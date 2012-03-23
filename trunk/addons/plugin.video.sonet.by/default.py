@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.2
+# Rev. 0.1.1
 
 
 import urllib,urllib2,re,sys,os,time,random
 import xbmcplugin,xbmcgui,xbmcaddon
 
-dbg = 1
+dbg = 0
 dbg_gd = 0
 
 pluginhandle = int(sys.argv[1])
@@ -24,6 +24,20 @@ usr_pwd = __settings__.getSetting('usr_pwd')
 
 def dbg_log(line):
     if dbg: print line
+    
+def raw2uni(raw):
+    unis = u''
+    raw_sz = len(raw)
+    i = 0
+    while  i < raw_sz:
+        if i < (raw_sz - 6) and raw[i] == '\\' and raw[i + 1]=='u':
+            unis += unichr(int(raw[i + 2] + raw[i + 3] + raw[i + 4] + raw[i + 5], 16))
+            i += 6
+        else:
+            unis += raw[i]
+            i += 1
+    return unis
+                        
     
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
     req = urllib2.Request(url)
@@ -86,6 +100,8 @@ def SNB_plpg(url, logo, cook, rfr):
 
     http = get_url(furl, cookie = cook, referrer = rfr)
     files = re.compile('"files":\[\{(.*?)\}\]').findall(http)
+    infos = re.compile('"Description":"(.*?)"').findall(http)
+
     if len(files):
         links = re.compile('"ftp":"(.*?)"').findall(files[0])
         titles = re.compile('"Name":"(.*?)"').findall(files[0])
@@ -94,16 +110,7 @@ def SNB_plpg(url, logo, cook, rfr):
         for i in range(len(links)):
             descr = u''
             if( i < n_titles):
-                tmp = titles[i]
-                titles_sz = len(titles[i])-6
-                k = 0
-                while k < titles_sz:
-                    if tmp[k] == '\\' and tmp[k+1]=='u':
-                        descr += unichr(int(tmp[k+2] + tmp[k+3] + tmp[k+4] + tmp[k+5], 16))
-                        k += 6
-                    else:
-                        descr += tmp[k]
-                        k += 1
+                descr = raw2uni(titles[i])
             else:
                 descr = str(i + 1)
                 
@@ -115,8 +122,10 @@ def SNB_plpg(url, logo, cook, rfr):
     
             title = descr
             thumbnail = logo
+            if len(infos): plot = raw2uni(infos[0])
+            else: plot = descr
     
-            item.setInfo( type='video', infoLabels={'title': title, 'plot': descr})
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
             item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(pluginhandle,uri,item)
             dbg_log('- uri:'+  uri + '\n')
