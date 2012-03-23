@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.0
+# Rev. 0.2.1
 
 
 import urllib,urllib2,re,sys,os,time,random
 import xbmcplugin,xbmcgui,xbmcaddon
 
-dbg = 1
+dbg = 0
 dbg_gd = 0
 
 pluginhandle = int(sys.argv[1])
