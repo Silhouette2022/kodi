@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.1
+# Rev. 0.2.0
 
 
 import urllib,urllib2,re,sys,os,time,random
 import xbmcplugin,xbmcgui,xbmcaddon
 
-dbg = 0
+dbg = 1
 dbg_gd = 0
 
 pluginhandle = int(sys.argv[1])
@@ -15,7 +15,8 @@ pluginhandle = int(sys.argv[1])
 start_pg = "http://sonet.by/video/"
 main_pg = "#page:0"
 list_pg = "#page:1"
-find_pg = "#page:3"
+#find_pg = "#page:3"
+find_pg = "actions.php?action=simplesearch&what=films"
 
 __settings__ = xbmcaddon.Addon(id='plugin.video.sonet.by')
 usr_log = __settings__.getSetting('usr_log')
@@ -85,22 +86,29 @@ def SNB_mnpg(url):
             #print href + logo + title
             item = xbmcgui.ListItem(title, iconImage=url + logo, thumbnailImage=url + logo)
             uri = sys.argv[0] + '?mode=plpg' \
-            + '&url=' + urllib.quote_plus(href) + '&logo=' + urllib.quote_plus(url + logo) + \
+            + '&url=' + urllib.quote_plus(href) + \
             '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(mycookie)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-            dbg_log('- uri:'+  uri + '\n')
+            if dbg_gd: dbg_log('- uri:'+  uri + '\n')
  
     xbmcplugin.endOfDirectory(pluginhandle) 
     
-def SNB_plpg(url, logo, cook, rfr):     
+def SNB_plpg(url, cook, rfr):     
     dbg_log('-SNB_plpg:'+ '\n')
     fval = url.split(':')
-    furl = start_pg + 'actions.php?action=getfilm&' + fval[0] + '=' + fval[1] + '&PHPSESSID=' + cook
-    #actions.php?action=getfilm&film=4822&PHPSESSID=377bb3ff4ffebc07ec2570f94e840cb7&JsHttpRequest=133226256496112-xml
 
+    furl = start_pg + 'actions.php?action=getfilm&' + fval[0] + '=' + fval[1] + '&PHPSESSID=' + cook
     http = get_url(furl, cookie = cook, referrer = rfr)
+
     files = re.compile('"files":\[\{(.*?)\}\]').findall(http)
     infos = re.compile('"Description":"(.*?)"').findall(http)
+    
+    posts = re.compile('"Poster":\["(.*?)"\]').findall(http)
+    if len(posts): logo = start_pg + re.sub('\\\/','/',posts[0])
+    else:
+        posts = re.compile('"BigPosters":\["(.*?)"\]').findall(http)
+        if len(posts): logo = start_pg + re.sub('\\\/','/',posts[0])
+        else: logo = ''
 
     if len(files):
         links = re.compile('"ftp":"(.*?)"').findall(files[0])
@@ -122,7 +130,7 @@ def SNB_plpg(url, logo, cook, rfr):
     
             title = descr
             thumbnail = logo
-            if len(infos): plot = raw2uni(infos[0])
+            if len(infos): plot = re.sub('<br>','\n', raw2uni(infos[0]))
             else: plot = descr
     
             item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
@@ -131,10 +139,37 @@ def SNB_plpg(url, logo, cook, rfr):
             dbg_log('- uri:'+  uri + '\n')
            
     xbmcplugin.endOfDirectory(pluginhandle)
+    
+def SNB_fdpg(url, cook, rfr):     
+    dbg_log('-SNB_fdpg:'+ '\n')
+    
+    kbd = xbmc.Keyboard()
+    kbd.setHeading('ПОИСК')
+    kbd.doModal()
+    if kbd.isConfirmed():
+        stxt = kbd.getText()
+        furl = url + '&text=' + stxt + '&PHPSESSID=' + cook
+ 
+        http = get_url(furl, cookie = cook, referrer = rfr)
 
-def SNB_play(url, logo, cook):     
+        lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)"}').findall(http)
+
+        for fid, fname, forgnm, fyear in lines:
+            title = raw2uni(fname + ' (' + forgnm + ') ' + fyear)
+            item = xbmcgui.ListItem(raw2uni(title))
+            uri = sys.argv[0] + '?mode=plpg' \
+            + '&url=' + urllib.quote_plus('film:'+fid) + \
+            '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(cook)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            dbg_log('- uri:'+  uri + '\n')
+ 
+    xbmcplugin.endOfDirectory(pluginhandle)         
+
+           
+    xbmcplugin.endOfDirectory(pluginhandle)    
+
+def SNB_play(url):     
     dbg_log('-SNB_play:'+ '\n')
-    #url='http://sonet.by/get/syrovatko/2011.12.03-2016.%20%EA%EE%ED%E5%F6%20%ED%EE%F7%E8%20%28hell%29%20%28%EF%F0%EE%EC%EE%29.2011.avi'
     item = xbmcgui.ListItem(path = url)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
            
@@ -200,10 +235,10 @@ try:
     dbg_log('-URL:'+ url + '\n')
 except: pass  
 
-if mode == 'fdpg': lsChan() #SNB_fdpg(start_pg, cook)
+if mode == 'fdpg': SNB_fdpg(url, cook, rfr)
 elif mode == 'lspg': lsChan() #SNB_lspg(start_pg, cook)
-elif mode == 'plpg': SNB_plpg(url, logo, cook, rfr)
-elif mode == 'play': SNB_play(url, logo, cook)
+elif mode == 'plpg': SNB_plpg(url, cook, rfr)
+elif mode == 'play': SNB_play(url)
 elif mode == '': SNB_mnpg(start_pg)
 
 
