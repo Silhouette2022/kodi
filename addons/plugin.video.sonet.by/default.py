@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.1
+# Rev. 0.3.0
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -14,9 +14,10 @@ pluginhandle = int(sys.argv[1])
 
 start_pg = "http://sonet.by/video/"
 main_pg = "#page:0"
-list_pg = "#page:1"
+#list_pg = "#page:1"
 #find_pg = "#page:3"
 find_pg = "actions.php?action=simplesearch&what=films"
+list_pg = "actions.php?action=filmlist"
 
 __settings__ = xbmcaddon.Addon(id='plugin.video.sonet.by')
 usr_log = __settings__.getSetting('usr_log')
@@ -63,8 +64,8 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 
 def SNB_mnpg(url):
     dbg_log('-SNB_mnpg:' + '\n')
-    ext_ls = [('ПОИСК', find_pg, '?mode=fdpg'),\
-             ('КАТАЛОГ', list_pg, '?mode=lspg')]
+    ext_ls = [('<ПОИСК>', find_pg, '?mode=fdpg'),\
+             ('<КАТАЛОГ>', list_pg, '?mode=lspg')]
 
 
     http = get_url(url, save_cookie = True)
@@ -78,7 +79,7 @@ def SNB_mnpg(url):
         for ctTitle, ctLink, ctMode  in ext_ls:
             item = xbmcgui.ListItem(ctTitle)
             uri = sys.argv[0] + ctMode \
-            + '&url=' + urllib.quote_plus(url + find_pg) + '&cook=' + urllib.quote_plus(mycookie)
+            + '&url=' + urllib.quote_plus(url + ctLink) + '&cook=' + urllib.quote_plus(mycookie)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')
 
@@ -164,9 +165,65 @@ def SNB_fdpg(url, cook, rfr):
             dbg_log('- uri:'+  uri + '\n')
  
     xbmcplugin.endOfDirectory(pluginhandle)         
+  
+def SNB_lspg(url, cook, rfr, ord, dir, off):     
+    dbg_log('-SNB_lspg:'+ '\n')
+    dir_ls = [('0', '<ПО ВОЗРАСТАНИЮ>', 'DESC'), ('1', '<ПО УБЫВАНИЮ>', 'ASC')]
+    ord_ls = [('0', '<ДОБАВЛЕНО>'), ('1', '<ГОД>'), ('5', '<АЛФАВИТ>')]
+    dirt =  ''
+    
+    for i, name, cd in dir_ls:
+        if i != dir:
+            item = xbmcgui.ListItem(name)
+            uri = sys.argv[0] + '?mode=lspg' \
+            + '&url=' + urllib.quote_plus(url) \
+            + '&ord=' + urllib.quote_plus(ord) \
+            + '&dir=' + urllib.quote_plus(i) \
+            + '&off=' + urllib.quote_plus(off) \
+            + '&cook=' + urllib.quote_plus(cook)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            dbg_log('- uri:'+  uri + '\n')
+        else:
+            dirt = cd
+            
+    for cd, name in ord_ls:
+        if cd != ord:
+            item = xbmcgui.ListItem(name)
+            uri = sys.argv[0] + '?mode=lspg' \
+            + '&url=' + urllib.quote_plus(url) \
+            + '&ord=' + urllib.quote_plus(cd) \
+            + '&dir=' + urllib.quote_plus(dir) \
+            + '&off=' + urllib.quote_plus(off) \
+            + '&cook=' + urllib.quote_plus(cook)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            dbg_log('- uri:'+  uri + '\n')            
 
-           
-    xbmcplugin.endOfDirectory(pluginhandle)    
+    furl = url + '&order=' + ord  + '&dir=' + dirt + '&offset=' + off + '&count=20' + '&PHPSESSID=' + cook
+    http = get_url(furl, cookie = cook, referrer = rfr)
+
+    lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)",').findall(http)
+
+    for fid, fname, forgnm, fyear in lines:
+        title = raw2uni(fname + ' (' + forgnm + ') ' + fyear)
+        item = xbmcgui.ListItem(raw2uni(title))
+        uri = sys.argv[0] + '?mode=plpg' \
+        + '&url=' + urllib.quote_plus('film:'+fid) + \
+        '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(cook)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+        dbg_log('- uri:'+  uri + '\n')
+    
+    item = xbmcgui.ListItem('<NEXT PAGE>')
+    uri = sys.argv[0] + '?mode=lspg' \
+    + '&url=' + urllib.quote_plus(url) \
+    + '&ord=' + ord \
+    + '&dir=' + dir \
+    + '&off=' + str(int(off) + 20) \
+    + '&cook=' + urllib.quote_plus(cook)
+
+    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+    dbg_log('- uri:'+  uri + '\n')
+
+    xbmcplugin.endOfDirectory(pluginhandle)  
 
 def SNB_play(url):     
     dbg_log('-SNB_play:'+ '\n')
@@ -200,11 +257,11 @@ params=get_params()
 
 cook = ''
 rfr = ''
-lspg = ''
-fdpg = ''
 mode=''
-logo=''
 url=''
+ord='0'
+dir='0'
+off='0'
 
 try:
     mode=params['mode']
@@ -219,16 +276,16 @@ try:
     dbg_log('-RFR:'+ rfr + '\n')
 except: pass
 try: 
-    lspg=urllib.unquote_plus(params['lspg'])
-    dbg_log('-LSPG:'+ lspg + '\n')
+    ord=urllib.unquote_plus(params['ord'])
+    dbg_log('-ORD:'+ ord + '\n')
 except: pass
 try: 
-    fdpg=urllib.unquote_plus(params['fdpg'])
-    dbg_log('-FDPG:'+ fdpg + '\n')
+    dir=urllib.unquote_plus(params['dir'])
+    dbg_log('-DIR:'+ dir + '\n')
 except: pass
 try: 
-    logo=urllib.unquote_plus(params['logo'])
-    dbg_log('-LOGO:'+ logo + '\n')
+    off=urllib.unquote_plus(params['off'])
+    dbg_log('-DIR:'+ off + '\n')
 except: pass    
 try: 
     url=urllib.unquote_plus(params['url'])
@@ -236,7 +293,7 @@ try:
 except: pass  
 
 if mode == 'fdpg': SNB_fdpg(url, cook, rfr)
-elif mode == 'lspg': lsChan() #SNB_lspg(start_pg, cook)
+elif mode == 'lspg': SNB_lspg(url, cook, rfr, ord, dir, off)
 elif mode == 'plpg': SNB_plpg(url, cook, rfr)
 elif mode == 'play': SNB_play(url)
 elif mode == '': SNB_mnpg(start_pg)
