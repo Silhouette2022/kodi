@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
-import urllib,urllib2,re,sys,os,time,random
+import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 
 dbg = 0
@@ -39,7 +39,16 @@ def raw2uni(raw):
             unis += raw[i]
             i += 1
     return unis
-                        
+    
+def uni2raw(ustr):
+    raw = ''
+    uni = unicode(ustr, 'utf8')
+    uni_sz = len(uni)
+    for i in range(uni_sz):
+        raw += ('%%u%04X') % ord(uni[i])
+        print raw
+    return raw    
+
     
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
     req = urllib2.Request(url)
@@ -99,6 +108,7 @@ def SNB_plpg(url, cook, rfr):
     fval = url.split(':')
 
     furl = start_pg + 'actions.php?action=getfilm&' + fval[0] + '=' + fval[1] + '&PHPSESSID=' + cook
+    dbg_log('- furl:'+  furl + '\n')
     http = get_url(furl, cookie = cook, referrer = rfr)
 
     files = re.compile('"files":\[\{(.*?)\}\]').findall(http)
@@ -148,9 +158,9 @@ def SNB_fdpg(url, cook, rfr):
     kbd.setHeading('ПОИСК')
     kbd.doModal()
     if kbd.isConfirmed():
-        stxt = kbd.getText()
+        stxt = uni2raw(kbd.getText())
         furl = url + '&text=' + stxt + '&PHPSESSID=' + cook
- 
+        dbg_log('- furl:'+  furl + '\n')
         http = get_url(furl, cookie = cook, referrer = rfr)
 
         lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)"}').findall(http)
@@ -166,7 +176,7 @@ def SNB_fdpg(url, cook, rfr):
  
     xbmcplugin.endOfDirectory(pluginhandle)         
   
-def SNB_lspg(url, cook, rfr, ord, dir, off):     
+def SNB_lspg(url, cook, rfr, ordr, dir, off):     
     dbg_log('-SNB_lspg:'+ '\n')
     dir_ls = [('0', '<ПО ВОЗРАСТАНИЮ>', 'DESC'), ('1', '<ПО УБЫВАНИЮ>', 'ASC')]
     ord_ls = [('0', '<ДОБАВЛЕНО>'), ('1', '<ГОД>'), ('5', '<АЛФАВИТ>')]
@@ -177,7 +187,7 @@ def SNB_lspg(url, cook, rfr, ord, dir, off):
             item = xbmcgui.ListItem(name)
             uri = sys.argv[0] + '?mode=lspg' \
             + '&url=' + urllib.quote_plus(url) \
-            + '&ord=' + urllib.quote_plus(ord) \
+            + '&ordr=' + urllib.quote_plus(ordr) \
             + '&dir=' + urllib.quote_plus(i) \
             + '&off=' + urllib.quote_plus(off) \
             + '&cook=' + urllib.quote_plus(cook)
@@ -187,18 +197,19 @@ def SNB_lspg(url, cook, rfr, ord, dir, off):
             dirt = cd
             
     for cd, name in ord_ls:
-        if cd != ord:
+        if cd != ordr:
             item = xbmcgui.ListItem(name)
             uri = sys.argv[0] + '?mode=lspg' \
             + '&url=' + urllib.quote_plus(url) \
-            + '&ord=' + urllib.quote_plus(cd) \
+            + '&ordr=' + urllib.quote_plus(cd) \
             + '&dir=' + urllib.quote_plus(dir) \
             + '&off=' + urllib.quote_plus(off) \
             + '&cook=' + urllib.quote_plus(cook)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')            
 
-    furl = url + '&order=' + ord  + '&dir=' + dirt + '&offset=' + off + '&count=20' + '&PHPSESSID=' + cook
+    furl = url + '&order=' + ordr  + '&dir=' + dirt + '&offset=' + off + '&count=20' + '&PHPSESSID=' + cook
+    dbg_log('- furl:'+  furl + '\n')
     http = get_url(furl, cookie = cook, referrer = rfr)
 
     lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)",').findall(http)
@@ -215,7 +226,7 @@ def SNB_lspg(url, cook, rfr, ord, dir, off):
     item = xbmcgui.ListItem('<NEXT PAGE>')
     uri = sys.argv[0] + '?mode=lspg' \
     + '&url=' + urllib.quote_plus(url) \
-    + '&ord=' + ord \
+    + '&ordr=' + ordr \
     + '&dir=' + dir \
     + '&off=' + str(int(off) + 20) \
     + '&cook=' + urllib.quote_plus(cook)
@@ -259,7 +270,7 @@ cook = ''
 rfr = ''
 mode=''
 url=''
-ord='0'
+ordr='0'
 dir='0'
 off='0'
 
@@ -276,8 +287,8 @@ try:
     dbg_log('-RFR:'+ rfr + '\n')
 except: pass
 try: 
-    ord=urllib.unquote_plus(params['ord'])
-    dbg_log('-ORD:'+ ord + '\n')
+    ordr=urllib.unquote_plus(params['ordr'])
+    dbg_log('-ordr:'+ ordr + '\n')
 except: pass
 try: 
     dir=urllib.unquote_plus(params['dir'])
@@ -293,7 +304,7 @@ try:
 except: pass  
 
 if mode == 'fdpg': SNB_fdpg(url, cook, rfr)
-elif mode == 'lspg': SNB_lspg(url, cook, rfr, ord, dir, off)
+elif mode == 'lspg': SNB_lspg(url, cook, rfr, ordr, dir, off)
 elif mode == 'plpg': SNB_plpg(url, cook, rfr)
 elif mode == 'play': SNB_play(url)
 elif mode == '': SNB_mnpg(start_pg)
