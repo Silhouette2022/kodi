@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.0
+# Rev. 0.4.1
 
 
 import urllib,urllib2,re,sys
@@ -245,16 +245,19 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
         if dbg_gd: dbg_log('- uri:'+  uri + '\n')
     
-    item = xbmcgui.ListItem('<NEXT PAGE>')
-    uri = sys.argv[0] + '?mode=lspg' \
-    + '&url=' + urllib.quote_plus(url) \
-    + '&ordr=' + ordr \
-    + '&dir=' + dir \
-    + '&off=' + str(int(off) + 20) \
-    + '&cook=' + urllib.quote_plus(cook)
+    if len(lines) >= 20:
+				item = xbmcgui.ListItem('<NEXT PAGE>')
+				uri = sys.argv[0] + '?mode=lspg' \
+				+ '&url=' + urllib.quote_plus(url)
+				if gnrs != '' and gnrs != '0':
+						uri +=  '&gnrs=' + gnrs
+				uri += '&ordr=' + ordr \
+				+ '&dir=' + dir \
+				+ '&off=' + str(int(off) + 20) \
+				+ '&cook=' + urllib.quote_plus(cook)
 
-    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-    dbg_log('- uri:'+  uri + '\n')
+				xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+				dbg_log('- uri:'+  uri + '\n')
 
     xbmcplugin.endOfDirectory(pluginhandle)  
 
@@ -354,6 +357,7 @@ try:
     gnrs=urllib.unquote_plus(params['gnrs'])
     dbg_log('-GNRS:'+ gnrs + '\n')
 except: pass  
+
 
 if mode == 'fdpg': SNB_fdpg(url, cook, rfr)
 elif mode == 'lspg': SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs)
