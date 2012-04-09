@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.1
+# Rev. 0.4.2
 
 
 import urllib,urllib2,re,sys
@@ -47,7 +47,6 @@ def uni2raw(ustr):
     uni_sz = len(uni)
     for i in range(uni_sz):
         raw += ('%%u%04X') % ord(uni[i])
-        print raw
     return raw    
 
     
@@ -234,11 +233,17 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
     dbg_log('- furl:'+  furl + '\n')
     http = get_url(furl, cookie = cook, referrer = rfr)
 
-    lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)",').findall(http)
+    lines = re.compile('{"ID":"(.*?)","Name":"(.*?)","OriginalName":"(.*?)","Year":"(.*?)",(.*?),"Poster":"(.*?)","SmallPoster":"(.*?)",').findall(http)
 
-    for fid, fname, forgnm, fyear in lines:
+    for fid, fname, forgnm, fyear, ftrash, flogo, fslogo in lines:
         title = raw2uni(fname + ' (' + forgnm + ') ' + fyear)
-        item = xbmcgui.ListItem(raw2uni(title))
+        
+        if flogo == '': tlogo = start_pg + re.sub('\\\/','/',fslogo)
+        else: tlogo = start_pg + re.sub('\\\/','/',flogo)    
+        
+        logo = re.sub('smallposters','posters',tlogo)     
+
+        item = xbmcgui.ListItem(raw2uni(title),iconImage=logo, thumbnailImage=logo)
         uri = sys.argv[0] + '?mode=plpg' \
         + '&url=' + urllib.quote_plus('film:'+fid) + \
         '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(cook)
