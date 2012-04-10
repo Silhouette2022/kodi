@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.2
+# Rev. 0.4.3
 
 
 import urllib,urllib2,re,sys
@@ -173,15 +173,15 @@ def SNB_fdpg(url, cook, rfr):
             '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(cook)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             if dbg_gd: dbg_log('- uri:'+  uri + '\n')
- 
+
     xbmcplugin.endOfDirectory(pluginhandle)         
-  
+
 def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):     
     dbg_log('-SNB_lspg:'+ '\n')
     dir_ls = [('0', '<ПО ВОЗРАСТАНИЮ>', 'DESC'), ('1', '<ПО УБЫВАНИЮ>', 'ASC')]
     ord_ls = [('0', '<ДОБАВЛЕНО>'), ('1', '<ГОД>'), ('5', '<АЛФАВИТ>')]
     dirt =  ''
-    
+
     if gnrs != '0':
       for i, name, cd in dir_ls:
           if i != dir:
@@ -191,7 +191,6 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
               + '&gnrs=' + urllib.quote_plus(gnrs) \
               + '&ordr=' + urllib.quote_plus(ordr) \
               + '&dir=' + urllib.quote_plus(i) \
-              + '&off=' + urllib.quote_plus(off) \
               + '&cook=' + urllib.quote_plus(cook)
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
               dbg_log('- uri:'+  uri + '\n')
@@ -206,7 +205,6 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
               + '&gnrs=' + urllib.quote_plus(gnrs) \
               + '&ordr=' + urllib.quote_plus(cd) \
               + '&dir=' + urllib.quote_plus(dir) \
-              + '&off=' + urllib.quote_plus(off) \
               + '&cook=' + urllib.quote_plus(cook)
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
               dbg_log('- uri:'+  uri + '\n')            
@@ -218,7 +216,6 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
         + '&gnrs=' + urllib.quote_plus('0') \
         + '&ordr=' + urllib.quote_plus(ordr) \
         + '&dir=' + urllib.quote_plus(dir) \
-        + '&off=' + urllib.quote_plus(off) \
         + '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
         dbg_log('- uri:'+  uri + '\n')
@@ -243,7 +240,7 @@ def SNB_lspg(url, cook, rfr, ordr, dir, off, gnrs):
         
         logo = re.sub('smallposters','posters',tlogo)     
 
-        item = xbmcgui.ListItem(raw2uni(title),iconImage=logo, thumbnailImage=logo)
+        item = xbmcgui.ListItem(raw2uni(title),iconImage=tlogo, thumbnailImage=logo)
         uri = sys.argv[0] + '?mode=plpg' \
         + '&url=' + urllib.quote_plus('film:'+fid) + \
         '&rfr=' + urllib.quote_plus(url) +'&cook=' + urllib.quote_plus(cook)
@@ -284,19 +281,18 @@ def SNB_gnpg(url, cook, rfr, ordr, dir, off, gnrs):
             + '&gnrs=' + urllib.quote_plus(fid) \
             + '&ordr=' + urllib.quote_plus(ordr) \
             + '&dir=' + urllib.quote_plus(dir) \
-            + '&off=' + urllib.quote_plus(off) \
             + '&cook=' + urllib.quote_plus(cook)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')
- 
+
     xbmcplugin.endOfDirectory(pluginhandle)  
 
 def SNB_play(url):     
     dbg_log('-SNB_play:'+ '\n')
     item = xbmcgui.ListItem(path = url)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-           
-          
+
+
 def lsChan():
     xbmcplugin.endOfDirectory(pluginhandle)
 
