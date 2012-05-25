@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.0
+# Rev. 0.2.0
 
 
 
@@ -15,6 +15,7 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.kaban.tva')
 
 KTV_url = 'http://www.kaban.tv'
 KTV_arch = '/archive'
+KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
 
 dbg = 0
@@ -35,20 +36,63 @@ def KTV_start():
     
     dbg_log('-KTV_start')
 
-    if 0:
-        name='Online TV'
-        item = xbmcgui.ListItem(name)
-        uri = sys.argv[0] + '?mode=PRLS'
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+    name='Live TV'
+    item = xbmcgui.ListItem(name)
+    uri = sys.argv[0] + '?mode=PRLS'
+    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+
+    name='Archives'
+    item = xbmcgui.ListItem(name)
+    uri = sys.argv[0] + '?mode=CHLS'
+    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+
+    xbmcplugin.endOfDirectory(pluginhandle)  
     
-        name='Archives'
-        item = xbmcgui.ListItem(name)
-        uri = sys.argv[0] + '?mode=CHLS'
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+    #KTV_chls(KTV_url + KTV_arch)
+        
+def KTV_prls(url):
+    dbg_log('KTV_prls')
     
-        xbmcplugin.endOfDirectory(pluginhandle)  
+    http = getURL(url)
+    pr_ls = re.compile('<li><a class="(.+?)" href="(.+?)"><span>(.+?)</span></a></li>').findall(http)
+    
+    thumbnail = ''
+    if len(pr_ls):
+        for eng,href,descr in pr_ls:
+            name = descr
+            dbg_log(name)
+            item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
+            uri = sys.argv[0] + '?mode=PLAY'
+            uri += '&url='+urllib.quote_plus(url + href)
+            item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+
+    xbmcplugin.endOfDirectory(pluginhandle)    
+    
+def KTV_play(url, name, thumbnail, plot):
+    dbg_log('-KTV_play')
+    response    = getURL(url)
+    rtmp_file   = re.compile('"file":"http://(.+?)/playlist').findall(response)[0]
+    dbg_log(rtmp_file)
+    st_ls = rtmp_file.split('/')
+    if len(st_ls):
+        rtmp_streamer = 'http://' + st_ls[0] + '/' + st_ls[1]
     else:
-        KTV_chls(KTV_url + KTV_arch)
+        return
+    
+    furl = '%s'%('rtmp://' + rtmp_file)
+    furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
+    furl += ' pageUrl=%s'%KTV_url
+    furl += ' tcUrl=%s'%rtmp_streamer
+    furl += ' flashVer=\'WIN 11,2,202,235\''
+    
+    dbg_log(furl)
+
+    xbmc.log('furl = %s'%furl)
+    item = xbmcgui.ListItem(path = furl)
+    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+             
         
 def KTV_chls(url):
     dbg_log('-KTV_chls')
@@ -87,14 +131,17 @@ def KTV_dates(furl, thumbnail):
     dt_ls = re.compile('<a href="' + KTV_arch + url + '/([A-Za-z0-9/_-]+?)"> +?<span>').findall(oneline)
 
     if len(dt_ls):
+        http = getURL(KTV_time)
+        cdate = re.compile('"date":"(.+?)"').findall(http)[0]
         for i in range(len(dt_ls) - 1, 0, -1):
             descr = dt_ls[i]
             dbg_log(descr)
-            item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
-            uri = sys.argv[0] + '?mode=GDLS'
-            uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl + '/' + descr)
-            uri += '&thumbnail='+urllib.quote_plus(thumbnail)
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            if descr <= cdate:
+                item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
+                uri = sys.argv[0] + '?mode=GDLS'
+                uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl + '/' + descr)
+                uri += '&thumbnail='+urllib.quote_plus(thumbnail)
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
 
     xbmcplugin.endOfDirectory(pluginhandle)
     
@@ -130,7 +177,7 @@ def KTV_guide(furl, thumbnail):
 
     xbmcplugin.endOfDirectory(pluginhandle)    
     
-def DTV_plarch(url, name, thumbnail, plot):
+def KTV_plarch(url, name, thumbnail, plot):
     
     furl = re.sub('-', '/', url)
     furl = re.sub('~', '-', furl)
@@ -197,7 +244,9 @@ except: pass
 
 
 
-if mode == 'PLAR': DTV_plarch(url, name, thumbnail, plot)
+if mode == 'PLAR': KTV_plarch(url, name, thumbnail, plot)
+elif mode == 'PLAY': KTV_play(url, name, thumbnail, plot)
+elif mode == 'PRLS': KTV_prls(KTV_url)
 elif mode == 'CHLS': KTV_chls(KTV_url + KTV_arch)
 elif mode == 'DTLS': KTV_dates(url, thumbnail)
 elif mode == 'GDLS': KTV_guide(url, thumbnail)
