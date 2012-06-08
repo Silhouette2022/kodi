@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.4
+# Rev. 0.2.5
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -62,7 +62,7 @@ def get_events(url, events):
             'Marzec': '03',
             'Kwiecień': '04',
             'Maj': '05',
-            'Iyugya': '06',
+            'Czerwiec': '06',
             'Lipca': '07',
             'Sierpnia': '08',
             'Września': '09',
@@ -77,12 +77,16 @@ def get_events(url, events):
     oneline = re.sub('</table>', '<class/></table>', htpg)
 
     pg_ls = re.compile('<tr class="day"><td colspan="3">(.*?), (.*?)</td></tr>(.*?)<class/>').findall(oneline)
+    if len(pg_ls) == 0:
+        return events
 
     i = 0
     for dw, ed, ddescr in pg_ls:
         ed_ls = re.split(' ',ed)
         
         ev_ls = re.compile('<td class="et">(.*?)</td><td class="event">(.*?)</td>').findall(ddescr)
+        if len(ev_ls) == 0:
+            return events
         for evt, evm in ev_ls:
             evtn = time.mktime(time.strptime(ed_ls[2] + '-' + months[ed_ls[1]]+ '-' + ed_ls[0] + ' '+ evt, "%Y-%m-%d %H:%M"))
             if i: 
