@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.0
+# Rev. 0.2.1
 
 
 
@@ -13,7 +13,7 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.kaban.tva')
 #fanart    = xbmc.translatePath( __addon__.getAddonInfo('path') + 'fanart.jpg')
 #xbmcplugin.setPluginFanart(pluginhandle, fanart)
 
-KTV_url = 'http://www.kaban.tv'
+KTV_url = 'http://kaban.tv'
 KTV_arch = '/archive'
 KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
