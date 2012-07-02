@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.5
+# Rev. 0.2.6
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -63,7 +63,7 @@ def get_events(url, events):
             'Kwiecień': '04',
             'Maj': '05',
             'Czerwiec': '06',
-            'Lipca': '07',
+            'Lipiec': '07',
             'Sierpnia': '08',
             'Września': '09',
             'Październik': '10',
