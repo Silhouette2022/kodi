@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.2
+# Rev. 0.3.2
 
 
 
@@ -33,8 +33,8 @@ def DTV_start():
     
     dbg_log('-DTV_start')
 
-    if 0:
-        name='Online TV'
+    if 1:
+        name='Live TV'
         item = xbmcgui.ListItem(name)
         uri = sys.argv[0] + '?mode=PRLS'
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
@@ -127,27 +127,38 @@ def DTV_online(url, prls):
 def DTV_play(url, name, thumbnail, plot):
     dbg_log('-DTV_play')
     response    = getURL(url)
-    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
-    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
-    flashparams = flashvars.split('&')
-    param = {}
-    for i in range(len(flashparams)):
-        splitparams = {}
-        splitparams = flashparams[i].split('=')
-        if (len(splitparams)) == 2:
-            param[splitparams[0]] = splitparams[1]
-    rtmp_file     = param['file']
-    rtmp_streamer = param['streamer']
-    rtmp_streamer = rtmp_streamer.replace('/load','/tv')
-    furl  = ''
-    furl += '%s/%s'%(rtmp_streamer,rtmp_file)
-    furl += ' swfUrl=%s'%SWFObject
-    furl += ' pageUrl=%s'%url
-    furl += ' tcUrl=%s'%rtmp_streamer
-    furl += ' swfVfy=True Live=True'
-    xbmc.output('furl = %s'%furl)
-    item = xbmcgui.ListItem(path = furl)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    
+    player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
+    streamer_ls   = re.compile("\'streamer\': \'(.*?)\'").findall(response)
+    file_ls   = re.compile("\'file\': \'(.*?)\'").findall(response)
+    
+    if (len(streamer_ls) & len(player_ls) & len(file_ls)):
+        rtmp_streamer = streamer_ls[0]
+        rtmp_file = file_ls[0]
+        SWFObject = DTV_url + player_ls[0] 
+
+        #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
+        #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
+        #    flashparams = flashvars.split('&')
+        #    param = {}
+        #    for i in range(len(flashparams)):
+        #        splitparams = {}
+        #        splitparams = flashparams[i].split('=')
+        #        if (len(splitparams)) == 2:
+        #            param[splitparams[0]] = splitparams[1]
+        #    rtmp_file     = param['file']
+        #    rtmp_streamer = param['streamer']
+        #    rtmp_streamer = rtmp_streamer.replace('/load','/tv')
+    
+        furl  = ''
+        furl += '%s/%s'%(rtmp_streamer,rtmp_file)
+        furl += ' swfUrl=%s'%SWFObject
+        furl += ' pageUrl=%s'%url
+        furl += ' tcUrl=%s'%rtmp_streamer
+        furl += ' swfVfy=True Live=True'
+        xbmc.output('furl = %s'%furl)
+        item = xbmcgui.ListItem(path = furl)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 
 def DTV_dates(url, thumbnail):
@@ -197,47 +208,54 @@ def DTV_archs(url, thumbnail):
     
 def DTV_plarch(url, name, thumbnail, plot):
     response    = getURL(url)
-    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
-    dbg_log('=SWFObject='+SWFObject)
-    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
-    dbg_log('=flashvars='+flashvars)
-    flashparams = re.sub( '\?', '\&', urllib.unquote_plus(flashvars)).split('&')
-    dbg_log('=flashparams=')
-    if dbg: print flashparams
-
-    for i in range(len(flashparams)):
-        if flashparams[i].find('time=') != -1:
-            rtmp_time = re.sub('time=', '', flashparams[i])
-        elif flashparams[i].find('str=') != -1:
-            rtmp_str = re.sub('str=', '', flashparams[i])
-        elif flashparams[i].find('ch=') != -1:
-            rtmp_ch = re.sub('ch=', '', flashparams[i])
-            
-    itime = int(rtmp_time)
-    rtime = (itime/3600)* 3600 
-    if itime != rtime:
-        stime = str((itime - rtime) * 1000)
-    else:
-        stime = ''
     
-    sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
-    sPlayer     = xbmc.Player()
-    sPlayList.clear()
+    player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
+    file_ls   = re.compile("\'playlistfile\': \'(.*?)\'").findall(response)
+    
+    if (len(player_ls) & len(file_ls)):
+        #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
+        #    dbg_log('=SWFObject='+SWFObject)
+        #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
+        #    dbg_log('=flashvars='+flashvars)
 
-    for hdelta in range(6):
-        furl  = 'rtmp://' + rtmp_str + '/archive/mp4:/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
-        furl += ' swfUrl=' + SWFObject
-        furl += ' pageUrl=' + url
-        furl += ' tcUrl=rtmp://' + rtmp_str + '/archive'
-        if stime != '' and hdelta == 0 :
-            furl += ' start=' + stime
+        SWFObject = DTV_url + player_ls[0]  
+        flashparams = re.sub( '\?', '\&', urllib.unquote_plus(file_ls[0])).split('&')
+        dbg_log('=flashparams=')
+        if dbg: print flashparams
 
-        item = xbmcgui.ListItem(path = furl)
-        sPlayList.add(furl, item, hdelta)
-        if hdelta == 0: item0 = item
-        dbg_log('furl = %s'%furl)
+        for i in range(len(flashparams)):
+            if flashparams[i].find('time=') != -1:
+                rtmp_time = re.sub('time=', '', flashparams[i])
+            elif flashparams[i].find('str=') != -1:
+                rtmp_str = re.sub('str=', '', flashparams[i])
+            elif flashparams[i].find('ch=') != -1:
+                rtmp_ch = re.sub('ch=', '', flashparams[i])
+            
+        itime = int(rtmp_time)
+        rtime = (itime/3600)* 3600 
+        if itime != rtime:
+            stime = str((itime - rtime) * 1000)
+        else:
+            stime = ''
+        
+        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+        sPlayer     = xbmc.Player()
+        sPlayList.clear()
 
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item0) 
+        for hdelta in range(6):
+            furl  = 'rtmp://' + rtmp_str + '/archive/mp4:/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
+            furl += ' swfUrl=' + SWFObject
+            furl += ' pageUrl=' + url
+            furl += ' tcUrl=rtmp://' + rtmp_str + '/archive'
+            if stime != '' and hdelta == 0 :
+                furl += ' start=' + stime
+
+            item = xbmcgui.ListItem(path = furl)
+            sPlayList.add(furl, item, hdelta)
+            if hdelta == 0: item0 = item
+            dbg_log('furl = %s'%furl)
+
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item0) 
 
     
 
