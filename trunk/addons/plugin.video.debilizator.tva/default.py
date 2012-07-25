@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.3.2
+# Rev. 0.4.0
 
 
 
@@ -16,6 +16,7 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.debilizator.tva')
 DTV_url = 'http://www.debilizator.tv/'
 
 dbg = 0
+
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
@@ -131,34 +132,42 @@ def DTV_play(url, name, thumbnail, plot):
     player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
     streamer_ls   = re.compile("\'streamer\': \'(.*?)\'").findall(response)
     file_ls   = re.compile("\'file\': \'(.*?)\'").findall(response)
+    print player_ls
+    print len(player_ls)
+    print streamer_ls
+    print len(streamer_ls)
+    print file_ls        
+    print len(file_ls)
     
-    if (len(streamer_ls) & len(player_ls) & len(file_ls)):
-        rtmp_streamer = streamer_ls[0]
-        rtmp_file = file_ls[0]
-        SWFObject = DTV_url + player_ls[0] 
+    if len(streamer_ls):
+      if len(player_ls):
+        if len(file_ls) :
+          rtmp_streamer = streamer_ls[0]
+          rtmp_file = file_ls[0]
+          SWFObject = DTV_url + player_ls[0] 
 
-        #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
-        #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
-        #    flashparams = flashvars.split('&')
-        #    param = {}
-        #    for i in range(len(flashparams)):
-        #        splitparams = {}
-        #        splitparams = flashparams[i].split('=')
-        #        if (len(splitparams)) == 2:
-        #            param[splitparams[0]] = splitparams[1]
-        #    rtmp_file     = param['file']
-        #    rtmp_streamer = param['streamer']
-        #    rtmp_streamer = rtmp_streamer.replace('/load','/tv')
-    
-        furl  = ''
-        furl += '%s/%s'%(rtmp_streamer,rtmp_file)
-        furl += ' swfUrl=%s'%SWFObject
-        furl += ' pageUrl=%s'%url
-        furl += ' tcUrl=%s'%rtmp_streamer
-        furl += ' swfVfy=True Live=True'
-        xbmc.output('furl = %s'%furl)
-        item = xbmcgui.ListItem(path = furl)
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+          #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
+          #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
+          #    flashparams = flashvars.split('&')
+          #    param = {}
+          #    for i in range(len(flashparams)):
+          #        splitparams = {}
+          #        splitparams = flashparams[i].split('=')
+          #        if (len(splitparams)) == 2:
+          #            param[splitparams[0]] = splitparams[1]
+          #    rtmp_file     = param['file']
+          #    rtmp_streamer = param['streamer']
+          #    rtmp_streamer = rtmp_streamer.replace('/load','/tv')
+      
+          furl  = ''
+          furl += '%s/%s'%(rtmp_streamer,rtmp_file)
+          furl += ' swfUrl=%s'%SWFObject
+          furl += ' pageUrl=%s'%url
+          furl += ' tcUrl=%s'%rtmp_streamer
+          furl += ' swfVfy=True Live=True'
+          xbmc.output('furl = %s'%furl)
+          item = xbmcgui.ListItem(path = furl)
+          xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 
 def DTV_dates(url, thumbnail):
