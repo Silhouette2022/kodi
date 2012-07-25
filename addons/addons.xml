@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="plugin.video.debilizator.tva" name="Debilizator.TVA" version="0.3.2" provider-name="Silhouette">
+<addon id="plugin.video.debilizator.tva" name="Debilizator.TVA" version="0.4.0" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
