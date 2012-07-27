@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.7
+# Rev. 0.3.0
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -27,11 +27,15 @@ usr_log = __settings__.getSetting('usr_log')
 usr_pwd = __settings__.getSetting('usr_pwd')
 usr_ctry = __settings__.getSetting('usr_ctry')
 usr_guide = __settings__.getSetting('usr_guide')
+if usr_guide == "true":
+  usr_allch = __settings__.getSetting('usr_allch')
+else:
+  usr_allch = "false"
 
 def dbg_log(line):
     if dbg: print line
     
-def get_events(url, events):    
+def get_events(url, events, chGr):    
 
     months = {'Января':'01',
             'Февраля':'02',
@@ -71,7 +75,7 @@ def get_events(url, events):
             'Grudzień': '12 '}
     
 
-    htpg = get_url(url + guige_pg + chgr)
+    htpg = get_url(url + guige_pg + chGr)
     oneline = re.sub('\n', '', htpg)
     htpg = re.sub('<tr class="day">', '<class/><tr class="day">', oneline)
     oneline = re.sub('</table>', '<class/></table>', htpg)
@@ -90,17 +94,17 @@ def get_events(url, events):
         for evt, evm in ev_ls:
             evtn = time.mktime(time.strptime(ed_ls[2] + '-' + months[ed_ls[1]]+ '-' + ed_ls[0] + ' '+ evt, "%Y-%m-%d %H:%M"))
             if i: 
-				dbg_log(evtn)
-				dbg_log(time.localtime(evtn))
+                dbg_log(evtn)
+                dbg_log(time.localtime(evtn))
 
             if i and events[-1][0][0] > evtn:
-				oldyd = time.localtime(events[-1][0][0]).tm_yday
-				newyd = time.localtime(evtn).tm_yday
-				if oldyd != newyd or corr == 0:
-					evtn += 24 * 3600
-					corr = 1
-					dbg_log(time.localtime(evtn))
-				else: corr = 0
+                oldyd = time.localtime(events[-1][0][0]).tm_yday
+                newyd = time.localtime(evtn).tm_yday
+                if oldyd != newyd or corr == 0:
+                    evtn += 24 * 3600
+                    corr = 1
+                    dbg_log(time.localtime(evtn))
+                else: corr = 0
             else: corr = 0
 
             events.append([(evtn, evm)])
@@ -200,9 +204,13 @@ def IMB_chls(url, mycookie):
             uri = sys.argv[0] + '?mode=chtz' + '&ctry=' + usr_ctry \
             + '&chrn=' + chRun + '&chgr=' + chGrid \
             + '&rfr=' + url + index_pg + '&chpg=' + channel_pg +  '&chlg=' + chLogo + '&cook=' + urllib.quote_plus(mycookie)
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-            dbg_log('- uri:'+  uri + '\n')
-    
+            
+            if usr_allch == "false":
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+                dbg_log('- uri:'+  uri + '\n')
+            else:
+                IMB_chtz(start_pg, chRun, chLogo, chGrid, mycookie, url + index_pg, channel_pg)
+                
     xbmcplugin.endOfDirectory(pluginhandle) 
     
 def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
@@ -225,7 +233,7 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
                 'ua': '367', 
                 'pl': '262'}    
 
-      events = get_events(url, events)
+      events = get_events(url, events, chgr)
       if len(events):
           httm = get_url(time_pg + tm_ref[usr_ctry])
           tml_ls = re.compile('<th class=w5>Current Time</th><td><strong id=ct  class=big>(.*?)</strong>').findall(httm)
@@ -265,8 +273,9 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
         #item.setProperty('fanart_image',thumbnail)
         xbmcplugin.addDirectoryItem(pluginhandle,uri,item)
         dbg_log('- uri:'+  uri + '\n')
-           
-    xbmcplugin.endOfDirectory(pluginhandle)
+
+    if mode == 'chtz':
+        xbmcplugin.endOfDirectory(pluginhandle)
 
 
 def IMB_chpl(url, chrn, chlg, cook, rfr, tzvl, uid):     
