@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.0
+# Rev. 0.1.1
 
 
 
@@ -50,10 +50,10 @@ def INC_prls(url):
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     dbg_log(mycookie)
     oneline = re.sub('[\r\n]', ' ', http)
-    pr_ls = re.compile('<tr > +?<td class="col01"><a href="(.+?)"><img src="(.+?)"  alt="(.+?)" /></a></td> +?<td class="col02"><a href="(.+?)">(.+?)</a></td>').findall(oneline)
+    pr_ls = re.compile('<tr > +?<td class="col01"><a href="(.+?)"><img src="(.+?)"  alt="(.+?)" /></a></td>').findall(oneline)
 
     if len(pr_ls):
-        for href,logo,x3,x4,descr in pr_ls:
+        for href,logo,descr in pr_ls:
 
             name = descr
             dbg_log(name)
