@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -56,7 +56,7 @@ def get_events(url, events, chGr):
             'Травня': '05',
             'Червня': '06',
             'Липня': '07',
-            'Серпня ': '08',
+            'Серпня': '08',
             'Вересня': '09',
             'Жовтня': '10',
             'Листопада': '11',
