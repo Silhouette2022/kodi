@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="plugin.video.debilizator.tva" name="Debilizator.TVA" version="0.4.0" provider-name="Silhouette">
+<addon id="plugin.video.debilizator.tva" name="[COLOR FFC85F1C]Debilizator.TVA[/COLOR]" version="0.4.1" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
@@ -10,7 +10,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.imbplus.tv" name="IMB Plus TV" version="0.3.1" provider-name="Silhouette">
+<addon id="plugin.video.imbplus.tv" name="[COLOR FF35A97D0]IMB Plus TV[/COLOR]" version="0.3.1" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
@@ -20,7 +20,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.inetcom.tv" name="Inetcom.tv" version="0.1.1" provider-name="Silhouette">
+<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.1.2" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
@@ -30,7 +30,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kaban.tva" name="Kaban.TVA" version="0.2.1" provider-name="Silhouette">
+<addon id="plugin.video.kaban.tva" name="[COLOR FFE55BB0]Kaban.TVA[/COLOR]" version="0.2.2" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
@@ -50,7 +50,7 @@
   </extension>
 </addon>
 
-<addon id="repository.silhouette" name="Silhouette XBMC Add-ons" version="1.0.0" provider-name="Silhouette">
+<addon id="repository.silhouette" name="Silhouette XBMC Add-ons" version="1.0.1" provider-name="Silhouette">
 	<extension point="xbmc.addon.repository" name="Silhouette XBMC Add-ons">
 		<info compressed="false">http://silhouette-xbmc-repo.googlecode.com/svn/trunk/addons/addons.xml</info>
 		<checksum>http://silhouette-xbmc-repo.googlecode.com/svn/trunk/addons/addons.xml.md5</checksum>
