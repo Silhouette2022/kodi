@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.2
+# Rev. 0.4.3
 
 
 
@@ -30,7 +30,7 @@ def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None
     if data: 
         response = urllib2.urlopen(req, data)
     else:
-    response = urllib2.urlopen(req)
+        response = urllib2.urlopen(req)
     link=response.read()
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
