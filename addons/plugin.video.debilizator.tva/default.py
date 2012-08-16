@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.0
+# Rev. 0.4.2
 
 
 
@@ -20,14 +20,27 @@ dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
-def getURL(url):
+def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None):
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
     req.add_header('Accept-Language', 'ru,en;q=0.9')
+    if cookie: req.add_header('Cookie', cookie)
+    if referrer: req.add_header('Referer', referrer)
+    if data: 
+        response = urllib2.urlopen(req, data)
+    else:
     response = urllib2.urlopen(req)
     link=response.read()
+    if save_cookie:
+        setcookie = response.info().get('Set-Cookie', None)
+        #print "Set-Cookie: %s" % repr(setcookie)
+        if setcookie:
+            setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+            link = link + '<cookie>' + setcookie + '</cookie>'
+    
     response.close()
+    #print response.info()
     return link
 
 def DTV_start():
@@ -129,15 +142,24 @@ def DTV_play(url, name, thumbnail, plot):
     dbg_log('-DTV_play')
     response    = getURL(url)
     
+    oneline = re.sub( '[\n\r\t]', ' ', response)
+    server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
+    if(len(server_ls)):
+        min = 100
+        new_srv = ""
+        for ssHref, ssCrap, ssVal in server_ls:
+            if(int(ssVal) < min):
+                min = int(ssVal)
+                new_srv = ssHref
+                
+        if(new_srv != ""):
+            dbg_log('-NEW_SRV:'+ new_srv + '\n')
+            #response = getURL(DTV_url + 'select_server.cgi?' + new_srv)
+            response = getURL(url, cookie=new_srv)
+    
     player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
     streamer_ls   = re.compile("\'streamer\': \'(.*?)\'").findall(response)
     file_ls   = re.compile("\'file\': \'(.*?)\'").findall(response)
-    print player_ls
-    print len(player_ls)
-    print streamer_ls
-    print len(streamer_ls)
-    print file_ls        
-    print len(file_ls)
     
     if len(streamer_ls):
       if len(player_ls):
@@ -165,7 +187,7 @@ def DTV_play(url, name, thumbnail, plot):
           furl += ' pageUrl=%s'%url
           furl += ' tcUrl=%s'%rtmp_streamer
           furl += ' swfVfy=True Live=True'
-          xbmc.output('furl = %s'%furl)
+          xbmc.log('furl = %s'%furl)
           item = xbmcgui.ListItem(path = furl)
           xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
@@ -217,6 +239,21 @@ def DTV_archs(url, thumbnail):
     
 def DTV_plarch(url, name, thumbnail, plot):
     response    = getURL(url)
+    
+    oneline = re.sub( '[\n\r\t]', ' ', response)
+    server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
+    if(len(server_ls)):
+        min = 100
+        new_srv = ""
+        for ssHref, ssCrap, ssVal in server_ls:
+            if(int(ssVal) < min):
+                min = int(ssVal)
+                new_srv = ssHref
+                
+        if(new_srv != ""):
+            dbg_log('-NEW_SRV:'+ new_srv + '\n')
+            #response = getURL(DTV_url + 'select_server.cgi?' + new_srv)
+            response = getURL(url, cookie=new_srv)
     
     player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
     file_ls   = re.compile("\'playlistfile\': \'(.*?)\'").findall(response)
