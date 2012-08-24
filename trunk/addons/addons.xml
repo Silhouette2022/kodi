@@ -40,6 +40,16 @@
   </extension>
 </addon>
 
+<addon id="plugin.video.new-kino.net" name="New-Kino.net" version="0.1.0" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>new-kino.net - фильмы, мультфильмы, сериалы</summary>
+    <description>new-kino.net - фильмы, мультфильмы, сериалы - круглосуточно на нашем сайте, смотрите, наслаждайтесь и отдыхайте</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="plugin.video.sonet.by" name="Sonet.by" version="0.4.3" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
