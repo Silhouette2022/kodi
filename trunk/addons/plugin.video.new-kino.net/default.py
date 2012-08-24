@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.1
+# Rev. 0.2.0
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 
-dbg = 1
+dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
@@ -69,9 +69,9 @@ def NKN_start(url, page):
 
                 href = hrefs[i][0]
                 dbg_log('-HREF %s'%href)
-                infos = re.compile('<img src="(.*?)" alt="(.*?)" title="(.*?)" /></a><!--TEnd--></div>(.*?)</div>').findall(str(sa))
+                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" /></a><!--TEnd--></div>(.*?)</div>').findall(str(sa))
                 for logo, alt, title, plot in infos:
-                    img = url + logo
+                    img = start_pg + logo
                     dbg_log('-TITLE %s'%title)
                     dbg_log('-IMG %s'%img)
                     dbg_log('-PLOT %s'%plot)
@@ -87,11 +87,11 @@ def NKN_start(url, page):
                 
     if i:
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
         item = xbmcgui.ListItem('<NEXT PAGE +10>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 10)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&url=' + urllib.quote_plus(url)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')        
  
