@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.0
+# Rev. 0.3.0
 
 
 import urllib,urllib2,re,sys
@@ -14,6 +14,8 @@ pluginhandle = int(sys.argv[1])
 
 start_pg = "http://new-kino.net/"
 page_pg = "page/"
+find_pg = "http://new-kino.net?do=search&subaction=search&story="
+search_start = "&search_start="
 
 def dbg_log(line):
     if dbg: print line
@@ -33,32 +35,43 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
         if setcookie:
+            print setcookie
             setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
             link = link + '<cookie>' + setcookie + '</cookie>'
     
     response.close()
     return link
 
-def NKN_start(url, page):
+def NKN_start(url, page, cook, rfr):
     dbg_log('-NKN_start:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
+    dbg_log('- cook:'+  cook + '\n')    
     ext_ls = [('<КАТАЛОГ>', '?mode=ctlg')]
-
+    #ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
+    #          ('<ПОИСК>', '?mode=find')]
+    if url.find(find_pg) != -1:
+        if page == '1':
+            n_url = url + search_start + page
+        else:
+            n_url = url
+    else:
+        n_url = url + page_pg + page + '/'
+        
+    dbg_log('- n_url:'+  n_url + '\n')
+    horg = get_url(n_url, cookie = cook, save_cookie = True)
+    if cook=='':
+        cook = re.search('<cookie>(.+?)</cookie>', horg).group(1)
+    i = 0
+    
     for ctTitle, ctMode  in ext_ls:
         item = xbmcgui.ListItem(ctTitle)
-        uri = sys.argv[0] + ctMode
+        uri = sys.argv[0] + ctMode + '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-        dbg_log('- uri:'+  uri + '\n')
-    
-    n_url = url + page_pg + page + '/'
-    dbg_log('- n_url:'+  n_url + '\n')
-    horg = get_url(n_url)
-    i = 0
+        dbg_log('- uri:'+  uri + '\n')    
     
     http = re.sub('<br />', '', horg)
     hrefs = re.compile('<a href="(.*?)(#|">)(.*?)</a></h4>').findall(http)
-    #print hrefs
     if len(hrefs):
         
         news_id = re.compile("news-id-[0-9]")
@@ -78,48 +91,70 @@ def NKN_start(url, page):
 
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
                     item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-                    uri = sys.argv[0] + '?mode=play' \
-                    + '&url=' + urllib.quote_plus(href)
-                    item.setProperty('IsPlayable', 'true')
-                    xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
+                    uri = sys.argv[0] + '?mode=view' \
+                    + '&url=' + urllib.quote_plus(href) + '&img=' + urllib.quote_plus(img) \
+                     + '&name=' + urllib.quote_plus(title)+ '&cook=' + urllib.quote_plus(cook)
+                    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                     dbg_log('- uri:'+  uri + '\n')
                     i = i + 1
                 
     if i:
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
         item = xbmcgui.ListItem('<NEXT PAGE +10>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&url=' + urllib.quote_plus(url)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')        
  
     xbmcplugin.endOfDirectory(pluginhandle) 
 
 
-def NKN_play(url):     
-    dbg_log('-NKN_play:'+ '\n')
+def NKN_view(url, img, name, cook, rfr):     
+    dbg_log('-NKN_view:'+ '\n')
     dbg_log('- url:'+  url + '\n')
-    
-    http = get_url(url)
+    dbg_log('- img:'+  img + '\n')
+    dbg_log('- name:'+  name + '\n')
+        
+    http = get_url(url, cookie = cook)
     news_id = re.compile("news-id-[0-9]")
     news = BeautifulSoup(http).findAll('div',{"id":news_id})
-        
+
     for sa in news:    
         #print str(sa)
         flvars = re.compile('<param name="flashvars" value="(.*?)"').findall(str(sa))
         #print urllib.unquote_plus(flvars[0])
         files = re.compile('file=(.*?)"').findall(str(sa))
-        print files
-        if len(files):
-            url = files[0]
-            dbg_log('- url:'+  url + '\n')
-            item = xbmcgui.ListItem(path = url)
-            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+        i = 1
+        for file in files:
+            if len(files) > 1:
+                title = str(i) + ' - ' + name
+            else:
+                title = name
+            i += 1
+
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            uri = sys.argv[0] + '?mode=play' \
+            + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
+            dbg_log('- uri:'+  uri + '\n')
+
+        xbmcplugin.endOfDirectory(pluginhandle)
 
 
-def NKN_ctlg(url):
+
+
+def NKN_play(url, cook, rfr):     
+    dbg_log('-NKN_play:'+ '\n')
+    dbg_log('- url:'+  url + '\n')
+    
+    item = xbmcgui.ListItem(path = url)
+    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+def NKN_ctlg(url, cook, rfr):
     dbg_log('-NKN_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
 
@@ -148,11 +183,25 @@ def NKN_ctlg(url):
     for ctLink, ctTitle  in catalog:
         item = xbmcgui.ListItem(ctTitle)
         uri = sys.argv[0] \
-        + '?url=' + urllib.quote_plus(start_pg + ctLink)
+        + '?url=' + urllib.quote_plus(start_pg + ctLink) + '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
         dbg_log('- uri:'+  uri + '\n')
         
-    xbmcplugin.endOfDirectory(pluginhandle)           
+    xbmcplugin.endOfDirectory(pluginhandle)
+
+
+def NKN_find(cook, rfr):     
+    dbg_log('-NKN_find:'+ '\n')
+    dbg_log('- cook:'+  cook + '\n')      
+    
+    kbd = xbmc.Keyboard()
+    kbd.setHeading('ПОИСК')
+    kbd.doModal()
+    if kbd.isConfirmed():
+        stxt = kbd.getText()
+        furl = find_pg + stxt
+        dbg_log('- furl:'+  furl + '\n')
+        NKN_start(furl, '1', cook, rfr)
 
 def lsChan():
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -186,6 +235,8 @@ ordr='0'
 dir='0'
 off='0'
 gnrs=''
+imag=''
+name=''
 
 try:
     mode=params['mode']
@@ -199,13 +250,31 @@ try:
     page=urllib.unquote_plus(params['page'])
     dbg_log('-PAGE:'+ page + '\n')
 except: page = '1'
+try: 
+    imag=urllib.unquote_plus(params['img'])
+    dbg_log('-IMaG:'+ imag + '\n')
+except: pass 
+try: 
+    name=urllib.unquote_plus(params['name'])
+    dbg_log('-NAME:'+ name + '\n')
+except: pass 
+try: 
+    cook=urllib.unquote_plus(params['cook'])
+    dbg_log('-COOK:'+ cook + '\n')
+except: pass
+try: 
+    rfr=urllib.unquote_plus(params['rfr'])
+    dbg_log('-RFR:'+ rfr + '\n')
+except: pass
 
 if url=='':
     url = start_pg
 
-if mode == '': NKN_start(url, page)
-elif mode == 'ctlg': NKN_ctlg(url)
-elif mode == 'play': NKN_play(url)
+if mode == '': NKN_start(url, page, cook, rfr)
+elif mode == 'ctlg': NKN_ctlg(url, cook, rfr)
+elif mode == 'view': NKN_view(url, imag, name, cook, rfr)
+elif mode == 'play': NKN_play(url, cook, rfr)
+elif mode == 'find': NKN_find(cook, rfr)
 
 
 
