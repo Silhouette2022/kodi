@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.3.0
+# Rev. 0.4.0
 
 
 import urllib,urllib2,re,sys
@@ -14,7 +14,7 @@ pluginhandle = int(sys.argv[1])
 
 start_pg = "http://new-kino.net/"
 page_pg = "page/"
-find_pg = "http://new-kino.net?do=search&subaction=search&story="
+find_pg = "http://new-kino.net/?do=search&subaction=search&story="
 search_start = "&search_start="
 
 def dbg_log(line):
@@ -35,28 +35,26 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
         if setcookie:
-            print setcookie
             setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
             link = link + '<cookie>' + setcookie + '</cookie>'
     
     response.close()
     return link
 
-def NKN_start(url, page, cook, rfr):
+def NKN_start(url, page, cook):
     dbg_log('-NKN_start:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     dbg_log('- cook:'+  cook + '\n')    
-    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg')]
-    #ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
-    #          ('<ПОИСК>', '?mode=find')]
+    #ext_ls = [('<КАТАЛОГ>', '?mode=ctlg')]
+    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
+              ('<ПОИСК>', '?mode=find')]
     if url.find(find_pg) != -1:
-        if page == '1':
-            n_url = url + search_start + page
-        else:
-            n_url = url
+        n_url = url + search_start + page
+        fnd = 1
     else:
         n_url = url + page_pg + page + '/'
+        fnd = 0
         
     dbg_log('- n_url:'+  n_url + '\n')
     horg = get_url(n_url, cookie = cook, save_cookie = True)
@@ -70,10 +68,11 @@ def NKN_start(url, page, cook, rfr):
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
         dbg_log('- uri:'+  uri + '\n')    
     
+
     http = re.sub('<br />', '', horg)
-    hrefs = re.compile('<a href="(.*?)(#|">)(.*?)</a></h4>').findall(http)
+    hrefs = re.compile('<a href="(.*?)(#|">|" >)(.*?)</a></h4>').findall(http)
+
     if len(hrefs):
-        
         news_id = re.compile("news-id-[0-9]")
         news = BeautifulSoup(http).findAll('div',{"id":news_id})
         
@@ -111,7 +110,7 @@ def NKN_start(url, page, cook, rfr):
     xbmcplugin.endOfDirectory(pluginhandle) 
 
 
-def NKN_view(url, img, name, cook, rfr):     
+def NKN_view(url, img, name, cook):     
     dbg_log('-NKN_view:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- img:'+  img + '\n')
@@ -147,14 +146,14 @@ def NKN_view(url, img, name, cook, rfr):
 
 
 
-def NKN_play(url, cook, rfr):     
+def NKN_play(url, cook):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     
     item = xbmcgui.ListItem(path = url)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
-def NKN_ctlg(url, cook, rfr):
+def NKN_ctlg(url, cook):
     dbg_log('-NKN_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
 
@@ -190,7 +189,7 @@ def NKN_ctlg(url, cook, rfr):
     xbmcplugin.endOfDirectory(pluginhandle)
 
 
-def NKN_find(cook, rfr):     
+def NKN_find(cook):     
     dbg_log('-NKN_find:'+ '\n')
     dbg_log('- cook:'+  cook + '\n')      
     
@@ -201,7 +200,7 @@ def NKN_find(cook, rfr):
         stxt = kbd.getText()
         furl = find_pg + stxt
         dbg_log('- furl:'+  furl + '\n')
-        NKN_start(furl, '1', cook, rfr)
+        NKN_start(furl, '1', cook)
 
 def lsChan():
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -228,7 +227,6 @@ params=get_params()
 
 
 cook = ''
-rfr = ''
 mode=''
 url=''
 ordr='0'
@@ -262,19 +260,15 @@ try:
     cook=urllib.unquote_plus(params['cook'])
     dbg_log('-COOK:'+ cook + '\n')
 except: pass
-try: 
-    rfr=urllib.unquote_plus(params['rfr'])
-    dbg_log('-RFR:'+ rfr + '\n')
-except: pass
 
 if url=='':
     url = start_pg
 
-if mode == '': NKN_start(url, page, cook, rfr)
-elif mode == 'ctlg': NKN_ctlg(url, cook, rfr)
-elif mode == 'view': NKN_view(url, imag, name, cook, rfr)
-elif mode == 'play': NKN_play(url, cook, rfr)
-elif mode == 'find': NKN_find(cook, rfr)
+if mode == '': NKN_start(url, page, cook)
+elif mode == 'ctlg': NKN_ctlg(url, cook)
+elif mode == 'view': NKN_view(url, imag, name, cook)
+elif mode == 'play': NKN_play(url, cook)
+elif mode == 'find': NKN_find(cook)
 
 
 
