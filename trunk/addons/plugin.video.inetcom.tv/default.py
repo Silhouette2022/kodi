@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.1
+# Rev. 0.1.4
 
 
 
@@ -17,7 +17,7 @@ INC_url = 'http://inetcom.tv'
 INC_ch = '/channel/all'
 
 
-dbg = 1
+dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
@@ -70,7 +70,7 @@ def INC_prls(url):
 def INC_play(url, name, thumbnail, plot, mycookie):
     dbg_log('-INC_play')
     response    = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)
-    lnks_ls   = re.compile("var lnks = \['(.+?)'\];").findall(response)
+    lnks_ls   = re.compile("lnks = \['(.+?)'\];").findall(response)
 
     if len(lnks_ls):
         dbg_log(lnks_ls[0])
