@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.0
+# Rev. 0.5.0
 
 
 import urllib,urllib2,re,sys
@@ -46,15 +46,12 @@ def NKN_start(url, page, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     dbg_log('- cook:'+  cook + '\n')    
-    #ext_ls = [('<КАТАЛОГ>', '?mode=ctlg')]
     ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
               ('<ПОИСК>', '?mode=find')]
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
-        fnd = 1
     else:
         n_url = url + page_pg + page + '/'
-        fnd = 0
         
     dbg_log('- n_url:'+  n_url + '\n')
     horg = get_url(n_url, cookie = cook, save_cookie = True)
@@ -188,6 +185,13 @@ def NKN_ctlg(url, cook):
         
     xbmcplugin.endOfDirectory(pluginhandle)
 
+def uni2cp(ustr):
+    raw = ''
+    uni = unicode(ustr, 'utf8')
+    uni_sz = len(uni)
+    for i in range(uni_sz):
+        raw += ('%%%02X') % ord(uni[i].encode('cp1251'))
+    return raw  
 
 def NKN_find(cook):     
     dbg_log('-NKN_find:'+ '\n')
@@ -197,7 +201,7 @@ def NKN_find(cook):
     kbd.setHeading('ПОИСК')
     kbd.doModal()
     if kbd.isConfirmed():
-        stxt = kbd.getText()
+        stxt = uni2cp(kbd.getText())
         furl = find_pg + stxt
         dbg_log('- furl:'+  furl + '\n')
         NKN_start(furl, '1', cook)
