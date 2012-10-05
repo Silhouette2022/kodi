@@ -5,6 +5,5 @@
         <setting id="usr_pwd" type="text" label="Password" option="hidden" enable="!eq(-1,)" default=""/>
         <setting id="usr_ctry" type="labelenum" label="Country TV" values="all|ru|ua|pl" default="ru"/>
         <setting id="usr_guide" type="bool" label="Enable TV Guide" default="false"/>
-        <setting id="usr_allch" type="bool" label="TV Guide as one list" default="false"/>        
     </category>
 </settings>
