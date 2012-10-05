@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.3.1
+# Rev. 0.4.0
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -27,10 +27,11 @@ usr_log = __settings__.getSetting('usr_log')
 usr_pwd = __settings__.getSetting('usr_pwd')
 usr_ctry = __settings__.getSetting('usr_ctry')
 usr_guide = __settings__.getSetting('usr_guide')
+
 if usr_guide == "true":
-  usr_allch = __settings__.getSetting('usr_allch')
-else:
-  usr_allch = "false"
+  usr_tst = __settings__.getSetting('usr_tst')
+
+usr_allch = "false"
 
 def dbg_log(line):
     if dbg: print line
@@ -196,20 +197,26 @@ def IMB_chls(url, mycookie):
         dbg_log('- channel_pg:'+  channel_pg + '\n')
     
         http = get_url(url + channel_pg, cookie = mycookie, referrer = url + index_pg)
-        chan_ls = re.compile('<tr><td align="center"><div class="channel_bg"><img class="channel_logo" onclick="javascript:RunChannel((.+?));" src="(.+?)" alt="(.+?)" title="(.+?)" /></div></td><td align="center" colspan="1"><img src="(.+?)" onclick="javascript:GetChannelGrid((.+?));" border="0" alt="(.+?)" title="(.+?)" /></td></tr>').findall(http)
-    
-        for chRun, runch2, chLogo, altTitle, chTitle, prGuide, chGrid, gdGrid2, gdAlt, gdTitle  in chan_ls:
-            #print chRun+" "+chLogo+" "+chTitle+" "+chGrid
-            item = xbmcgui.ListItem(chTitle, iconImage=chLogo, thumbnailImage=chLogo)
-            uri = sys.argv[0] + '?mode=chtz' + '&ctry=' + usr_ctry \
-            + '&chrn=' + chRun + '&chgr=' + chGrid \
-            + '&rfr=' + url + index_pg + '&chpg=' + channel_pg +  '&chlg=' + chLogo + '&cook=' + urllib.quote_plus(mycookie)
-            
-            if usr_allch == "false":
-                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-                dbg_log('- uri:'+  uri + '\n')
-            else:
-                IMB_chtz(start_pg, chRun, chLogo, chGrid, mycookie, url + index_pg, channel_pg)
+        rnew_ls = re.compile('window.location\s=\s"http://www.imb-plus.tv/user/renew.php"').findall(http)
+        if len(rnew_ls) and usr_tst != "true":
+            item = xbmcgui.ListItem("Renew Membership")
+            xbmcplugin.addDirectoryItem(pluginhandle, "", item, False)  
+            dbg_log('- renew\n')
+        else:      
+            chan_ls = re.compile('<tr><td align="center"><div class="channel_bg"><img class="channel_logo" onclick="javascript:RunChannel((.+?));" src="(.+?)" alt="(.+?)" title="(.+?)" /></div></td><td align="center" colspan="1"><img src="(.+?)" onclick="javascript:GetChannelGrid((.+?));" border="0" alt="(.+?)" title="(.+?)" /></td></tr>').findall(http)
+        
+            for chRun, runch2, chLogo, altTitle, chTitle, prGuide, chGrid, gdGrid2, gdAlt, gdTitle  in chan_ls:
+                #print chRun+" "+chLogo+" "+chTitle+" "+chGrid
+                item = xbmcgui.ListItem(chTitle, iconImage=chLogo, thumbnailImage=chLogo)
+                uri = sys.argv[0] + '?mode=chtz' + '&ctry=' + usr_ctry \
+                + '&chrn=' + chRun + '&chgr=' + chGrid \
+                + '&rfr=' + url + index_pg + '&chpg=' + channel_pg +  '&chlg=' + chLogo + '&cook=' + urllib.quote_plus(mycookie)
+                
+                if usr_allch == "false":
+                    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+                    dbg_log('- uri:'+  uri + '\n')
+                else:
+                    IMB_chtz(start_pg, chRun, chLogo, chGrid, mycookie, url + index_pg, channel_pg)
                 
     xbmcplugin.endOfDirectory(pluginhandle) 
     
