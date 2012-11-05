@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.0
+# Rev. 0.4.1
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -252,7 +252,7 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
     for tz_nm, tz_val, tz_sel, tz_dcr  in tz_ls:
         tzvl = int(tz_val)
         if tzvl:  
-            if usr_ctry == "ru": tzvl += 3
+            if usr_ctry == "ru": tzvl += 4
             elif usr_ctry == "ua": tzvl += 2
             elif usr_ctry == "pl": tzvl += 1
         tz_val = str(tzvl)
