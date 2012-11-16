@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.kinochi.org" name="[COLOR FFFD0100]KINOCHI.ORG[/COLOR]" version="0.1.0" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>KINOCHI.ORG - Проект бесплатного онлайн видео</summary>
+    <description>КИНОЧИ - сайт, позволяющий в реальном времени просмотривать качественный видеоконтент пользуясь удобным функционалом и навигацией, настраивать обновления ваших любимых жанров и сериалов используя систему профилей</description>
+    <platform>all</platform>
+  </extension>
+</addon>
