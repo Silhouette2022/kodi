@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.1.0
-
-
+# Rev. 0.2.0
 
 import urllib,urllib2,re,sys,os,time
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -27,6 +25,9 @@ HASH_view = 'act=get&hash[]=view&hash[]='
 
 ACT_glnk = 'act=getlink&f='
 HASH_flv = '&hash[]=view&hash[]='
+
+HASH_find = '&hash[]=7fffff&hash[]='
+#act=get&page=0&hash%[]=filmoteka&hash[]=7fffff&hash[]=recall
 
 dbg = 0
 def dbg_log(line):
@@ -59,15 +60,29 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     return link
 
 
-def KNO_start(page, cook):
+def KNO_start(page, sfind, cook):
     
     dbg_log('-KNO_start')
 
-    if page == None:
-        page = '0'
+    if page == '0':
         http = get_url(KNO_url)
         
-    hpost = ACT_get + page + HASH_fmtk
+    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
+              ('<ПОИСК>', '?mode=find')]
+   
+    if page == "0" and sfind == "":
+        for ctTitle, ctMode  in ext_ls:
+            item = xbmcgui.ListItem(ctTitle)
+            uri = sys.argv[0] + ctMode + '&cook=' + urllib.quote_plus(cook)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            dbg_log('- uri:'+  uri + '\n')
+        
+        
+    if sfind == "":
+        hpost = ACT_get + page + HASH_fmtk
+    else:
+        hpost = ACT_get + page + HASH_fmtk + HASH_find + sfind
+    dbg_log('- hpost:'+  hpost + '\n')
     http = get_url(KNO_url + KNO_fmtk, data = hpost, referrer = KNO_url)
 
     jdata = json.loads(http)
@@ -105,11 +120,11 @@ def KNO_start(page, cook):
                   
     if i:
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1)# + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&sfind=' + urllib.quote_plus(sfind) #+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
         item = xbmcgui.ListItem('<NEXT PAGE +10>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 10)# + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&sfind=' + urllib.quote_plus(sfind) #+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')  
 
@@ -122,6 +137,7 @@ def KNO_list(id, cook):
     dbg_log('-KNO_list')
     
     hpost = HASH_view + id
+    dbg_log('- hpost:'+  hpost + '\n')
     http = get_url(KNO_url + KNO_view, data = hpost, referrer = KNO_url)
     #print http
     jd = json.loads(http)
@@ -161,15 +177,19 @@ def KNO_list(id, cook):
         
 
     xbmcplugin.endOfDirectory(pluginhandle)
-    
-    
-#    response = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)
-#    lnks_ls = re.compile("lnks = \['(.+?)'\];").findall(response)
 
-#    if len(lnks_ls):
-#        dbg_log(lnks_ls[0])
-#        item = xbmcgui.ListItem(path =  lnks_ls[0])
-#        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+def KNO_find(page, cook):     
+    dbg_log('-KNO_find:'+ '\n')
+    dbg_log('- page:'+  page + '\n')      
+    
+    kbd = xbmc.Keyboard()
+    kbd.setHeading('ПОИСК')
+    kbd.doModal()
+    if kbd.isConfirmed():
+        stxt = kbd.getText()
+        dbg_log('- stxt:'+  stxt + '\n')
+        KNO_start('0', stxt, cook)
 
 
 def KNO_play(id, fid):
@@ -207,11 +227,12 @@ def get_params():
 
 params=get_params()
 url=None
-page=None
+page='0'
 id=''
 fid=''
 name=''
 cook=''
+sfind=''
 mode=None
 
 dbg_log('OPEN:')
@@ -244,10 +265,15 @@ try:
     name=urllib.unquote_plus(params['name'])
     dbg_log('-NAME:'+ name + '\n')
 except: pass
+try:
+    sfind=urllib.unquote_plus(params['sfind'])
+    dbg_log('-SFIND:'+ sfind + '\n')
+except: pass
 
 if mode == 'play': KNO_play(id, fid)
 if mode == 'list': KNO_list(id, cook)
-elif mode == None: KNO_start(page, cook)
+if mode == 'find': KNO_find(page, cook)
+elif mode == None: KNO_start(page, sfind, cook)
 
 dbg_log('CLOSE:')
 
