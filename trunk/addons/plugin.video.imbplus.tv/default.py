@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.1
+# Rev. 0.5.0
 
 
 import urllib,urllib2,re,sys,os,time,random
 import xbmcplugin,xbmcgui,xbmcaddon
+import json
 
 dbg = 0
 dbg_gd = 0
@@ -32,6 +33,7 @@ if usr_guide == "true":
   usr_tst = __settings__.getSetting('usr_tst')
 
 usr_allch = "false"
+usr_guide = "false"
 
 def dbg_log(line):
     if dbg: print line
@@ -77,6 +79,7 @@ def get_events(url, events, chGr):
     
 
     htpg = get_url(url + guige_pg + chGr)
+    print htpg
     oneline = re.sub('\n', '', htpg)
     htpg = re.sub('<tr class="day">', '<class/><tr class="day">', oneline)
     oneline = re.sub('</table>', '<class/></table>', htpg)
@@ -95,8 +98,9 @@ def get_events(url, events, chGr):
         for evt, evm in ev_ls:
             evtn = time.mktime(time.strptime(ed_ls[2] + '-' + months[ed_ls[1]]+ '-' + ed_ls[0] + ' '+ evt, "%Y-%m-%d %H:%M"))
             if i: 
-                dbg_log(evtn)
-                dbg_log(time.localtime(evtn))
+                if dbg_gd: 
+                    dbg_log(evtn)
+                    dbg_log(time.localtime(evtn))
 
             if i and events[-1][0][0] > evtn:
                 oldyd = time.localtime(events[-1][0][0]).tm_yday
@@ -104,7 +108,7 @@ def get_events(url, events, chGr):
                 if oldyd != newyd or corr == 0:
                     evtn += 24 * 3600
                     corr = 1
-                    dbg_log(time.localtime(evtn))
+                    if dbg_gd: dbg_log(time.localtime(evtn))
                 else: corr = 0
             else: corr = 0
 
@@ -116,7 +120,7 @@ def get_events(url, events, chGr):
 
 def get_evline(events, tm):
     prtm = events[0][0][0]
-    dbg_log('tm-%s'%tm)
+    if dbg_gd: dbg_log('tm-%s'%tm)
     for i in range(1,len(events)):
         if tm >= prtm and tm < events[i][0][0]:
             line = '%s-%s %s'%(time.strftime("%H:%M", time.localtime(prtm)),\
@@ -198,14 +202,15 @@ def IMB_chls(url, mycookie):
     
         http = get_url(url + channel_pg, cookie = mycookie, referrer = url + index_pg)
         rnew_ls = re.compile('window.location\s=\s"http://www.imb-plus.tv/user/renew.php"').findall(http)
+
         if len(rnew_ls) and usr_tst != "true":
             item = xbmcgui.ListItem("Renew Membership")
             xbmcplugin.addDirectoryItem(pluginhandle, "", item, False)  
             dbg_log('- renew\n')
-        else:      
-            chan_ls = re.compile('<tr><td align="center"><div class="channel_bg"><img class="channel_logo" onclick="javascript:RunChannel((.+?));" src="(.+?)" alt="(.+?)" title="(.+?)" /></div></td><td align="center" colspan="1"><img src="(.+?)" onclick="javascript:GetChannelGrid((.+?));" border="0" alt="(.+?)" title="(.+?)" /></td></tr>').findall(http)
-        
-            for chRun, runch2, chLogo, altTitle, chTitle, prGuide, chGrid, gdGrid2, gdAlt, gdTitle  in chan_ls:
+        else:
+            chan_ls = re.compile('<tr><td align="center"><div class="channel_bg"><img class="channel_logo" onclick="javascript:RunChannel((.+?));" src="(.+?)" title="(.+?)"/></div></td><td align="center" colspan="1"><img src="(.+?)" onclick="javascript:GetChannelGrid((.+?));" border="0" title="(.+?)" /></td></tr>').findall(http)
+
+            for chRun, runch2, chLogo, chTitle, prGuide, chGrid, gdGrid2, gdTitle  in chan_ls:
                 #print chRun+" "+chLogo+" "+chTitle+" "+chGrid
                 item = xbmcgui.ListItem(chTitle, iconImage=chLogo, thumbnailImage=chLogo)
                 uri = sys.argv[0] + '?mode=chtz' + '&ctry=' + usr_ctry \
@@ -245,20 +250,22 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
           httm = get_url(time_pg + tm_ref[usr_ctry])
           tml_ls = re.compile('<th class=w5>Current Time</th><td><strong id=ct  class=big>(.*?)</strong>').findall(httm)
           if len(tml_ls):
-              dbg_log(tml_ls[0]) #Monday, March 12, 2012 at 7:20:27 AM
+              if dbg_gd: dbg_log(tml_ls[0]) #Monday, March 12, 2012 at 7:20:27 AM
               tml = time.mktime(time.strptime(tml_ls[0],"%A, %B %d, %Y at %I:%M:%S %p"))
             
     tz_ls = re.compile("<option name='time_zone' class='box' id=\"(.+?)\" value=\"(.+?)\" (.+?)>(.+?)</option>").findall(http)
+    i = 0
     for tz_nm, tz_val, tz_sel, tz_dcr  in tz_ls:
         tzvl = int(tz_val)
-        if tzvl:  
-            if usr_ctry == "ru": tzvl += 4
-            elif usr_ctry == "ua": tzvl += 2
-            elif usr_ctry == "pl": tzvl += 1
+        if tzvl:
+            tzvl = i + 4
+#            if usr_ctry == "ru": tzvl = i + 4
+#            elif usr_ctry == "ua": tzvl += 4
+#            elif usr_ctry == "pl": tzvl += 4
         tz_val = str(tzvl)
 
         if tml:
-            evline = get_evline(events, tml - int(tz_val) * 3600)
+            evline = get_evline(events, tml - (int(tz_val) - 4) * 3600 )
         else:
             evline = None 
         
@@ -280,6 +287,7 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
         #item.setProperty('fanart_image',thumbnail)
         xbmcplugin.addDirectoryItem(pluginhandle,uri,item)
         dbg_log('- uri:'+  uri + '\n')
+        i += 1
 
     if mode == 'chtz':
         xbmcplugin.endOfDirectory(pluginhandle)
@@ -287,26 +295,14 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
 
 def IMB_chpl(url, chrn, chlg, cook, rfr, tzvl, uid):     
     dbg_log('-IMB_chpl:'+ '\n')
-    
-    vlc_url = url + vlc_pg + 'chid=' + chrn + '&tz=' + tzvl \
-                 + '&uid=' + uid + '&d=' + str(random.random())
-    #print "VLC_URL=",vlc_url
+    vlc_url = url + 'lib/ajax/aux_act_json.php?' + 'order=' + uid + '&ch=' + chrn + '&tz=' + tzvl + '&ts=0' + '&t=' + str(random.random())
     vlc = get_url(vlc_url, cookie = cook, referrer = rfr)
-
-    tv_link = re.search('var tv_link = "(.+?)";', vlc).group(1)
-        
-    key_url = url + key_pg + 'order=' + uid + '&t=' + str(random.random()) \
-                 + '&ch=' + chrn
-    dbg_log('- key_url:'+  key_url + '\n')
-    key = get_url(key_url, cookie = cook, referrer = vlc_url)
-    dbg_log('- key:'+  key + '\n')
-        
-    link = tv_link + '/' + key
-    dbg_log('- link:'+  link + '\n')
-    
-    item = xbmcgui.ListItem(path = link)
+    dbg_log(vlc)
+    jdf = json.loads(vlc)
+    vlink = jdf['url']
+    dbg_log(vlink)
+    item = xbmcgui.ListItem(path =  vlink)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-          
 
 def get_params():
     param=[]
