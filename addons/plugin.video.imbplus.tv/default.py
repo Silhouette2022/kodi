@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.5.0
+# Rev. 0.5.1
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -33,7 +33,6 @@ if usr_guide == "true":
   usr_tst = __settings__.getSetting('usr_tst')
 
 usr_allch = "false"
-usr_guide = "false"
 
 def dbg_log(line):
     if dbg: print line
@@ -258,14 +257,18 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
     for tz_nm, tz_val, tz_sel, tz_dcr  in tz_ls:
         tzvl = int(tz_val)
         if tzvl:
+            if usr_ctry == "ru": tzgd = tzvl + 4
+            elif usr_ctry == "ua": tzgd = tzvl + 2
+            elif usr_ctry == "pl": tzgd = tzvl + 1
+            
             tzvl = i + 4
-#            if usr_ctry == "ru": tzvl = i + 4
-#            elif usr_ctry == "ua": tzvl += 4
-#            elif usr_ctry == "pl": tzvl += 4
+        else:
+            tzgd = 0
+
         tz_val = str(tzvl)
 
         if tml:
-            evline = get_evline(events, tml - (int(tz_val) - 4) * 3600 )
+            evline = get_evline(events, tml - (tzgd) * 3600 )
         else:
             evline = None 
         
