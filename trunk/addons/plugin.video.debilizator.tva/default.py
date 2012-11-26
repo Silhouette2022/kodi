@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-# Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.4.3
+# Writer (c) 2012, Silhouette, E-mail: 
+# Rev. 0.5.0
 
 
 
@@ -167,20 +167,7 @@ def DTV_play(url, name, thumbnail, plot):
           rtmp_streamer = streamer_ls[0]
           rtmp_file = file_ls[0]
           SWFObject = DTV_url + player_ls[0] 
-
-          #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
-          #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
-          #    flashparams = flashvars.split('&')
-          #    param = {}
-          #    for i in range(len(flashparams)):
-          #        splitparams = {}
-          #        splitparams = flashparams[i].split('=')
-          #        if (len(splitparams)) == 2:
-          #            param[splitparams[0]] = splitparams[1]
-          #    rtmp_file     = param['file']
-          #    rtmp_streamer = param['streamer']
-          #    rtmp_streamer = rtmp_streamer.replace('/load','/tv')
-      
+     
           furl  = ''
           furl += '%s/%s'%(rtmp_streamer,rtmp_file)
           furl += ' swfUrl=%s'%SWFObject
@@ -232,7 +219,7 @@ def DTV_archs(url, thumbnail):
             item.setProperty('IsPlayable', 'true')
             #item.setProperty('fanart_image',thumbnail)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
-            #LF.write('uri:' + uri + '\n')  
+            dbg_log('uri:' + uri + '\n')  
 
 
     xbmcplugin.endOfDirectory(pluginhandle)    
@@ -252,17 +239,12 @@ def DTV_plarch(url, name, thumbnail, plot):
                 
         if(new_srv != ""):
             dbg_log('-NEW_SRV:'+ new_srv + '\n')
-            #response = getURL(DTV_url + 'select_server.cgi?' + new_srv)
             response = getURL(url, cookie=new_srv)
     
     player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
     file_ls   = re.compile("\'playlistfile\': \'(.*?)\'").findall(response)
-    
+    print file_ls
     if (len(player_ls) & len(file_ls)):
-        #    SWFObject   = DTV_url + re.compile('new SWFObject\(\'(.*?)\'').findall(response)[0]
-        #    dbg_log('=SWFObject='+SWFObject)
-        #    flashvars   = re.compile('so.addParam\(\'flashvars\',\'(.*?)\'\);').findall(response)[0] + '&'
-        #    dbg_log('=flashvars='+flashvars)
 
         SWFObject = DTV_url + player_ls[0]  
         flashparams = re.sub( '\?', '\&', urllib.unquote_plus(file_ls[0])).split('&')
@@ -287,14 +269,14 @@ def DTV_plarch(url, name, thumbnail, plot):
         sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
         sPlayer     = xbmc.Player()
         sPlayList.clear()
-
+        #http://37.221.160.211:8080/archive/a2.stream.rec/1353808800.mp4?start=0
         for hdelta in range(6):
-            furl  = 'rtmp://' + rtmp_str + '/archive/mp4:/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
-            furl += ' swfUrl=' + SWFObject
-            furl += ' pageUrl=' + url
-            furl += ' tcUrl=rtmp://' + rtmp_str + '/archive'
+            furl  = 'http://' + rtmp_str + ':8080/archive/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
+#            furl += ' swfUrl=' + SWFObject
+#            furl += ' pageUrl=' + url
+#            furl += ' tcUrl=rtmp://' + rtmp_str + ':8080/archive'
             if stime != '' and hdelta == 0 :
-                furl += ' start=' + stime
+                furl += '?start=' + stime
 
             item = xbmcgui.ListItem(path = furl)
             sPlayList.add(furl, item, hdelta)
@@ -303,13 +285,6 @@ def DTV_plarch(url, name, thumbnail, plot):
 
         xbmcplugin.setResolvedUrl(pluginhandle, True, item0) 
 
-    
-
-    #item = xbmcgui.ListItem(path = furl)
-    #xbmcplugin.setResolvedUrl(pluginhandle, True, item)     
-    
-      
-    
     sPlayer.play(sPlayList)
 
 def get_params():
