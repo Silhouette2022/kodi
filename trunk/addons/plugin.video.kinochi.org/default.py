@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.0
+# Rev. 0.3.0
 
 import urllib,urllib2,re,sys,os,time
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -12,22 +12,29 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.inetcom.tv')
 #fanart    = xbmc.translatePath( __addon__.getAddonInfo('path') + 'fanart.jpg')
 #xbmcplugin.setPluginFanart(pluginhandle, fanart)
 
-KNO_url = 'http://kinochi.org/'
+KNO_url = 'http://kinochi.org'
 KNO_fmtk = '/modules/filmoteka/'
 KNO_pic1 = '/data/pic/id'
 KNO_pic2 = '/t.jpg'
 KNO_view = '/modules/view/'
 
-ACT_get = 'act=get&page='
-HASH_fmtk = '&hash[]=filmoteka'
+AFID = '&f='
+APAGE = '&page='
+FIND_all = '7fffff'
 
-HASH_view = 'act=get&hash[]=view&hash[]='
+ACT = 'act='
+ACT_get = ACT + 'get'
+ACT_lnk = ACT + 'getlink'
 
-ACT_glnk = 'act=getlink&f='
-HASH_flv = '&hash[]=view&hash[]='
+AHASH = '&hash[]='
+HASH_fmtk = AHASH + 'filmoteka'
+HASH_view = AHASH + 'view'
+HASH_flv = HASH_view + AHASH
+HASH_find = AHASH + FIND_all + AHASH
 
-HASH_find = '&hash[]=7fffff&hash[]='
-#act=get&page=0&hash%[]=filmoteka&hash[]=7fffff&hash[]=recall
+AGETPAGE = ACT_get + APAGE
+AGETLINK = ACT_lnk + AFID
+AGETVIEW = ACT_get + HASH_view + AHASH
 
 dbg = 0
 def dbg_log(line):
@@ -59,29 +66,44 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     response.close()
     return link
 
+def addVLDItem(title, uri, folder = True, icon = None, thumbn = None, info = None):
+    dbg_log('-addVLDItem')
+    dbg_log('- title:'+  title + '\n')
+    dbg_log('- uri:'+  uri + '\n')
+    dbg_log('- folder:'+  str(folder) + '\n')
+    dbg_log('- icon:'+  str(icon) + '\n')
+    dbg_log('- thumbn:'+  str(thumbn) + '\n')
+    dbg_log('- info:'+  str(info) + '\n')
+    
+    item = xbmcgui.ListItem(title, iconImage=icon, thumbnailImage=thumbn)
+    item.setInfo( type='video', infoLabels={'title': title, 'plot': info})
+    if folder == False:
+        item.setProperty('IsPlayable', 'true')
+    xbmcplugin.addDirectoryItem(pluginhandle, uri, item, folder)
 
-def KNO_start(page, sfind, cook):
+
+def KNO_start(page, sfind, fval, cook):
     
     dbg_log('-KNO_start')
 
     if page == '0':
         http = get_url(KNO_url)
         
-    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
+    ext_ls = [('<ФИЛЬТР>', '?mode=filt'),
               ('<ПОИСК>', '?mode=find')]
    
-    if page == "0" and sfind == "":
-        for ctTitle, ctMode  in ext_ls:
-            item = xbmcgui.ListItem(ctTitle)
-            uri = sys.argv[0] + ctMode + '&cook=' + urllib.quote_plus(cook)
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-            dbg_log('- uri:'+  uri + '\n')
+#    if page == "0" and sfind == "":
+    for ctTitle, ctMode  in ext_ls:
+        item = xbmcgui.ListItem(ctTitle)
+        uri = sys.argv[0] + ctMode + '&fval=' + urllib.quote_plus(fval) + '&cook=' + urllib.quote_plus(cook)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+        dbg_log('- uri:'+  uri + '\n')
         
         
     if sfind == "":
-        hpost = ACT_get + page + HASH_fmtk
+        hpost = AGETPAGE + page + HASH_fmtk + AHASH + fval
     else:
-        hpost = ACT_get + page + HASH_fmtk + HASH_find + sfind
+        hpost = AGETPAGE + page + HASH_fmtk + AHASH + fval + AHASH + sfind
     dbg_log('- hpost:'+  hpost + '\n')
     http = get_url(KNO_url + KNO_fmtk, data = hpost, referrer = KNO_url)
 
@@ -106,9 +128,9 @@ def KNO_start(page, sfind, cook):
                   
                   
                   dbg_log(id)
-                  dbg_log(name.encode('utf8'))
-                  dbg_log(info.encode('utf8'))
-                  dbg_log(logo)
+                  #dbg_log(name.encode('utf8'))
+                  #dbg_log(info.encode('utf8'))
+                  #dbg_log(logo)
                   
                   item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
                   item.setInfo( type='video', infoLabels={'title': name, 'plot': info})
@@ -120,11 +142,11 @@ def KNO_start(page, sfind, cook):
                   
     if i:
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&sfind=' + urllib.quote_plus(sfind) #+ '&cook=' + urllib.quote_plus(cook)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&sfind=' + urllib.quote_plus(sfind) + '&fval=' + urllib.quote_plus(fval)#+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
         item = xbmcgui.ListItem('<NEXT PAGE +10>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&sfind=' + urllib.quote_plus(sfind) #+ '&cook=' + urllib.quote_plus(cook)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 10) + '&sfind=' + urllib.quote_plus(sfind) + '&fval=' + urllib.quote_plus(fval) #+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')  
 
@@ -136,7 +158,7 @@ def KNO_start(page, sfind, cook):
 def KNO_list(id, cook):
     dbg_log('-KNO_list')
     
-    hpost = HASH_view + id
+    hpost = AGETVIEW + id
     dbg_log('- hpost:'+  hpost + '\n')
     http = get_url(KNO_url + KNO_view, data = hpost, referrer = KNO_url)
     #print http
@@ -179,7 +201,7 @@ def KNO_list(id, cook):
     xbmcplugin.endOfDirectory(pluginhandle)
 
 
-def KNO_find(page, cook):     
+def KNO_find(page, fval, cook):     
     dbg_log('-KNO_find:'+ '\n')
     dbg_log('- page:'+  page + '\n')      
     
@@ -189,13 +211,68 @@ def KNO_find(page, cook):
     if kbd.isConfirmed():
         stxt = kbd.getText()
         dbg_log('- stxt:'+  stxt + '\n')
-        KNO_start('0', stxt, cook)
+        KNO_start('0', stxt, fval, cook)
 
+def KNO_filt(fval):
+    dbg_log('-KNO_filt:'+ '\n')
+    dbg_log('- filt:'+ fval + '\n') 
+    
+    genre_ls = [('КОМЕДИЯ', 2097152),
+                ('ПРИКЛЮЧЕНИЯ', 1048576),
+                ('ФАНТАСТИКА', 524288),
+                ('ИСТОРИЯ', 262144),
+                ('БОЕВИК', 131072),
+                ('ДЕТЕКТИВ', 65536),
+                ('УЖАСЫ', 32768),
+                ('ДРАМА', 16384),
+                ('ТРИЛЛЕР', 8192),
+                ('НАШЕ КИНО', 4096),
+                ('МУЛЬТФИЛЬМ', 2048),
+                ('СПОРТ', 1024),
+                ('ДОКУМЕНТАЛЬНОЕ', 512),
+                ('КРИМИНАЛ', 256),
+                ('ФЕНТЕЗИ', 128),
+                ('ВЕСТЕРН', 64)]
+                
+    film_ls = [('ФИЛЬМ', 16),
+                ('СЕРИАЛ', 32)]
+#                ('CamRip', 8),
+#                ('TeleSync', 4),
+#                ('DVD Screener', 2),
+#                ('DVD Rip', 1)]
+                
+#    for fTitle, eVal  in genre_ls:
+#        if int(fval,16) & eVal:
+#            entry = "[COLOR FF00FF00]" + fTitle + "[/COLOR]"
+#            nval = hex(int(fval,16) ^ eVal)
+#        else:
+#            entry = "[COLOR FFFF0000]" + fTitle + "[/COLOR]"
+#            nval = hex(int(fval,16) | eVal)
+
+    if fval == FIND_all:
+        list_ls = film_ls
+    else:
+        list_ls = genre_ls
+
+    for fTitle, eVal  in list_ls:
+        if fval == FIND_all:
+            nval = hex(int(fval,16) ^ eVal) 
+        else:
+            nval = hex((int(fval,16) & int('3f',16)) | eVal | 4194304)
+
+        entry = fTitle
+        item = xbmcgui.ListItem(entry)
+        uri = sys.argv[0] + '?fval=' + urllib.quote_plus(nval)
+            
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+        dbg_log('- uri:'+  uri + '\n')
+    
+    xbmcplugin.endOfDirectory(pluginhandle)
 
 def KNO_play(id, fid):
     dbg_log('-KNO_play')
 
-    hpost = ACT_glnk + fid + HASH_flv + id
+    hpost = AGETLINK + fid + HASH_flv + id
     dbg_log(hpost)
     http = get_url(KNO_url + KNO_view, data = hpost, referrer = KNO_url)
     jdf = json.loads(http)
@@ -204,8 +281,6 @@ def KNO_play(id, fid):
     dbg_log(vlink)
     item = xbmcgui.ListItem(path =  vlink)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-        
-        
 
    
 def get_params():
@@ -233,6 +308,7 @@ fid=''
 name=''
 cook=''
 sfind=''
+fval=FIND_all
 mode=None
 
 dbg_log('OPEN:')
@@ -269,11 +345,16 @@ try:
     sfind=urllib.unquote_plus(params['sfind'])
     dbg_log('-SFIND:'+ sfind + '\n')
 except: pass
+try:
+    fval=urllib.unquote_plus(params['fval'])
+    dbg_log('-FVAL:'+ fval + '\n')
+except: pass
 
-if mode == 'play': KNO_play(id, fid)
-if mode == 'list': KNO_list(id, cook)
-if mode == 'find': KNO_find(page, cook)
-elif mode == None: KNO_start(page, sfind, cook)
+if mode == None: KNO_start(page, sfind, fval, cook)
+elif mode == 'play': KNO_play(id, fid)
+elif mode == 'list': KNO_list(id, cook)
+elif mode == 'find': KNO_find(page, fval, cook)
+elif mode == 'filt': KNO_filt(fval)
 
 dbg_log('CLOSE:')
 
