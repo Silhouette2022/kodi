@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-# Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.2.1
+# Writer (c) 2012, Silhouette, E-mail: 
+# Rev. 0.2.3
 
 
 
