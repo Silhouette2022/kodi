@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Writer (c) 2012, Silhouette, E-mail: otaranda@hotmail.com
-# Rev. 0.5.0
+# Writer (c) 2012, Silhouette, E-mail: 
+# Rev. 0.5.1
 
 
 import urllib,urllib2,re,sys
