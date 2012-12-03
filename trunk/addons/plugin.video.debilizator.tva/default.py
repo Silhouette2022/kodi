@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-# Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.5.0
+# Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
+# Rev. 0.5.1
 
 
 
@@ -145,7 +145,7 @@ def DTV_play(url, name, thumbnail, plot):
     oneline = re.sub( '[\n\r\t]', ' ', response)
     server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
     if(len(server_ls)):
-        min = 100
+        min = 999
         new_srv = ""
         for ssHref, ssCrap, ssVal in server_ls:
             if(int(ssVal) < min):
@@ -230,7 +230,7 @@ def DTV_plarch(url, name, thumbnail, plot):
     oneline = re.sub( '[\n\r\t]', ' ', response)
     server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
     if(len(server_ls)):
-        min = 100
+        min = 999
         new_srv = ""
         for ssHref, ssCrap, ssVal in server_ls:
             if(int(ssVal) < min):
@@ -261,11 +261,13 @@ def DTV_plarch(url, name, thumbnail, plot):
             
         itime = int(rtmp_time)
         rtime = (itime/3600)* 3600 
+        dbg_log('itime=' + str(itime))
+        dbg_log('rtime=' + str(rtime))
         if itime != rtime:
-            stime = str((itime - rtime) * 1000)
+            stime = str(itime - rtime)
         else:
             stime = ''
-        
+        dbg_log('stime=' + str(stime))
         sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
         sPlayer     = xbmc.Player()
         sPlayList.clear()
