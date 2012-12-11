@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.5.1
+# Rev. 0.5.2
 
 
 
@@ -28,9 +28,9 @@ def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
     if data: 
-        response = urllib2.urlopen(req, data)
+        response = urllib2.urlopen(req, data,timeout=30)
     else:
-        response = urllib2.urlopen(req)
+        response = urllib2.urlopen(req,timeout=30)
     link=response.read()
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
