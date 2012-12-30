@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.2.3
+# Rev. 0.3.0
 
 
 
@@ -21,6 +21,55 @@ KTV_time = 'http://kaban.tv/current-time'
 dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
+  
+def Decode(param):
+        hash1 = ("3", "U", "I", "a", "V", "x", "s", "8", "z", "2", "7", "W", "w", "G", "B", "X", "b", "9", "4", "R", "k", "J", "e", "5", "g", "=")
+        hash2 = ("Q", "H", "o", "1", "0", "T", "d", "n", "v", "i", "l", "Z", "Y", "f", "p", "M", "y", "N", "6", "D", "t", "L", "m", "c", "u", "j")
+
+
+        try:
+            #-- define variables
+            loc_3 = [0,0,0,0]
+            loc_4 = [0,0,0]
+            loc_2 = ''
+
+            #-- define hash parameters for decoding
+            dec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+
+            #-- decode
+            for i in range(0, len(hash1)):
+                re1 = hash1[i]
+                re2 = hash2[i]
+
+                param = param.replace(re1, '___')
+                param = param.replace(re2, re1)
+                param = param.replace('___', re2)
+
+            i = 0
+            while i < len(param):
+                j = 0
+                while j < 4 and i+j < len(param):
+                    loc_3[j] = dec.find(param[i+j])
+                    j = j + 1
+
+                loc_4[0] = (loc_3[0] << 2) + ((loc_3[1] & 48) >> 4);
+                loc_4[1] = ((loc_3[1] & 15) << 4) + ((loc_3[2] & 60) >> 2);
+                loc_4[2] = ((loc_3[2] & 3) << 6) + loc_3[3];
+
+                j = 0
+                while j < 3:
+                    if loc_3[j + 1] == 64:
+                        break
+
+                    loc_2 += unichr(loc_4[j])
+
+                    j = j + 1
+
+                i = i + 4;
+        except:
+            loc_2 = ''
+
+        return loc_2
 
 def getURL(url):
     req = urllib2.Request(url)
@@ -165,31 +214,39 @@ def KTV_guide(furl, thumbnail):
         i = 0
         if len(gd_ls):
             for href,descr in gd_ls:
+                print href
                 name=tm_ls[i] + '-' + re.sub('\&#034;' ,'\"', descr.strip())
                 dbg_log(name)
                 item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
                 uri = sys.argv[0] + '?mode=PLAR'
-                uri += '&url='+urllib.quote_plus(furl + '/' + re.sub(':', '~', tm_ls[i]))
+#                uri += '&url='+urllib.quote_plus(furl + '/' + re.sub(':', '~', tm_ls[i]))
+                uri += '&url='+urllib.quote_plus(furl + '/' + href)
                 item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
                 item.setProperty('IsPlayable', 'true')
                 xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+                dbg_log(uri)
                 i += 1
 
     xbmcplugin.endOfDirectory(pluginhandle)    
     
 def KTV_plarch(url, name, thumbnail, plot):
-    
-    furl = re.sub('-', '/', url)
-    furl = re.sub('~', '-', furl)
 
-    furl  = re.sub(KTV_url + KTV_arch, 'http://213.186.127.242', furl)
-    furl += '.flv'
-    xbmc.output('furl = %s'%furl)
-    item = xbmcgui.ListItem(path = furl)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    http = getURL(url)
+    oneline = re.sub('[\r\n]', '', http)
+
+    #"file":"1UDV5RIzJvoTXb6TORwgXxoQJ=oVX2NeOZwb9=07WSa=WR7tJx3QOx3kOREv9Sat9eLewiFtXZ0tOfoz5f0bse7BJZkhyeFdJvoYXxozXxozXx3zXRAkXRHgWeTi"
+    fl_ls = re.compile('"file":"(.+?)"').findall(oneline)
+    #print fl_ls
+    #print Decode(fl_ls[0]).encode('utf8')
     
-    #213.186.127.242/karusel/2012/05/21/00-00.flv
-    #http://www.kaban.tv/archive/pervii-kanal/2012-05-21/414051
+    if len(fl_ls):
+        furl = Decode(fl_ls[0])
+        xbmc.log('furl = %s'%furl)
+        item = xbmcgui.ListItem(path = furl)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    
+
+
 
     
 def get_params():
