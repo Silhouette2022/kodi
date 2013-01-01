@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
 
@@ -178,11 +178,12 @@ def KTV_dates(furl, thumbnail):
     http = getURL(KTV_url + KTV_arch + url)
     oneline = re.sub('[\r\n]', '', http)
     dt_ls = re.compile('<a href="' + KTV_arch + url + '/([A-Za-z0-9/_-]+?)"> +?<span>').findall(oneline)
-
+    print dt_ls
     if len(dt_ls):
         http = getURL(KTV_time)
         cdate = re.compile('"date":"(.+?)"').findall(http)[0]
-        for i in range(len(dt_ls) - 1, 0, -1):
+        for i in range(len(dt_ls) - 1, -1, -1):
+            print i
             descr = dt_ls[i]
             dbg_log(descr)
             if descr <= cdate:
@@ -191,7 +192,12 @@ def KTV_dates(furl, thumbnail):
                 uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl + '/' + descr)
                 uri += '&thumbnail='+urllib.quote_plus(thumbnail)
                 xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-
+#        if dt_ls[0] == cdate:
+#            item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
+#            uri = sys.argv[0] + '?mode=GDLS'
+#            uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl + '/' + dt_ls[0])
+#            uri += '&thumbnail='+urllib.quote_plus(thumbnail)
+#            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True) 
     xbmcplugin.endOfDirectory(pluginhandle)
     
     
