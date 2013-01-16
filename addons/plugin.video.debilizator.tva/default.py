@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.5.2
+# Rev. 0.5.3
 
 
 
@@ -243,7 +243,7 @@ def DTV_plarch(url, name, thumbnail, plot):
     
     player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
     file_ls   = re.compile("\'playlistfile\': \'(.*?)\'").findall(response)
-    print file_ls
+    #print file_ls
     if (len(player_ls) & len(file_ls)):
 
         SWFObject = DTV_url + player_ls[0]  
@@ -274,15 +274,19 @@ def DTV_plarch(url, name, thumbnail, plot):
         #http://37.221.160.211:8080/archive/a2.stream.rec/1353808800.mp4?start=0
         for hdelta in range(6):
             furl  = 'http://' + rtmp_str + ':8080/archive/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
-#            furl += ' swfUrl=' + SWFObject
-#            furl += ' pageUrl=' + url
-#            furl += ' tcUrl=rtmp://' + rtmp_str + ':8080/archive'
+
+            if hdelta == 0:
+                item0 = xbmcgui.ListItem(path = furl + '?start=0')
+                xbmcplugin.setResolvedUrl(pluginhandle, True, item0)
+                dbg_log('furl0 = %s'%furl)
+            
             if stime != '' and hdelta == 0 :
                 furl += '?start=' + stime
+            else:
+                furl += '?start=0'
 
             item = xbmcgui.ListItem(path = furl)
             sPlayList.add(furl, item, hdelta)
-            if hdelta == 0: item0 = item
             dbg_log('furl = %s'%furl)
 
         xbmcplugin.setResolvedUrl(pluginhandle, True, item0) 
