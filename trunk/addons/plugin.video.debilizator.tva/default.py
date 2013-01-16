@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.5.3
+# Rev. 0.5.4
 
 
 
@@ -288,8 +288,6 @@ def DTV_plarch(url, name, thumbnail, plot):
             item = xbmcgui.ListItem(path = furl)
             sPlayList.add(furl, item, hdelta)
             dbg_log('furl = %s'%furl)
-
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item0) 
 
     sPlayer.play(sPlayList)
 
