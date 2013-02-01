@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.0
+# Rev. 0.4.1
 
 
 
@@ -18,7 +18,7 @@ KTV_arch = '/archive'
 KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
 
-dbg = 1
+dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
   
@@ -125,7 +125,11 @@ def KTV_play(url, name, thumbnail, plot):
     dbg_log('-KTV_play:')
     dbg_log('url = %s'%url)
     plnk = re.sub('-online','',url)
-    response    = getURL(plnk + '/player.jsx')
+    
+    try:
+        response    = getURL(plnk + '/player.jsx')
+    except:
+        response    = getURL(url)
     
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
     #print ef_ls
