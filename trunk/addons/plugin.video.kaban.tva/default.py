@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.3.2
+# Rev. 0.4.0
 
 
 
@@ -18,7 +18,7 @@ KTV_arch = '/archive'
 KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
 
-dbg = 0
+dbg = 1
 def dbg_log(line):
   if dbg: xbmc.log(line)
   
@@ -124,26 +124,46 @@ def KTV_prls(url):
 def KTV_play(url, name, thumbnail, plot):
     dbg_log('-KTV_play:')
     dbg_log('url = %s'%url)
-    response    = getURL(url)
-    rtmp_file   = re.compile('"file":"http://(.+?)/playlist').findall(response)[0]
-    dbg_log(rtmp_file)
-    st_ls = rtmp_file.split('/')
-    if len(st_ls):
-        rtmp_streamer = 'http://' + st_ls[0] + '/' + st_ls[1]
-    else:
+    plnk = re.sub('-online','',url)
+    response    = getURL(plnk + '/player.jsx')
+    
+    ef_ls = re.compile('"file":"(.+?)"').findall(response)
+    #print ef_ls
+    if (len(ef_ls) < 2):
         return
+    else:
+        rtmp_file = Decode(ef_ls[1])
+        dbg_log('rtmp_file = %s'%rtmp_file)
+        st_ls =rtmp_file.split(' ')
+        #print st_ls
+        if len(st_ls):
+            rtmp_streamer = st_ls[0]
+            rtmp_file = rtmp_streamer
+        else:
+            return       
+      
+        if 0:
+          rtmp_file   = re.compile('"file":"http://(.+?)/playlist').findall(response)[0]
+          dbg_log(rtmp_file)
+          st_ls = rtmp_file.split('/')
+          if len(st_ls):
+              rtmp_streamer = 'http://' + st_ls[0] + '/' + st_ls[1]
+          else:
+              return
+        
+        furl = rtmp_file
+        furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
+        furl += ' pageUrl=%s'%KTV_url
+        furl += ' tcUrl=%s'%rtmp_streamer
+        furl += ' flashVer=\'WIN 11,2,202,235\''
+        
+      
     
-    furl = '%s'%('rtmp://' + rtmp_file)
-    furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
-    furl += ' pageUrl=%s'%KTV_url
-    furl += ' tcUrl=%s'%rtmp_streamer
-    furl += ' flashVer=\'WIN 11,2,202,235\''
-    
-    dbg_log(furl)
+        dbg_log(furl)
 
-    xbmc.log('furl = %s'%furl)
-    item = xbmcgui.ListItem(path = furl)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        xbmc.log('furl = %s'%furl)
+        item = xbmcgui.ListItem(path = furl)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
              
         
 def KTV_chls(url):
@@ -189,7 +209,7 @@ def KTV_dates(furl, thumbnail, dyear):
         http = getURL(KTV_time)
         cdate = re.compile('"date":"(.+?)"').findall(http)[0]
         for i in range(len(dt_ls) - 1, -1, -1):
-            print i
+            #print i
             descr = dt_ls[i]
             dbg_log(descr)
             if descr <= cdate:
