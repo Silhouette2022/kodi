@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.1
+# Rev. 0.4.2
 
 
 
@@ -219,7 +219,9 @@ def KTV_dates(furl, thumbnail, dyear):
             if descr <= cdate:
                 item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
                 uri = sys.argv[0] + '?mode=GDLS'
-                uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl + '/' + descr)
+                #uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + furl)
+                uri += '&url='+urllib.quote_plus(url)
+                uri += '&cdate='+urllib.quote_plus(descr)
                 uri += '&thumbnail='+urllib.quote_plus(thumbnail)
                 xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                 
@@ -235,31 +237,36 @@ def KTV_dates(furl, thumbnail, dyear):
     
     
 
-def KTV_guide(furl, thumbnail):
+def KTV_guide(furl, thumbnail, cdate):
     dbg_log('-KTV_guide:')
     dbg_log('furl = %s'%furl)
     dbg_log('thumbnail = %s'%thumbnail)
+    dbg_log('cdate = %s'%cdate)
         
     url = re.sub('~','-',furl)
-    http = getURL(url)
+    http = getURL(KTV_url + KTV_arch + url + '/' + cdate)
+    #print http
     oneline = re.sub('[\r\n]', '', http)
     tr_ls = re.compile('<tr align="top">(.+?)</tr>').findall(oneline)
     
     if len(tr_ls):
         tm_ls = []
-        surl = re.sub(KTV_url, '', url)
+        #surl = re.sub(KTV_url, '', url  + '/' + cdate)
+        surl = KTV_arch  + url + '/' + cdate 
+        dbg_log('surl = %s'%surl)
         for tr in tr_ls:
             tm_ls.append(re.search('<td valign="top">(.+?)</td>', tr).group(1))
             gd_ls = re.compile('<a href="' + surl + '/(.+?)">(.+?) +?</a>').findall(oneline)
 
         i = 0
+        print gd_ls
         if len(gd_ls):
             for href,descr in gd_ls:
                 name=tm_ls[i] + '-' + re.sub('\&#034;' ,'\"', descr.strip())
                 dbg_log(name)
                 item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
                 uri = sys.argv[0] + '?mode=PLAR'
-                uri += '&url='+urllib.quote_plus(furl + '/' + href)
+                uri += '&url='+urllib.quote_plus(KTV_url + KTV_arch + '/player' + url + '/' + href + '.jsx')
                 item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
                 item.setProperty('IsPlayable', 'true')
                 xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
@@ -271,11 +278,12 @@ def KTV_guide(furl, thumbnail):
 def KTV_plarch(url, name, thumbnail, plot):
 
     http = getURL(url)
-    oneline = re.sub('[\r\n]', '', http)
+
+    #oneline = re.sub('[\r\n]', '', http)
 
     #"file":"1UDV5RIzJvoTXb6TORwgXxoQJ=oVX2NeOZwb9=07WSa=WR7tJx3QOx3kOREv9Sat9eLewiFtXZ0tOfoz5f0bse7BJZkhyeFdJvoYXxozXxozXx3zXRAkXRHgWeTi"
-    fl_ls = re.compile('"file":"(.+?)"').findall(oneline)
-    #print fl_ls
+    fl_ls = re.compile('"file":"(.+?)"').findall(http)
+    print fl_ls
     #print Decode(fl_ls[0]).encode('utf8')
     
     if len(fl_ls):
@@ -313,7 +321,7 @@ mode=None
 #thumbnail=fanart
 thumbnail=''
 dyear=''
-
+cdate=''
 dbg_log('OPEN:')
 
 try:
@@ -340,7 +348,10 @@ try:
     dyear=urllib.unquote_plus(params['dyear'])
     dbg_log('-DYEAR:'+ dyear + '\n')
 except: pass
-
+try: 
+    cdate=urllib.unquote_plus(params['cdate'])
+    dbg_log('-CDATE:'+ cdate + '\n')
+except: pass
 
 
 
@@ -349,7 +360,7 @@ elif mode == 'PLAY': KTV_play(url, name, thumbnail, plot)
 elif mode == 'PRLS': KTV_prls(KTV_url)
 elif mode == 'CHLS': KTV_chls(KTV_url + KTV_arch)
 elif mode == 'DTLS': KTV_dates(url, thumbnail, dyear)
-elif mode == 'GDLS': KTV_guide(url, thumbnail)
+elif mode == 'GDLS': KTV_guide(url, thumbnail, cdate)
 elif mode == None: KTV_start()
 
 dbg_log('CLOSE:')
