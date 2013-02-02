@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.5.2
+# Rev. 0.5.3
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -301,11 +301,15 @@ def IMB_chpl(url, chrn, chlg, cook, rfr, tzvl, uid):
     vlc_url = url + 'lib/ajax/aux_act_json.php?' + 'order=' + uid + '&ch=' + chrn + '&tz=' + tzvl + '&ts=0' + '&t=' + str(random.random())
     vlc = get_url(vlc_url, cookie = cook, referrer = rfr)
     dbg_log(vlc)
-    jdf = json.loads(vlc)
-    vlink = jdf['url']
-    dbg_log(vlink)
-    item = xbmcgui.ListItem(path =  vlink)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    lnk_ls = re.compile('"url":"(.+?)"').findall(vlc)
+    if len(lnk_ls) :
+        #vlink = re.sub('\\/','/',lnk_ls[0])
+        vlink_ls = lnk_ls[0].split('\/')
+        #print vlink_ls
+        vlink = vlink_ls[0]+'//'+vlink_ls[2]+'/'+vlink_ls[3]
+        dbg_log(vlink)
+        item = xbmcgui.ListItem(path =  vlink)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 def get_params():
     param=[]
