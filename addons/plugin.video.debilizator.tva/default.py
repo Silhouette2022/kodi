@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.5.4
+# Rev. 0.6.0
 
 
 
@@ -13,7 +13,7 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.debilizator.tva')
 #fanart    = xbmc.translatePath( __addon__.getAddonInfo('path') + 'fanart.jpg')
 #xbmcplugin.setPluginFanart(pluginhandle, fanart)
 
-DTV_url = 'http://www.debilizator.tv/'
+DTV_url = 'http://www.debilizator.tv'
 
 dbg = 0
 
@@ -28,15 +28,19 @@ def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
     if data: 
-        response = urllib2.urlopen(req, data,timeout=30)
+        response = urllib2.urlopen(req, data, timeout=30)
     else:
-        response = urllib2.urlopen(req,timeout=30)
+        response = urllib2.urlopen(req, timeout=30)
     link=response.read()
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
         #print "Set-Cookie: %s" % repr(setcookie)
+        #print response.info()['set-cookie']
         if setcookie:
-            setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+            try:
+              setcookie = response.info()['set-cookie']
+            except:
+              pass
             link = link + '<cookie>' + setcookie + '</cookie>'
     
     response.close()
@@ -86,47 +90,49 @@ def DTV_online(url, prls):
         xbmcplugin.endOfDirectory(pluginhandle)
         return
     oneline = re.sub( '\n', ' ', http)
-    chndls = re.compile('<div class="chlogo">(.*?)</div> <!-- (left|right)(up|down)part -->').findall(oneline)
-    for chndel, rEL, rEU in chndls:
-        chells = re.compile('<a href=(.*?)><img src="(.*?)" alt="(.*?)" title="(.*?)"></div>').findall(chndel)
+    chndls = re.compile('<div class="(left|right)part">(.*?)<div class="bighalfdivider"></div>').findall(oneline)
+    for rLR, chndel in chndls:
+        chells = re.compile('<a href="(.*?)"> *?<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel)
         description = chells[0][3]
         if prls == 'PRLS':
-            title = description
+            #title = description
             is_folder = False
         else:
-            title = re.sub('Смотрите онлайн ', '', description) #'Смотрите онлайн '
+            #title = re.sub('Смотрите онлайн ', '', description) #'Смотрите онлайн '
             is_folder = True
-        thumbnail = chells[0][1].replace('./', url)
+        title = description
+        thumbnail = url + chells[0][1].replace('/mini', '')
         if prls == 'PRLS':
             uri = sys.argv[0] + '?mode=PLAY'
         else:
             uri = sys.argv[0] + '?mode=DTLS'
-        uri += '&url='+urllib.quote_plus(url + chells[0][0])
+        uri += '&url='+urllib.quote_plus(url + '/' + chells[0][0])
         uri += '&name='+urllib.quote_plus(title)
-        uri += '&plot='+urllib.quote_plus(description)
+        #uri += '&plot='+urllib.quote_plus(description)
         uri += '&thumbnail='+urllib.quote_plus(thumbnail)
-        ptls = re.compile('<div class="prtime">(.*?)</div><div class="prdesc">(.*?)</div>').findall(chndel)
-        ptlsln = len(ptls)
-        if prls == 'PRLS':
-            i = 1
-            while ptlsln - i + 1:
-                prtm = ptls[ptlsln - i][0]
-                prds = ptls[ptlsln - i][1]
-                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
-                try:
-                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
-                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
-                        i += 1
-                    else:
-                        if i > 1:
-                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
-                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
-                        else:
-                            prtm = toLcTm(tzdf, prtmst)
-                        title = prtm + " " + prds
-                        break
-                except:
-                    break
+        ptlsln = 1
+#        ptls = re.compile('<div class="prtime">(.*?)</div><div class="prdesc">(.*?)</div>').findall(chndel)
+#        ptlsln = len(ptls)
+#        if prls == 'PRLS':
+#            i = 1
+#            while ptlsln - i + 1:
+#                prtm = ptls[ptlsln - i][0]
+#                prds = ptls[ptlsln - i][1]
+#                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
+#                try:
+#                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
+#                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
+#                        i += 1
+#                    else:
+#                        if i > 1:
+#                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
+#                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
+#                        else:
+#                            prtm = toLcTm(tzdf, prtmst)
+#                        title = prtm + " " + prds
+#                        break
+#                except:
+#                    break
 
         if ptlsln:
             dbg_log(title)
@@ -136,47 +142,50 @@ def DTV_online(url, prls):
                 item.setProperty('IsPlayable', 'true')
             #item.setProperty('fanart_image',thumbnail)
             xbmcplugin.addDirectoryItem(pluginhandle,uri,item,is_folder)
+            dbg_log(uri)
     xbmcplugin.endOfDirectory(pluginhandle)
 
-def DTV_play(url, name, thumbnail, plot):
+def DTV_play(url, name, thumbnail):
     dbg_log('-DTV_play')
-    response    = getURL(url)
+    
+    response    = getURL(url, save_cookie = True, referrer = DTV_url)
+    mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     
     oneline = re.sub( '[\n\r\t]', ' ', response)
-    server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
+    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
     if(len(server_ls)):
         min = 999
         new_srv = ""
         for ssHref, ssCrap, ssVal in server_ls:
             if(int(ssVal) < min):
                 min = int(ssVal)
-                new_srv = ssHref
+                new_srv = "/server/live/" + ssHref
                 
         if(new_srv != ""):
             dbg_log('-NEW_SRV:'+ new_srv + '\n')
-            #response = getURL(DTV_url + 'select_server.cgi?' + new_srv)
-            response = getURL(url, cookie=new_srv)
+            response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
+            mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
+                   
+    response = getURL(DTV_url + '/playlist/', cookie = mycookie, referrer = url)
     
-    player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
-    streamer_ls   = re.compile("\'streamer\': \'(.*?)\'").findall(response)
-    file_ls   = re.compile("\'file\': \'(.*?)\'").findall(response)
+    streamer_ls   = re.compile('<jwplayer:streamer>(.*?)</jwplayer:streamer>').findall(response)
+    file_ls   = re.compile('<enclosure url="(.*?)"').findall(response)
     
     if len(streamer_ls):
-      if len(player_ls):
-        if len(file_ls) :
-          rtmp_streamer = streamer_ls[0]
-          rtmp_file = file_ls[0]
-          SWFObject = DTV_url + player_ls[0] 
-     
-          furl  = ''
-          furl += '%s/%s'%(rtmp_streamer,rtmp_file)
-          furl += ' swfUrl=%s'%SWFObject
-          furl += ' pageUrl=%s'%url
-          furl += ' tcUrl=%s'%rtmp_streamer
-          furl += ' swfVfy=True Live=True'
-          xbmc.log('furl = %s'%furl)
-          item = xbmcgui.ListItem(path = furl)
-          xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+      if len(file_ls) :
+        rtmp_streamer = streamer_ls[0]
+        rtmp_file = file_ls[0]
+        SWFObject = DTV_url + '/player/' 
+   
+        furl  = ''
+        furl += '%s/%s'%(rtmp_streamer,rtmp_file)
+        furl += ' swfUrl=%s'%SWFObject
+        furl += ' pageUrl=%s'%url
+        furl += ' tcUrl=%s'%rtmp_streamer
+        furl += ' swfVfy=True Live=True'
+        xbmc.log('furl = %s'%furl)
+        item = xbmcgui.ListItem(path = furl)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 
 def DTV_dates(url, thumbnail):
@@ -188,34 +197,38 @@ def DTV_dates(url, thumbnail):
     uri += '&thumbnail='+urllib.quote_plus(thumbnail)
     xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             
-    http = getURL(url)
-    oneline = re.sub( '\n', ' ', http)
-    dtls = re.compile('<div id="timeselect">(.*?)</div> <!-- timeselect -->').findall(oneline)
+    http = getURL(url, save_cookie = True, referrer = DTV_url)
+    mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    
+    dtls = re.compile('<td style="(.*?)"><a href="(.*?)">(.*?)</a></td>').findall(http)
     if len(dtls):
-        dtells = re.compile('<a href=(.*?)&time=(.*?)> (.*?) </a>').findall(dtls[0])
-        for src, tm, descr in dtells:
+        for style, href, descr in dtls:
             item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=ARLS'
-            uri += '&url='+urllib.quote_plus(url + '&time=' + tm)
+            uri += '&url='+urllib.quote_plus(DTV_url + href)
             uri += '&thumbnail='+urllib.quote_plus(thumbnail)
+            uri += '&cook='+urllib.quote_plus(mycookie)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
 
     xbmcplugin.endOfDirectory(pluginhandle)
     
     
 
-def DTV_archs(url, thumbnail):
+def DTV_archs(url, thumbnail, mycook):
     dbg_log('DTV_archs')
-    http = getURL(url)
+    http = getURL(url, save_cookie = True, cookie = mycook, referrer = url)
+    mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    
     oneline = re.sub( '\n', ' ', http)
-    dtls = re.compile('<a href=\?(.*?)><div class="prtime">(.*?)</div><div class="prdescfull">(.*?)</div></a>').findall(oneline)
+    dtls = re.compile('<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
     if len(dtls):
-        for src, tm, descr in dtls:
-            name=tm + ' ' + descr
+        for crap, src, tm, plot, descr in dtls:
+            name=tm + ' ' + descr.replace('&quot;', '\"')
             item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=PLAR'
-            uri += '&url='+urllib.quote_plus(DTV_url + 'tv.cgi?' + src)
-            item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
+            uri += '&url='+urllib.quote_plus(DTV_url + src)
+            uri += '&cook='+urllib.quote_plus(mycookie)
+            item.setInfo( type='video', infoLabels={'title': name, 'plot': plot})
             item.setProperty('IsPlayable', 'true')
             #item.setProperty('fanart_image',thumbnail)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
@@ -224,72 +237,50 @@ def DTV_archs(url, thumbnail):
 
     xbmcplugin.endOfDirectory(pluginhandle)    
     
-def DTV_plarch(url, name, thumbnail, plot):
-    response    = getURL(url)
+def DTV_plarch(url, mycook):
+    
+    response = getURL(url, save_cookie = True, cookie = mycook)
+    mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     
     oneline = re.sub( '[\n\r\t]', ' ', response)
-    server_ls   = re.compile('<a href="/select_server.cgi\?(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var value = (.*?);').findall(oneline)
+    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
     if(len(server_ls)):
         min = 999
         new_srv = ""
         for ssHref, ssCrap, ssVal in server_ls:
             if(int(ssVal) < min):
                 min = int(ssVal)
-                new_srv = ssHref
+                new_srv = "/server/live/" + ssHref
                 
         if(new_srv != ""):
             dbg_log('-NEW_SRV:'+ new_srv + '\n')
-            response = getURL(url, cookie=new_srv)
+            response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
+            mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
+                   
+    response = getURL(DTV_url + '/playlist/', cookie = mycookie, referrer = url)
+            
+    file_ls   = re.compile('<enclosure url="(.*?)"').findall(response)
     
-    player_ls   = re.compile("\'flashplayer\': \'(.*?)\'").findall(response)
-    file_ls   = re.compile("\'playlistfile\': \'(.*?)\'").findall(response)
-    #print file_ls
-    if (len(player_ls) & len(file_ls)):
+    sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+    sPlayer     = xbmc.Player()
+    sPlayList.clear()
 
-        SWFObject = DTV_url + player_ls[0]  
-        flashparams = re.sub( '\?', '\&', urllib.unquote_plus(file_ls[0])).split('&')
-        dbg_log('=flashparams=')
-        if dbg: print flashparams
+    if len(file_ls) :
+      i = 0
+      for furl in file_ls:
+        if i == 0:
+          item0 = xbmcgui.ListItem(path = furl)
+          xbmcplugin.setResolvedUrl(pluginhandle, True, item0)
+          dbg_log('furl0 = %s'%furl)
 
-        for i in range(len(flashparams)):
-            if flashparams[i].find('time=') != -1:
-                rtmp_time = re.sub('time=', '', flashparams[i])
-            elif flashparams[i].find('str=') != -1:
-                rtmp_str = re.sub('str=', '', flashparams[i])
-            elif flashparams[i].find('ch=') != -1:
-                rtmp_ch = re.sub('ch=', '', flashparams[i])
-            
-        itime = int(rtmp_time)
-        rtime = (itime/3600)* 3600 
-        dbg_log('itime=' + str(itime))
-        dbg_log('rtime=' + str(rtime))
-        if itime != rtime:
-            stime = str(itime - rtime)
-        else:
-            stime = ''
-        dbg_log('stime=' + str(stime))
-        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
-        sPlayer     = xbmc.Player()
-        sPlayList.clear()
-        #http://37.221.160.211:8080/archive/a2.stream.rec/1353808800.mp4?start=0
-        for hdelta in range(6):
-            furl  = 'http://' + rtmp_str + ':8080/archive/a' + rtmp_ch + '.stream.rec/' + str(rtime + hdelta * 3600) + '.mp4'
+        item = xbmcgui.ListItem(path = furl)
+        sPlayList.add(furl, item, i)
+        
+        dbg_log('furl = %s'%furl)
+        i = i + 1
 
-            if hdelta == 0:
-                item0 = xbmcgui.ListItem(path = furl + '?start=0')
-                xbmcplugin.setResolvedUrl(pluginhandle, True, item0)
-                dbg_log('furl0 = %s'%furl)
-            
-            if stime != '' and hdelta == 0 :
-                furl += '?start=' + stime
-            else:
-                furl += '?start=0'
+    sPlayer.play(sPlayList)      
 
-            item = xbmcgui.ListItem(path = furl)
-            sPlayList.add(furl, item, hdelta)
-            dbg_log('furl = %s'%furl)
-
-    sPlayer.play(sPlayList)
 
 def get_params():
     param=[]
@@ -315,6 +306,7 @@ plot=''
 mode=None
 #thumbnail=fanart
 thumbnail=''
+cook=''
 
 dbg_log('OPEN:')
 
@@ -338,17 +330,20 @@ try:
     plot=urllib.unquote_plus(params['plot'])
     dbg_log('-PLOT:'+ plot + '\n')
 except: pass
+try: 
+    cook=urllib.unquote_plus(params['cook'])
+    dbg_log('-COOK:'+ cook + '\n')
+except: pass
 
 
 
 
-
-if mode == 'PLAY': DTV_play(url, name, thumbnail, plot)
-elif mode == 'PLAR': DTV_plarch(url, name, thumbnail, plot)
+if mode == 'PLAY': DTV_play(url, name, thumbnail)
+elif mode == 'PLAR': DTV_plarch(url, cook)
 elif mode == 'PRLS': DTV_online(DTV_url, mode)
 elif mode == 'CHLS': DTV_online(DTV_url, mode)
 elif mode == 'DTLS': DTV_dates(url, thumbnail)
-elif mode == 'ARLS': DTV_archs(url, thumbnail)
+elif mode == 'ARLS': DTV_archs(url, thumbnail, cook)
 elif mode == None: DTV_start()
 
 dbg_log('CLOSE:')
