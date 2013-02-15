@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.2.3
+# Rev. 0.2.4
 
 
 
@@ -78,7 +78,10 @@ def INC_start():
     http = get_url(INC_urlw + INC_auth, 
                   data = "LoginForm%5Busername%5D=" + urllib.quote_plus(usr_log) + "&LoginForm%5Bpassword%5D=" + urllib.quote_plus(usr_pwd),
                   cookie = mycookie, save_cookie = True, referrer = INC_urlw + '/index.php', accept='json')
-    mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    try:
+      mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    except:
+      pass
                   
                   
     http = get_url(INC_urlw + '/index.php', cookie = mycookie)
