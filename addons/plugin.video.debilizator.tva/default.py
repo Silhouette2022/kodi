@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.6.0
+# Rev. 0.6.1
 
 
 
@@ -206,6 +206,7 @@ def DTV_dates(url, thumbnail):
             item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=ARLS'
             uri += '&url='+urllib.quote_plus(DTV_url + href)
+            uri += '&name='+urllib.quote_plus(url)
             uri += '&thumbnail='+urllib.quote_plus(thumbnail)
             uri += '&cook='+urllib.quote_plus(mycookie)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
@@ -214,19 +215,21 @@ def DTV_dates(url, thumbnail):
     
     
 
-def DTV_archs(url, thumbnail, mycook):
+def DTV_archs(url, name2, thumbnail, mycook):
     dbg_log('DTV_archs')
     http = getURL(url, save_cookie = True, cookie = mycook, referrer = url)
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     
     oneline = re.sub( '\n', ' ', http)
-    dtls = re.compile('<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
+    dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
+
     if len(dtls):
-        for crap, src, tm, plot, descr in dtls:
+        for crap1, crap2, src, tm, plot, descr in dtls:
             name=tm + ' ' + descr.replace('&quot;', '\"')
             item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=PLAR'
             uri += '&url='+urllib.quote_plus(DTV_url + src)
+            uri += '&name='+urllib.quote_plus(name2)
             uri += '&cook='+urllib.quote_plus(mycookie)
             item.setInfo( type='video', infoLabels={'title': name, 'plot': plot})
             item.setProperty('IsPlayable', 'true')
@@ -237,20 +240,20 @@ def DTV_archs(url, thumbnail, mycook):
 
     xbmcplugin.endOfDirectory(pluginhandle)    
     
-def DTV_plarch(url, mycook):
+def DTV_plarch(url, name, mycook):
     
     response = getURL(url, save_cookie = True, cookie = mycook)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     
     oneline = re.sub( '[\n\r\t]', ' ', response)
-    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
+    server_ls   = re.compile('<a href="/server/vod/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
     if(len(server_ls)):
         min = 999
         new_srv = ""
         for ssHref, ssCrap, ssVal in server_ls:
             if(int(ssVal) < min):
                 min = int(ssVal)
-                new_srv = "/server/live/" + ssHref
+                new_srv = "/server/vod/" + ssHref
                 
         if(new_srv != ""):
             dbg_log('-NEW_SRV:'+ new_srv + '\n')
@@ -267,11 +270,24 @@ def DTV_plarch(url, mycook):
 
     if len(file_ls) :
       i = 0
+ 
+      url2 = re.sub(name, ' ', url) 
+      url2 = re.sub('/', ' ', url2) 
+      dbg_log('url2 = %s'%url2) 
+      
+      try:
+        prtime = time.strptime(url2, " %Y-%m-%d %H:%M ")
+        stime = str(time.mktime(prtime) % 3600)
+        dbg_log('stime = %s'%stime)
+      except:
+        pass
+	        
       for furl in file_ls:
         if i == 0:
           item0 = xbmcgui.ListItem(path = furl)
           xbmcplugin.setResolvedUrl(pluginhandle, True, item0)
           dbg_log('furl0 = %s'%furl)
+          furl += '?start=' + stime
 
         item = xbmcgui.ListItem(path = furl)
         sPlayList.add(furl, item, i)
@@ -339,11 +355,11 @@ except: pass
 
 
 if mode == 'PLAY': DTV_play(url, name, thumbnail)
-elif mode == 'PLAR': DTV_plarch(url, cook)
+elif mode == 'PLAR': DTV_plarch(url, name, cook)
 elif mode == 'PRLS': DTV_online(DTV_url, mode)
 elif mode == 'CHLS': DTV_online(DTV_url, mode)
 elif mode == 'DTLS': DTV_dates(url, thumbnail)
-elif mode == 'ARLS': DTV_archs(url, thumbnail, cook)
+elif mode == 'ARLS': DTV_archs(url, name, thumbnail, cook)
 elif mode == None: DTV_start()
 
 dbg_log('CLOSE:')
