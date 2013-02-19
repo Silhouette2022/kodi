@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.6.1
+# Rev. 0.6.2
 
 
 
@@ -270,17 +270,22 @@ def DTV_plarch(url, name, mycook):
 
     if len(file_ls) :
       i = 0
- 
-      url2 = re.sub(name, ' ', url) 
-      url2 = re.sub('/', ' ', url2) 
-      dbg_log('url2 = %s'%url2) 
+      
+      url2 = urllib.quote_plus(url)
+      dbg_log('url2 = %s'%url2)
+      name2 = urllib.quote_plus(name)
+      dbg_log('name2 = %s'%name2)
+      url2 = re.sub(name2, ' ', url2) 
+      dbg_log('url2 = %s'%url2)
+      url2 = re.sub('/', ' ', urllib.unquote_plus(url2) )
+      dbg_log('url3 = %s'%url2) 
       
       try:
         prtime = time.strptime(url2, " %Y-%m-%d %H:%M ")
         stime = str(time.mktime(prtime) % 3600)
         dbg_log('stime = %s'%stime)
       except:
-        pass
+        stime = '0.0'
 	        
       for furl in file_ls:
         if i == 0:
