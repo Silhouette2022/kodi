@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.6.2
+# Rev. 0.6.3
 
 
 
@@ -200,7 +200,7 @@ def DTV_dates(url, thumbnail):
     http = getURL(url, save_cookie = True, referrer = DTV_url)
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     
-    dtls = re.compile('<td style="(.*?)"><a href="(.*?)">(.*?)</a></td>').findall(http)
+    dtls = re.compile('<td style="(.*?)"><a rel="nofollow" href="(.*?)">(.*?)</a></td>').findall(http)
     if len(dtls):
         for style, href, descr in dtls:
             item = xbmcgui.ListItem(descr, iconImage=thumbnail, thumbnailImage=thumbnail)
@@ -221,7 +221,8 @@ def DTV_archs(url, name2, thumbnail, mycook):
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     
     oneline = re.sub( '\n', ' ', http)
-    dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
+    #dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
+    dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div>').findall(oneline)
 
     if len(dtls):
         for crap1, crap2, src, tm, plot, descr in dtls:
