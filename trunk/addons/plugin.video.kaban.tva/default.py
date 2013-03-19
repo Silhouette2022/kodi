@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.2
+# Rev. 0.4.3
 
 
 
@@ -133,10 +133,8 @@ def KTV_play(url, name, thumbnail, plot):
     
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
     #print ef_ls
-    if (len(ef_ls) < 2):
-        return
-    else:
-        rtmp_file = Decode(ef_ls[1])
+    if len(ef_ls):
+        rtmp_file = Decode(ef_ls[0])
         dbg_log('rtmp_file = %s'%rtmp_file)
         st_ls =rtmp_file.split(' ')
         #print st_ls
@@ -144,30 +142,27 @@ def KTV_play(url, name, thumbnail, plot):
             rtmp_streamer = st_ls[0]
             rtmp_file = rtmp_streamer
         else:
+            dbg_log('-return1')
             return       
-      
-        if 0:
-          rtmp_file   = re.compile('"file":"http://(.+?)/playlist').findall(response)[0]
-          dbg_log(rtmp_file)
-          st_ls = rtmp_file.split('/')
-          if len(st_ls):
-              rtmp_streamer = 'http://' + st_ls[0] + '/' + st_ls[1]
-          else:
-              return
-        
-        furl = rtmp_file
-        furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
-        furl += ' pageUrl=%s'%KTV_url
-        furl += ' tcUrl=%s'%rtmp_streamer
-        furl += ' flashVer=\'WIN 11,2,202,235\''
-        
-      
-    
-        dbg_log(furl)
+    else:
+        dbg_log('-return2')
+        return
 
-        xbmc.log('furl = %s'%furl)
-        item = xbmcgui.ListItem(path = furl)
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+        
+    furl = rtmp_file
+    furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
+    furl += ' pageUrl=%s'%KTV_url
+    furl += ' tcUrl=%s'%rtmp_streamer
+    furl += ' flashVer=\'WIN 11,2,202,235\''
+    
+  
+
+    dbg_log(furl)
+
+    xbmc.log('furl = %s'%furl)
+    item = xbmcgui.ListItem(path = furl)
+    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
              
         
 def KTV_chls(url):
