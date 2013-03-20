@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.6.3
+# Rev. 0.6.4
 
 
 
@@ -15,12 +15,13 @@ __addon__       = xbmcaddon.Addon(id='plugin.video.debilizator.tva')
 
 DTV_url = 'http://www.debilizator.tv'
 
-dbg = 0
+dbg = 1
 
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
 def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None):
+    print url
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
@@ -90,23 +91,24 @@ def DTV_online(url, prls):
         xbmcplugin.endOfDirectory(pluginhandle)
         return
     oneline = re.sub( '\n', ' ', http)
-    chndls = re.compile('<div class="(left|right)part">(.*?)<div class="bighalfdivider"></div>').findall(oneline)
-    for rLR, chndel in chndls:
-        chells = re.compile('<a href="(.*?)"> *?<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel)
-        description = chells[0][3]
+    chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/">(.*?)</div> *?</div> *?</div>').findall(oneline)
+    #print chndls
+    for chndel in chndls:
+        print chndel[1]
+        chells = re.compile('<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel[1])
+        print chells
+        description = chells[0][2]
         if prls == 'PRLS':
-            #title = description
             is_folder = False
         else:
-            #title = re.sub('Смотрите онлайн ', '', description) #'Смотрите онлайн '
             is_folder = True
         title = description
-        thumbnail = url + chells[0][1].replace('/mini', '')
+        thumbnail = url + chells[0][0].replace('/mini', '')
         if prls == 'PRLS':
             uri = sys.argv[0] + '?mode=PLAY'
         else:
             uri = sys.argv[0] + '?mode=DTLS'
-        uri += '&url='+urllib.quote_plus(url + '/' + chells[0][0])
+        uri += '&url='+urllib.quote_plus(url + '/' + chndel[0])
         uri += '&name='+urllib.quote_plus(title)
         #uri += '&plot='+urllib.quote_plus(description)
         uri += '&thumbnail='+urllib.quote_plus(thumbnail)
@@ -221,11 +223,10 @@ def DTV_archs(url, name2, thumbnail, mycook):
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     
     oneline = re.sub( '\n', ' ', http)
-    #dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div> *?</a>').findall(oneline)
-    dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div>').findall(oneline)
-
+    #dtls = re.compile('</(script|a)> *?<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?<div class="fulldivider"></div>').findall(oneline)
+    dtls = re.compile('<a title="(.*?)" href="(.*?)"> *?<div class="prtime">(.*?)</div> *?<div class="prdescfull" title="(.*?)">(.*?)</div> *?</a>').findall(oneline)
     if len(dtls):
-        for crap1, crap2, src, tm, plot, descr in dtls:
+        for crap1, src, tm, plot, descr in dtls:
             name=tm + ' ' + descr.replace('&quot;', '\"')
             item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=PLAR'
