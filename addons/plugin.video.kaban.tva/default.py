@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.3
+# Rev. 0.4.4
 
 
 
@@ -21,7 +21,30 @@ KTV_time = 'http://kaban.tv/current-time'
 dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
-  
+
+
+logos = {'pervii-kanal':'pervyi_kanal',
+            'rossiya-1':'rossiia_1',
+            'ntv':'ntv',
+            'sts':'sts',
+            'rossiya-2':'rossiia_2',
+            'perec':'perets',
+            'rossiya-k':'rossiia_k',
+            'ren':'ren_tv',
+            'rossiya-24':'rossiia_24',
+            'karusel':'karusel',
+            '5kanal':'piatyi_kanal',
+            'tv5kanal':'piatyi_kanal',
+            'disney':'disney_channel',
+            'domashnii':'domashnii',
+            'tvc': 'tvts',
+            'zvezda': 'zvezda',
+            'u': 'iu-tv',
+            'tnt': 'tnt',
+            'tv3': 'tv-3',
+            'mtv': 'mtv-russia'}
+    
+      
 def Decode(param):
         hash1 = ("3", "U", "I", "a", "V", "x", "s", "8", "z", "2", "7", "W", "w", "G", "B", "X", "b", "9", "4", "R", "k", "J", "e", "5", "g", "=")
         hash2 = ("Q", "H", "o", "1", "0", "T", "d", "n", "v", "i", "l", "Z", "Y", "f", "p", "M", "y", "N", "6", "D", "t", "L", "m", "c", "u", "j")
@@ -107,11 +130,15 @@ def KTV_prls(url):
     http = getURL(url)
     pr_ls = re.compile('<li><a class="(.+?)" href="(.+?)"><span>(.+?)</span></a></li>').findall(http)
     
-    thumbnail = ''
     if len(pr_ls):
         for eng,href,descr in pr_ls:
             name = descr
+            try:
+                thumbnail = xbmc.translatePath( __addon__.getAddonInfo('path') + '\\resources\\logos\\' + logos[eng] + '.png')
+            except:
+                thumbnail = ''
             dbg_log(name)
+            dbg_log(thumbnail)
             item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
             uri = sys.argv[0] + '?mode=PLAY'
             uri += '&url='+urllib.quote_plus(url + href)
@@ -177,10 +204,14 @@ def KTV_chls(url):
 
     http = getURL(url)
     ch_ls = re.compile('href="' + KTV_arch +'(.+?)"><span><b>(.+?)</b>').findall(http)
+    print ch_ls
     for arlnk, description in ch_ls:
         title = description
         is_folder = True
-        thumbnail = ''
+        try:
+            thumbnail = xbmc.translatePath( __addon__.getAddonInfo('path') + '\\resources\\logos\\' + logos[arlnk[1:]] + '.png')
+        except:
+            thumbnail = ''
         arlnk = re.sub('-','~',arlnk)
 
         uri = sys.argv[0] + '?mode=DTLS'
