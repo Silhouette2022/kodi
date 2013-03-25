@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.7.1
+# Rev. 0.7.2
 
 
 
@@ -113,28 +113,30 @@ def DTV_online(url, prls):
         #uri += '&plot='+urllib.quote_plus(description)
         uri += '&thumbnail='+urllib.quote_plus(thumbnail)
         ptlsln = 1
-#        ptls = re.compile('<div class="prtime">(.*?)</div><div class="prdesc">(.*?)</div>').findall(chndel)
-#        ptlsln = len(ptls)
-#        if prls == 'PRLS':
-#            i = 1
-#            while ptlsln - i + 1:
-#                prtm = ptls[ptlsln - i][0]
-#                prds = ptls[ptlsln - i][1]
-#                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
-#                try:
-#                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
-#                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
-#                        i += 1
-#                    else:
-#                        if i > 1:
-#                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
-#                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
-#                        else:
-#                            prtm = toLcTm(tzdf, prtmst)
-#                        title = prtm + " " + prds
-#                        break
-#                except:
-#                    break
+        ptls = re.compile('<div class="prtime">(.*?)</div> *?<div class="prdesc" title=".*?">(.*?)</div>').findall(chndel[1])
+        #print ptls
+        ptlsln = len(ptls)
+        if prls == 'PRLS':
+            i = 1
+            while ptlsln - i + 1:
+                prtm = ptls[ptlsln - i][0]
+                prds = ptls[ptlsln - i][1]
+                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
+                try:
+                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
+                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
+                        i += 1
+                    else:
+                        if i > 1:
+                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
+                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
+                        else:
+                            prtm = toLcTm(tzdf, prtmst)
+                        title = prtm + " " + re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', prds))
+                        
+                        break
+                except:
+                    break
 
         if ptlsln:
             dbg_log(title)
