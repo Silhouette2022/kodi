@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.7.0
+# Rev. 0.7.1
 
 
 
@@ -21,7 +21,7 @@ def dbg_log(line):
   if dbg: xbmc.log(line)
 
 def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None):
-    print url
+    #print url
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
@@ -94,9 +94,9 @@ def DTV_online(url, prls):
     chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/">(.*?)</div> *?</div> *?</div>').findall(oneline)
     #print chndls
     for chndel in chndls:
-        print chndel[1]
+        #print chndel[1]
         chells = re.compile('<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel[1])
-        print chells
+        #print chells
         description = chells[0][2]
         if prls == 'PRLS':
             is_folder = False
