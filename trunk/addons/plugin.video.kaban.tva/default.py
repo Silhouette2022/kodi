@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.4
+# Rev. 0.4.5
 
 
 
@@ -124,9 +124,17 @@ def KTV_start():
     #KTV_chls(KTV_url + KTV_arch)
         
 def KTV_prls(url):
+    try:
+      import YaTv
+      tvp=YaTv.GetPr()
+      xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+    except:
+      pass
+        
+    
+    
     dbg_log('-KTV_prls:')
     dbg_log('url = %s'%url)
-    
     http = getURL(url)
     pr_ls = re.compile('<li><a class="(.+?)" href="(.+?)"><span>(.+?)</span></a></li>').findall(http)
     
@@ -134,12 +142,21 @@ def KTV_prls(url):
         for eng,href,descr in pr_ls:
             name = descr
             try:
-                thumbnail = xbmc.translatePath( __addon__.getAddonInfo('path') + '\\resources\\logos\\' + logos[eng] + '.png')
+                logo = xbmc.translatePath( __addon__.getAddonInfo('path') + '\\resources\\logos\\' + logos[eng] + '.png')
             except:
-                thumbnail = ''
+                logo = ''
             dbg_log(name)
-            dbg_log(thumbnail)
-            item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
+            dbg_log(logo)
+            try:
+                name=descr.replace("Россия К","Культура").replace("Дисней","Канал Disney").replace("Перец","ПЕРЕЦ").replace("Рен ТВ","РЕН ТВ").replace("ТВЦ","ТВ Центр")
+                descr = tvp[name]["plot"]
+                tbn=tvp[name]["img"]
+                item.setProperty('fanart_image', tbn)
+
+            except:
+                tbn = logo
+            
+            item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
             uri = sys.argv[0] + '?mode=PLAY'
             uri += '&url='+urllib.quote_plus(url + href)
             item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
