@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.7.2
+# Rev. 0.7.3
 
 
 
@@ -76,7 +76,7 @@ def DTV_online(url, prls):
 
     if prls == 'PRLS':
         dbg_log('FALSE:')
-
+        xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
         try:
             msktmht = getURL('http://time.jp-net.ru/');
             msktmls = re.compile('<h1 align=\'center\'>(.*?): (.*?)</h1>').findall(msktmht)
@@ -97,12 +97,12 @@ def DTV_online(url, prls):
         #print chndel[1]
         chells = re.compile('<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel[1])
         #print chells
-        description = chells[0][2]
+        title = chells[0][2]
         if prls == 'PRLS':
             is_folder = False
         else:
             is_folder = True
-        title = description
+        description = ''
         thumbnail = url + chells[0][0].replace('/mini', '')
         if prls == 'PRLS':
             uri = sys.argv[0] + '?mode=PLAY'
@@ -114,30 +114,45 @@ def DTV_online(url, prls):
         uri += '&thumbnail='+urllib.quote_plus(thumbnail)
         ptlsln = 1
         ptls = re.compile('<div class="prtime">(.*?)</div> *?<div class="prdesc" title=".*?">(.*?)</div>').findall(chndel[1])
-        #print ptls
+        print ptls
         ptlsln = len(ptls)
         if prls == 'PRLS':
             i = 1
             while ptlsln - i + 1:
                 prtm = ptls[ptlsln - i][0]
                 prds = ptls[ptlsln - i][1]
-                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
-                try:
-                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
-                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
-                        i += 1
-                    else:
-                        if i > 1:
-                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
-                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
-                        else:
-                            prtm = toLcTm(tzdf, prtmst)
-                        title = prtm + " " + re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', prds))
-                        
-                        break
-                except:
-                    break
+                #prxt = ptls[ptlsln - i][2]
+                prxt = ''
 
+                prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
+                
+                try:
+                    nprtm = toLcTm(tzdf, prtmst)
+                except:
+                    nprtm = prtm
+                i += 1
+                description = "[B][COLOR FF0084FF]" + nprtm + "[/COLOR] [COLOR FFFFFFFF]" + prds + "[/COLOR][/B][COLOR FF999999]" + chr(10) + prxt + "[/COLOR]" + chr(10) + description
+                    
+                
+#                try:
+#                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
+#                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
+#                        i += 1
+#                    else:
+#                        if i > 1:
+#                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
+#                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
+#                        else:
+#                            prtm = toLcTm(tzdf, prtmst)
+#                        title = prtm + " " + re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', prds))
+#                        
+#                        break
+#                except:
+#                    break
+                    
+                
+
+        description = re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', description))
         if ptlsln:
             dbg_log(title)
             item=xbmcgui.ListItem(title, iconImage=thumbnail, thumbnailImage=thumbnail)
@@ -154,21 +169,21 @@ def DTV_play(url, name, thumbnail):
     
     response    = getURL(url, save_cookie = True, referrer = DTV_url)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
-    
     oneline = re.sub( '[\n\r\t]', ' ', response)
-    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
-    if(len(server_ls)):
-        min = 999
-        new_srv = ""
-        for ssHref, ssCrap, ssVal in server_ls:
-            if(int(ssVal) < min):
-                min = int(ssVal)
-                new_srv = "/server/live/" + ssHref
+#    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
+#    if(len(server_ls)):
+#        min = 999
+#        new_srv = ""
+#        for ssHref, ssCrap, ssVal in server_ls:
+#            if(int(ssVal) < min):
+#                min = int(ssVal)
+#                new_srv = "/server/live/" + ssHref
                 
-        if(new_srv != ""):
-            dbg_log('-NEW_SRV:'+ new_srv + '\n')
-            response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
-            mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
+#        if(new_srv != ""):
+#            dbg_log('-NEW_SRV:'+ new_srv + '\n')
+    new_srv = "/server/live/100500"
+    response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
+    mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
                    
     response = getURL(DTV_url + '/maclist/', cookie = mycookie, referrer = url)
     streamer_ls   = re.compile('mvideo.src="(.*?)";').findall(response)
@@ -253,20 +268,21 @@ def DTV_plarch(url, name, mycook):
     response = getURL(url, save_cookie = True, cookie = mycook)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     
-    oneline = re.sub( '[\n\r\t]', ' ', response)
-    server_ls   = re.compile('<a href="/server/vod/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
-    if(len(server_ls)):
-        min = 999
-        new_srv = ""
-        for ssHref, ssCrap, ssVal in server_ls:
-            if(int(ssVal) < min):
-                min = int(ssVal)
-                new_srv = "/server/vod/" + ssHref
+#    oneline = re.sub( '[\n\r\t]', ' ', response)
+#    server_ls   = re.compile('<a href="/server/vod/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
+#    if(len(server_ls)):
+#        min = 999
+#        new_srv = ""
+#        for ssHref, ssCrap, ssVal in server_ls:
+#            if(int(ssVal) < min):
+#                min = int(ssVal)
+#                new_srv = "/server/vod/" + ssHref
                 
-        if(new_srv != ""):
-            dbg_log('-NEW_SRV:'+ new_srv + '\n')
-            response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
-            mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
+#        if(new_srv != ""):
+#            dbg_log('-NEW_SRV:'+ new_srv + '\n')
+    new_srv = "/server/live/100500"
+    response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
+    mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
             
     response = getURL(DTV_url + '/maclist/', cookie = mycookie, referrer = url)
     file_ls   = re.compile('mvideo.src="(.*?)";').findall(response)
