@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.2.4
+# Rev. 0.2.5
 
 
 
@@ -147,7 +147,7 @@ def INC_chls(mycookie):
 #    dbg_log(mycookie)
     oneline = re.sub('[\r\n]', ' ', http)
     pr_ls = re.compile('<tr > +?<td class="col01"><a href="(.+?)"><img src="(.+?)"  alt="(.+?)" /></a></td>').findall(oneline)
-    print pr_ls
+    #print pr_ls
     if len(pr_ls):
         for href,logo,name in pr_ls:
             dbg_log(name)
@@ -170,10 +170,11 @@ def INC_dtls(url, name, thumbnail, mycookie):
         id_ls = re.compile("var current_channel = (.+?);").findall(response)
     if len(id_ls):
         dbg_log(id_ls[0])
-        dtls = re.compile('<li class="(.*?)"><a href="(.*?)">..</a><span class="date">').findall(response)
+        dtls = re.compile('<li class="(.*?)"><a href="(.*?)">(.*?)</a><span class="date">').findall(response)
+        #print dtls
         if len(dtls):
             today = False
-            for cl, dt in reversed(dtls):
+            for cl, dt, wk in reversed(dtls):
                 if cl == 'active': today = True
                 if today:
                     item = xbmcgui.ListItem(dt, iconImage=thumbnail, thumbnailImage=thumbnail)
@@ -190,7 +191,7 @@ def INC_dtls(url, name, thumbnail, mycookie):
 def INC_prls(url, id, name, pdate, thumbnail, mycookie):
     dbg_log('-INC_prls')
     response = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)
-    jdata = json.loads(response, encoding="cp1251")
+    jdata = json.loads(response, encoding="utf-8")
     #print json.dumps(jdata, encoding="cp1251")
     
     for it in jdata:
