@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.7.3
+# Rev. 0.7.4
 
 
 
@@ -103,7 +103,7 @@ def DTV_online(url, prls):
         else:
             is_folder = True
         description = ''
-        thumbnail = url + chells[0][0].replace('/mini', '')
+        thumbnail = chells[0][0].replace('/mini', '')
         if prls == 'PRLS':
             uri = sys.argv[0] + '?mode=PLAY'
         else:
@@ -114,7 +114,7 @@ def DTV_online(url, prls):
         uri += '&thumbnail='+urllib.quote_plus(thumbnail)
         ptlsln = 1
         ptls = re.compile('<div class="prtime">(.*?)</div> *?<div class="prdesc" title=".*?">(.*?)</div>').findall(chndel[1])
-        print ptls
+        #print ptls
         ptlsln = len(ptls)
         if prls == 'PRLS':
             i = 1
