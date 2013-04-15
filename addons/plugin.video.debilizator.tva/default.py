@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.7.4
+# Rev. 0.7.5
 
 
 
@@ -133,24 +133,6 @@ def DTV_online(url, prls):
                 i += 1
                 description = "[B][COLOR FF0084FF]" + nprtm + "[/COLOR] [COLOR FFFFFFFF]" + prds + "[/COLOR][/B][COLOR FF999999]" + chr(10) + prxt + "[/COLOR]" + chr(10) + description
                     
-                
-#                try:
-#                    tmdf = time.mktime(msktmst) - time.mktime(prtmst)
-#                    if (((tmdf < 0) and (tmdf > -12*3600.0)) or (tmdf > 12*3600.0)) and (ptlsln > 1):
-#                        i += 1
-#                    else:
-#                        if i > 1:
-#                            prtmst2 = time.strptime(msktmls[0][1] + ' ' + ptls[ptlsln - i + 1][0], "%Y-%d-%m %H:%M")
-#                            prtm = toLcTm(tzdf, prtmst) + '-' + toLcTm(tzdf, prtmst2)
-#                        else:
-#                            prtm = toLcTm(tzdf, prtmst)
-#                        title = prtm + " " + re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', prds))
-#                        
-#                        break
-#                except:
-#                    break
-                    
-                
 
         description = re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', description))
         if ptlsln:
@@ -170,45 +152,37 @@ def DTV_play(url, name, thumbnail):
     response    = getURL(url, save_cookie = True, referrer = DTV_url)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     oneline = re.sub( '[\n\r\t]', ' ', response)
-#    server_ls   = re.compile('<a href="/server/live/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
-#    if(len(server_ls)):
-#        min = 999
-#        new_srv = ""
-#        for ssHref, ssCrap, ssVal in server_ls:
-#            if(int(ssVal) < min):
-#                min = int(ssVal)
-#                new_srv = "/server/live/" + ssHref
-                
-#        if(new_srv != ""):
-#            dbg_log('-NEW_SRV:'+ new_srv + '\n')
+
     new_srv = "/server/live/100500"
     response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
                    
-    response = getURL(DTV_url + '/maclist/', cookie = mycookie, referrer = url)
-    streamer_ls   = re.compile('mvideo.src="(.*?)";').findall(response)
-    
-#    streamer_ls   = re.compile('<jwplayer:streamer>(.*?)</jwplayer:streamer>').findall(response)
-#    file_ls   = re.compile('<enclosure url="(.*?)"').findall(response)
-    
-#    if len(streamer_ls):
-#      if len(file_ls) :
-#        rtmp_streamer = streamer_ls[0]
-#        rtmp_file = file_ls[0]
-#        SWFObject = DTV_url + '/player/' 
-   
-#        furl  = ''
-#        furl += '%s/%s'%(rtmp_streamer,rtmp_file)
-#        furl += ' swfUrl=%s'%SWFObject
-#        furl += ' pageUrl=%s'%url
-#        furl += ' tcUrl=%s'%rtmp_streamer
-#        furl += ' swfVfy=True Live=True'
+    response = getURL(DTV_url + '/config/', cookie = mycookie, referrer = url)
+    streamer_ls   = re.compile('<src>(.*?)playlist.m3u8</src>').findall(response)
+
 
     if len(streamer_ls):
-        furl = streamer_ls[0]
+        furl = streamer_ls[0] + 'playlist.m3u8'
         xbmc.log('furl = %s'%furl)
         item = xbmcgui.ListItem(path = furl)
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+#        response = getURL(furl, cookie = mycookie, referrer = url)
+
+#        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+#        sPlayer     = xbmc.Player()
+#        sPlayList.clear()
+        
+#        ts_ls   = re.compile('(.*?).ts').findall(response)
+#        i = 0
+#        for ts in ts_ls:
+#            furl = streamer_ls[0] + ts + '.ts'
+#            xbmc.log('furl = %s'%furl)
+#            item = xbmcgui.ListItem(path = furl)
+#            sPlayList.add(furl, item, i)
+#            i = i + 1
+            
+#        sPlayer.play(sPlayList)
 
 
 def DTV_dates(url, thumbnail):
@@ -268,75 +242,41 @@ def DTV_plarch(url, name, mycook):
     response = getURL(url, save_cookie = True, cookie = mycook)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
     
-#    oneline = re.sub( '[\n\r\t]', ' ', response)
-#    server_ls   = re.compile('<a href="/server/vod/(.*?)"><div id="bar[0-9]" style="(.*?)"></div></a> *?<script type="text/javascript"> *?\$\(function\(\) \{ *?var val = (.*?);').findall(oneline)
-#    if(len(server_ls)):
-#        min = 999
-#        new_srv = ""
-#        for ssHref, ssCrap, ssVal in server_ls:
-#            if(int(ssVal) < min):
-#                min = int(ssVal)
-#                new_srv = "/server/vod/" + ssHref
-                
-#        if(new_srv != ""):
-#            dbg_log('-NEW_SRV:'+ new_srv + '\n')
     new_srv = "/server/live/100500"
     response = getURL(DTV_url + new_srv, save_cookie = True, cookie = mycookie, referrer = url)
     mycookie = re.search('<cookie>(.+?)</cookie>', response).group(1)
-            
-    response = getURL(DTV_url + '/maclist/', cookie = mycookie, referrer = url)
-    file_ls   = re.compile('mvideo.src="(.*?)";').findall(response)
-    
-    if len(file_ls):
-        furl = file_ls[0]
+
+
+    response = getURL(DTV_url + '/config/', cookie = mycookie, referrer = url)
+    streamer_ls   = re.compile('<src>(.*?).m3u8</src>').findall(response)
+
+    if len(streamer_ls):
+        furl = streamer_ls[0] + '.m3u8'
         xbmc.log('furl = %s'%furl)
         item = xbmcgui.ListItem(path = furl)
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-    
-                   
-#    response = getURL(DTV_url + '/playlist/', cookie = mycookie, referrer = url)
-            
-#    file_ls   = re.compile('<enclosure url="(.*?)"').findall(response)
-    
-#    sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
-#    sPlayer     = xbmc.Player()
-#    sPlayList.clear()
-
-#    if len(file_ls) :
-#      i = 0
-      
-#      url2 = urllib.quote_plus(url)
-#      dbg_log('url2 = %s'%url2)
-#      name2 = urllib.quote_plus(name)
-#      dbg_log('name2 = %s'%name2)
-#      url2 = re.sub(name2, ' ', url2) 
-#      dbg_log('url2 = %s'%url2)
-#      url2 = re.sub('/', ' ', urllib.unquote_plus(url2) )
-#      dbg_log('url3 = %s'%url2) 
-      
-#      try:
-#        prtime = time.strptime(url2, " %Y-%m-%d %H:%M ")
-#        stime = str(time.mktime(prtime) % 3600)
-#        dbg_log('stime = %s'%stime)
-#      except:
-#        stime = '0.0'
-	        
-#      for furl in file_ls:
-#        if i == 0:
-#          item0 = xbmcgui.ListItem(path = furl)
-#          xbmcplugin.setResolvedUrl(pluginhandle, True, item0)
-#          dbg_log('furl0 = %s'%furl)
-#          furl += '?start=' + stime
-
-#        item = xbmcgui.ListItem(path = furl)
-#        sPlayList.add(furl, item, i)
         
-#        dbg_log('furl = %s'%furl)
-#        i = i + 1
+#        file_ls   = re.compile('(.*?)playlist').findall(streamer_ls[0])
+#        if len(file_ls):
+#            furl = streamer_ls[0] + '.m3u8'
+#            response = getURL(furl, cookie = mycookie, referrer = url)
 
-#    sPlayer.play(sPlayList)      
-
-
+#            sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+#            sPlayer     = xbmc.Player()
+#            sPlayList.clear()
+            
+#            ts_ls   = re.compile('(.*?).ts').findall(response)
+#            i = 0
+#            for ts in ts_ls:
+#                furl = file_ls[0] + ts + '.ts'
+#                xbmc.log('furl = %s'%furl)
+#                item = xbmcgui.ListItem(path = furl)
+#                sPlayList.add(furl, item, i)
+#                i = i + 1
+                #xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+                
+#            sPlayer.play(sPlayList)
+        
 def get_params():
     param=[]
     paramstring=sys.argv[2]
