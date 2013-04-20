@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.5
+# Rev. 0.4.6
 
 
 
@@ -221,7 +221,7 @@ def KTV_chls(url):
 
     http = getURL(url)
     ch_ls = re.compile('href="' + KTV_arch +'(.+?)"><span><b>(.+?)</b>').findall(http)
-    print ch_ls
+    #print ch_ls
     for arlnk, description in ch_ls:
         title = description
         is_folder = True
@@ -302,7 +302,7 @@ def KTV_guide(furl, thumbnail, cdate):
             gd_ls = re.compile('<a href="' + surl + '/(.+?)">(.+?) +?</a>').findall(oneline)
 
         i = 0
-        print gd_ls
+        #print gd_ls
         if len(gd_ls):
             for href,descr in gd_ls:
                 name=tm_ls[i] + '-' + re.sub('\&#034;' ,'\"', descr.strip())
@@ -322,18 +322,17 @@ def KTV_plarch(url, name, thumbnail, plot):
 
     http = getURL(url)
 
-    #oneline = re.sub('[\r\n]', '', http)
-
-    #"file":"1UDV5RIzJvoTXb6TORwgXxoQJ=oVX2NeOZwb9=07WSa=WR7tJx3QOx3kOREv9Sat9eLewiFtXZ0tOfoz5f0bse7BJZkhyeFdJvoYXxozXxozXx3zXRAkXRHgWeTi"
     fl_ls = re.compile('"file":"(.+?)"').findall(http)
-    print fl_ls
-    #print Decode(fl_ls[0]).encode('utf8')
+    #print fl_ls
     
     if len(fl_ls):
-        furl = Decode(fl_ls[0])
-        xbmc.log('furl = %s'%furl)
-        item = xbmcgui.ListItem(path = furl)
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        #furl = Decode(fl_ls[0])
+        url_ls = re.compile('(.+?).flv').findall(Decode(fl_ls[0]))
+        if len(url_ls):
+            furl = url_ls[0] + '.flv'
+            xbmc.log('furl = %s'%furl)
+            item = xbmcgui.ListItem(path = furl)
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
     
 
 
