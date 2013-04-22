@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.7
+# Rev. 0.4.8
 
 
 
@@ -178,36 +178,33 @@ def KTV_play(url, name, thumbnail, plot):
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
     #print ef_ls
     if len(ef_ls):
-        rtmp_file = Decode(ef_ls[0])
-        dbg_log('rtmp_file = %s'%rtmp_file)
-        st_ls =rtmp_file.split(' ')
-        #print st_ls
-        if len(st_ls):
-            rtmp_streamer = st_ls[0]
-            rtmp_file = rtmp_streamer
-        else:
-            dbg_log('-return1')
-            return       
-    else:
-        dbg_log('-return2')
-        return
+        url_ls = re.compile('rtmp:(.+?).stream').findall(Decode(ef_ls[0]))
+        if len(url_ls):
+            i = 0
+        for ur in url_ls:
+            hurl = 'http:' + url_ls[i] + '.stream'
+            dbg_log('hrl = %s'%hurl)
+            try:            
+              http = urllib2.urlopen(hurl, None, 5)
+            except:
+              i += 1
+              dbg_log('--not playing')
+              continue
+            
+            rtmp_streamer = re.sub('http','rtmp',hurl)
+            furl = rtmp_streamer
+            furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
+            furl += ' pageUrl=%s'%KTV_url
+            furl += ' tcUrl=%s'%rtmp_streamer
+            furl += ' flashVer=\'WIN 11,2,202,235\''
+            
+            xbmc.log('furl = %s'%furl)
+            
+            item = xbmcgui.ListItem(path = furl)
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
+            dbg_log('--playing') 
 
-        
-    furl = rtmp_file
-    furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
-    furl += ' pageUrl=%s'%KTV_url
-    furl += ' tcUrl=%s'%rtmp_streamer
-    furl += ' flashVer=\'WIN 11,2,202,235\''
-    
-  
-
-    dbg_log(furl)
-
-    xbmc.log('furl = %s'%furl)
-    item = xbmcgui.ListItem(path = furl)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-             
         
 def KTV_chls(url):
     dbg_log('-KTV_chls:')
@@ -326,9 +323,7 @@ def KTV_plarch(url, name, thumbnail, plot):
     #print fl_ls
     
     if len(fl_ls):
-        #furl = Decode(fl_ls[0])
         url_ls = re.compile('http:(.+?).flv').findall(Decode(fl_ls[0]))
-        
         if len(url_ls):
             i = 0
         for ur in url_ls:
@@ -336,12 +331,14 @@ def KTV_plarch(url, name, thumbnail, plot):
             xbmc.log('furl = %s'%furl)
             try:            
               http = urllib2.urlopen(furl, None, 10)
-              item = xbmcgui.ListItem(path = furl)
-              xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-              dbg_log('--playing') 
             except:
               i += 1
               dbg_log('--not playing')
+              continue
+
+            item = xbmcgui.ListItem(path = furl)
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+            dbg_log('--playing') 
     
 def get_params():
     param=[]
