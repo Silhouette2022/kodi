@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.6
+# Rev. 0.4.7
 
 
 
@@ -327,16 +327,21 @@ def KTV_plarch(url, name, thumbnail, plot):
     
     if len(fl_ls):
         #furl = Decode(fl_ls[0])
-        url_ls = re.compile('(.+?).flv').findall(Decode(fl_ls[0]))
+        url_ls = re.compile('http:(.+?).flv').findall(Decode(fl_ls[0]))
+        
         if len(url_ls):
-            furl = url_ls[0] + '.flv'
+            i = 0
+        for ur in url_ls:
+            furl = 'http:' + url_ls[i] + '.flv'
             xbmc.log('furl = %s'%furl)
-            item = xbmcgui.ListItem(path = furl)
-            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-    
-
-
-
+            try:            
+              http = urllib2.urlopen(furl, None, 10)
+              item = xbmcgui.ListItem(path = furl)
+              xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+              dbg_log('--playing') 
+            except:
+              i += 1
+              dbg_log('--not playing')
     
 def get_params():
     param=[]
