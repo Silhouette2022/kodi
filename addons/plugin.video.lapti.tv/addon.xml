@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.lapti.tv" name="Lapti.TV" version="0.1.0" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Live TV and Archives from lapti.tv \nTest Mode</summary>
+    <description>Live TV and Archives from lapti.tv \nTest Mode</description>
+    <platform>all</platform>
+  </extension>
+</addon>
