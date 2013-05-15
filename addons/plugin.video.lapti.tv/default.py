@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.1.0
+# Rev. 0.2.0
 
 
 
@@ -24,7 +24,24 @@ dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
+def getMskTime():
+    try:
+      msktmht = getURL('http://time.jp-net.ru/');
+      msktmls = re.compile('<h1 align=\'center\'>(.*?): (.*?)</h1>').findall(msktmht)
+      msktmst = time.strptime(msktmls[0][1] + ' ' + msktmls[1][1], "%Y-%d-%m %H:%M:%S")
+      mskitime = time.mktime(msktmst)
+      return mskitime
+    except:
+      return 0
 
+wds =  {0:'Пн',
+        1:'Вт',
+        2:'Ср',
+        3:'Чт',
+        4:'Пт',
+        5:'Сб',
+        6:'Вс'}
+            
 logos = {'onechanel':'pervyi_kanal',
             'rus1chanel':'rossiia_1',
             'ntvchanel':'ntv',
@@ -45,26 +62,25 @@ logos = {'onechanel':'pervyi_kanal',
             'tv3chanel': 'tv-3',
             'mtvchanel': 'mtv-russia'}
             
-chnames = {'onechanel':'pervyi_kanal',
-            'rus1chanel':'rossiia_1',
-            'ntvchanel':'ntv',
-            'stschanel':'sts',
-            'rus2chanel':'rossiia_2',
-            'perec':'perets',
-            'ruskchanel':'rossiia_k',
-            'rentvchanel':'ren_tv',
-            'rus24chanel':'rossiia_24',
-            'karuselchanel':'karusel',
-            'tv5chanel':'piatyi_kanal',
-            'disneychanel':'disney_channel',
-            'homechanel':'domashnii',
-            'tvcentrchanel': 'tvts',
-            'zvezda': 'zvezda',
-            'uchanel': 'iu-tv',
-            'tnt': 'tnt',
-            'tv3chanel': 'tv-3',
-            'mtvchanel': 'mtv-russia'}
-                        
+chnames = {'onechanel':'Первыи_канал',
+            'rus1chanel':'Россия_1',
+            'ntvchanel':'НТВ',
+            'stschanel':'СТС',
+            'rus2chanel':'Россия_2',
+            'perec':'Перец',
+            'ruskchanel':'Россия_К',
+            'rentvchanel':'РЕН_ТВ',
+            'rus24chanel':'Россия_24',
+            'karuselchanel':'Карусель',
+            'tv5chanel':'5_Канал',
+            'disneychanel':'Disney_Chanel',
+            'homechanel':'Домашний',
+            'tvcentrchanel': 'ТВЦ',
+            'zvezda': 'Звезда',
+            'uchanel': 'Ю_ТВ',
+            'tnt': 'ТНТ',
+            'tv3chanel': 'ТВ-3',
+            'mtvchanel': 'МТВ'}
     
       
 def Decode(param):
@@ -167,6 +183,7 @@ def getURL(url, data = None, cookie = None, save_cookie = False, referer = None,
 def LTV_prls(url):
     dbg_log('-LTV_prls:')
     dbg_log('url = %s'%url)
+
     http = getURL(url)
     #print http
     pr_ls = re.compile('<li><a class="(.+?)" href="(.+?)"></a></li>').findall(http)
@@ -192,7 +209,7 @@ def LTV_prls(url):
             tbn = logo
             
             item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
-            uri = sys.argv[0] + '?mode=GDLS'
+            uri = sys.argv[0] + '?mode=DTLS'
             uri += '&url='+urllib.quote_plus(url + href)
             uri += '&thumbnail='+urllib.quote_plus(logo)
             item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
@@ -224,8 +241,7 @@ def LTV_play(url):
         item = xbmcgui.ListItem(path = furl)
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
              
-
-def LTV_guide(furl, thumbnail):
+def LTV_guideOLD(furl, thumbnail):
     dbg_log('-LTV_guide:')
     dbg_log('furl = %s'%furl)
         
@@ -234,6 +250,7 @@ def LTV_guide(furl, thumbnail):
       mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     except:
       mycookie = ''
+
     
     ef_ls = re.compile('"file":"(.+?)"').findall(http)
     #print ef_ls
@@ -247,7 +264,6 @@ def LTV_guide(furl, thumbnail):
         item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
         item.setProperty('IsPlayable', 'true')
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
-
 
     sys_ls = re.compile('<input type="hidden" name="sys" id="(.+?)" value="(.+?)">').findall(http)
     str_ls = re.compile('<input type="hidden" name="stream" id="(.+?)" value="(.+?)">').findall(http)
@@ -287,12 +303,95 @@ def LTV_guide(furl, thumbnail):
 
     xbmcplugin.endOfDirectory(pluginhandle)
 #    wnd = xbmcgui.Window(xbmcgui.getCurrentWindowId())
-#    wnd.getControl(wnd.getFocusId()).selectItem(cpos)    
+#    wnd.getControl(wnd.getFocusId()).selectItem(cpos)   
+
+def LTV_guide(furl, thumbnail, pdata, pref, psys, pstream, mycookie):
+    dbg_log('-LTV_guide:')
+    dbg_log('furl = %s'%furl)
+        
+    http = getURL(LTV_url + '/src/ajax.php', 
+                  data = 'nowdate=' + pdata + '&chanel=' + psys + '&sli=3&filter=', 
+                  referer = furl, xReqW = 'XMLHttpRequest')
+
+    prog_ls = re.compile('<span  id="prog(.+?)"><span class="now-top"></span><span class="now-middle"><span class="time" rel="(.+?)">(.+?)</span> <span class="tvname"><span class="name">(.+?)</span>').findall(http)
+    
+    if len(prog_ls):
+      for prog, rel, stm, descr in prog_ls:
+          name=stm + '-' + descr
+          dbg_log(name)
+
+          item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
+          uri = sys.argv[0] + '?mode=PLAR'
+          
+          #POST start=1366995600&timeng=undefined&chanel=http://www.lapti.tv/pervii-kanal-online.html&sys=1TV&stream=first              
+          uri += '&url='+urllib.quote_plus(LTV_url + '/src/ajaxplayer.php')
+          uri += '&pdata='+urllib.quote_plus('start=' + rel + '&timeng=' + rel + '&chanel=' + pref + '&sys=' + psys + '&stream=' + pstream)
+          uri += '&cookie='+urllib.quote_plus(mycookie)
+          item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
+          item.setProperty('IsPlayable', 'true')
+          xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+
+    xbmcplugin.endOfDirectory(pluginhandle)
+
+
+def LTV_dates(furl, thumbnail):
+    dbg_log('-LTV_guide:')
+    dbg_log('furl = %s'%furl)
+    
+        
+    http = getURL(furl, save_cookie = True)
+    try:
+      mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    except:
+      mycookie = ''
+
+    ef_ls = re.compile('"file":"(.+?)"').findall(http)
+
+    if len(ef_ls):
+        rtmp_file = Decode(ef_ls[0])
+        name = '-Live-'
+        descr = '-Live-'
+        item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
+        uri = sys.argv[0] + '?mode=PLAY'
+        uri += '&url='+urllib.quote_plus(rtmp_file)
+        item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
+        item.setProperty('IsPlayable', 'true')
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+
+    sys_ls = re.compile('<input type="hidden" name="sys" id="(.+?)" value="(.+?)">').findall(http)
+    date_ls = re.compile('<input type="hidden" name="prevdata" id="(.+?)" value="(.+?)">').findall(http)
+    str_ls = re.compile('<input type="hidden" name="stream" id="(.+?)" value="(.+?)">').findall(http)
+    
+    cpos = 0
+    if len(sys_ls) > 0 and len(date_ls) > 0 and len(str_ls) > 0:
+    
+#        try:
+        iMsk = getMskTime()
+        if iMsk:
+                dthdr_ls = [(time.strftime("%Y-%m-%d",time.localtime(iMsk - i*3600*24)), 
+                            ' ' + wds[time.localtime(iMsk - i*3600*24).tm_wday])  for i in range(20)]
+#        except:
+            #<span class="titleprogram">30 Апреля 2013 (<span class="nedeasy">Вт</span>)</span>
+#            dttp = getURL(LTV_url + '/src/ajax.php', data = 'nowdate=' + date_ls[0][1] + '&chanel=' + sys_ls[0][1] + '&sli=4&filter=', referer = furl, xReqW = 'XMLHttpRequest')
+#            dthdr_ls = re.compile('<span class="titleprogram">(.+?)\(<span class=".*?">(.+?)</span>\)</span>').findall(dttp)
+        
+        for dtname,week in dthdr_ls:
+            item = xbmcgui.ListItem(dtname + week, iconImage=thumbnail, thumbnailImage=thumbnail)
+            uri = sys.argv[0] + '?mode=GDLS'
+            uri += '&url='+urllib.quote_plus(furl)
+            uri += '&pdata='+urllib.quote_plus(dtname)
+            uri += '&pref='+urllib.quote_plus(furl)
+            uri += '&psys='+urllib.quote_plus(sys_ls[0][1])
+            uri += '&name='+urllib.quote_plus(str_ls[0][1])
+            uri += '&cookie='+urllib.quote_plus(mycookie)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+    
+    xbmcplugin.endOfDirectory(pluginhandle)        
+
     
 def LTV_plarch(url, pdata, cook):
 
     http = getURL(url, data = pdata, cookie = cook, referer="http://www.lapti.tv/pervii-kanal-online.html", xReqW = 'XMLHttpRequest')
-    #oneline = re.sub('[\r\n]', '', http)
 
     #"file":"1UDV5RIzJvoTXb6TORwgXxoQJ=oVX2NeOZwb9=07WSa=WR7tJx3QOx3kOREv9Sat9eLewiFtXZ0tOfoz5f0bse7BJZkhyeFdJvoYXxozXxozXx3zXRAkXRHgWeTi"
     fl_ls = re.compile('"file":"(.+?)"').findall(http)
@@ -334,6 +433,8 @@ mode=None
 #thumbnail=fanart
 thumbnail=''
 pdata=''
+pref=''
+psys=''
 cookie=''
 dbg_log('OPEN:')
 
@@ -362,6 +463,14 @@ try:
     dbg_log('-PDATA:'+ pdata + '\n')
 except: pass
 try: 
+    pref=urllib.unquote_plus(params['pref'])
+    dbg_log('-PREF:'+ pref + '\n')
+except: pass
+try: 
+    psys=urllib.unquote_plus(params['psys'])
+    dbg_log('-PSYS:'+ psys + '\n')
+except: pass
+try: 
     cookie=urllib.unquote_plus(params['cookie'])
     dbg_log('-COOKIE:'+ cookie + '\n')
 except: pass
@@ -370,7 +479,8 @@ except: pass
 if mode == 'PLAR': LTV_plarch(url, pdata, cookie)
 elif mode == 'PLAY': LTV_play(url)
 elif mode == 'PRLS': LTV_prls(LTV_url)
-elif mode == 'GDLS': LTV_guide(url, thumbnail)
+elif mode == 'DTLS': LTV_dates(url, thumbnail)
+elif mode == 'GDLS': LTV_guide(url, thumbnail, pdata, pref, psys, name, cookie)
 elif mode == None: LTV_prls(LTV_url)
 
 dbg_log('CLOSE:')
