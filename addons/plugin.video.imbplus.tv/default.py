@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-# Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.5.5
+# Writer (c) 2012, Silhouette, E-mail: Silhouette2022@gmail.com
+# Rev. 0.5.6
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -129,9 +129,12 @@ def get_evline(events, tm, prg=None):
                 time.strftime("%H:%M", time.localtime(events[i][0][0])),events[i-1][0][1])
             else:
                 line = ''
-                for j in range(0,6):
-                    line += '[B][COLOR FF0084FF]%s [/COLOR] [COLOR FFCCCCCC]%s[/COLOR][/B]'\
-                    %(time.strftime("%H:%M", time.localtime(events[i-1+j][0][0])),events[i-1+j][0][1]) + chr(10)
+                try:
+                  for j in range(0,6):
+                      line += '[B][COLOR FF0084FF]%s [/COLOR] [COLOR FFCCCCCC]%s[/COLOR][/B]'\
+                      %(time.strftime("%H:%M", time.localtime(events[i-1+j][0][0])),events[i-1+j][0][1]) + chr(10)
+                except: 
+                  pass
 
             return line
         else:
