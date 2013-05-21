@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.5.4
+# Rev. 0.5.5
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -28,6 +28,8 @@ usr_log = __settings__.getSetting('usr_log')
 usr_pwd = __settings__.getSetting('usr_pwd')
 usr_ctry = __settings__.getSetting('usr_ctry')
 usr_guide = __settings__.getSetting('usr_guide')
+usr_gd_ext = __settings__.getSetting('usr_gd_ext')
+usr_gd_ext = "true"
 
 if usr_guide == "true":
   usr_tst = __settings__.getSetting('usr_tst')
@@ -78,7 +80,7 @@ def get_events(url, events, chGr):
     
 
     htpg = get_url(url + guige_pg + chGr)
-    print htpg
+    #print htpg
     oneline = re.sub('\n', '', htpg)
     htpg = re.sub('<tr class="day">', '<class/><tr class="day">', oneline)
     oneline = re.sub('</table>', '<class/></table>', htpg)
@@ -114,16 +116,23 @@ def get_events(url, events, chGr):
             events.append([(evtn, evm)])
             if dbg_gd: dbg_log('%d %s'%(evtn,ed_ls[2] + '-' + months[ed_ls[1]]+ '-' + ed_ls[0] + ' '+ evt + ' '+ evm))
             i = 1
-             
+    
     return events
 
-def get_evline(events, tm):
+def get_evline(events, tm, prg=None):
     prtm = events[0][0][0]
     if dbg_gd: dbg_log('tm-%s'%tm)
     for i in range(1,len(events)):
         if tm >= prtm and tm < events[i][0][0]:
-            line = '%s-%s %s'%(time.strftime("%H:%M", time.localtime(prtm)),\
-            time.strftime("%H:%M", time.localtime(events[i][0][0])),events[i-1][0][1])
+            if prg == None:
+                line = '%s-%s %s'%(time.strftime("%H:%M", time.localtime(prtm)),\
+                time.strftime("%H:%M", time.localtime(events[i][0][0])),events[i-1][0][1])
+            else:
+                line = ''
+                for j in range(0,6):
+                    line += '[B][COLOR FF0084FF]%s [/COLOR] [COLOR FFCCCCCC]%s[/COLOR][/B]'\
+                    %(time.strftime("%H:%M", time.localtime(events[i-1+j][0][0])),events[i-1+j][0][1]) + chr(10)
+
             return line
         else:
             prtm = events[i][0][0]
@@ -226,6 +235,9 @@ def IMB_chls(url, mycookie):
     
 def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
     dbg_log('-IMB_chtz:'+ '\n')
+    
+    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+    #xbmc.executebuiltin("Container.SetViewMode(503)") #Media Info
 
     http = get_url(url + chpg, cookie = cook, referrer = rfr)
 
@@ -254,6 +266,7 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
             
     tz_ls = re.compile("<option name='time_zone' class='box' id=\"(.+?)\" value=\"(.+?)\" (.+?)>(.+?)</option>").findall(http)
     i = 0
+    description = ''
     for tz_nm, tz_val, tz_sel, tz_dcr  in tz_ls:
         tzvl = int(tz_val)
         if tzvl:
@@ -269,20 +282,22 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
 
         if tml:
             evline = get_evline(events, tml - (tzgd) * 3600 )
+            if usr_gd_ext == "true":
+                description = get_evline(events, tml - (tzgd) * 3600, True)
         else:
             evline = None 
         
-        if evline:  description = evline
-        else: description = tz_dcr
+        if evline:  title = evline
+        else: title = tz_dcr
         
-        dbg_log('- description:'+  description)
+        dbg_log('- title:'+  title)
                 
-        item = xbmcgui.ListItem(description, iconImage=chlg)
+        item = xbmcgui.ListItem(title, iconImage=chlg)
         uri = sys.argv[0] + '?mode=chpl' + '&tzvl=' + tz_val \
         + '&uid=' + uid + '&chrn=' + chrn \
         + '&rfr=' + url + chpg + '&chlg=' + chlg + '&cook=' + urllib.quote_plus(cook)
     
-        title = description
+        if description=='': description = title
         thumbnail = chlg
     
         item.setInfo( type='video', infoLabels={'title': title, 'plot': description})

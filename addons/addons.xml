@@ -10,7 +10,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.imbplus.tv" name="[COLOR FF35A97D0]IMB Plus TV[/COLOR]" version="0.5.4" provider-name="Silhouette">
+<addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.5" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
