@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
-# Writer (c) 2012, Silhouette, E-mail: Silhouette2022@gmail.com
-# Rev. 0.5.6
+# Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
+# Rev. 0.5.7
 
 
 import urllib,urllib2,re,sys,os,time,random
 import xbmcplugin,xbmcgui,xbmcaddon
 import json
-
+	
 dbg = 0
 dbg_gd = 0
 
@@ -36,6 +36,15 @@ if usr_guide == "true":
 
 usr_allch = "false"
 
+def track(page_url, cook):
+
+#    gif = get_url("http://c.statcounter.com/8968112/0/56d3dd23/1/")
+  try:
+    gif = get_url("http://c.statcounter.com/t.php?sc_project=8968112&camefrom="+page_url+"&u="+usr_log+"&java=0&security=56d3dd23&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+  except:
+    pass
+    
+     
 def dbg_log(line):
     if dbg: print line
     
@@ -144,6 +153,7 @@ def get_evline(events, tm, prg=None):
   
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+    dbg_log(url)
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
@@ -172,6 +182,7 @@ def IMB_ctls(url):
     http = get_url(url + login_pg, 
                   data = "login=" + usr_log + "&pass=" + usr_pwd + "&sign=Login",
                   cookie = mycookie, referrer = url + login_pg)
+    track(login_pg, mycookie)                  
                   
     if usr_ctry != 'all':
         IMB_chls(url, mycookie)
@@ -199,8 +210,8 @@ def IMB_chls(url, mycookie):
         http = get_url(url + login_pg, 
                   data = "login=" + usr_log + "&pass=" + usr_pwd + "&sign=Login",
                   cookie = mycookie, referrer = url + login_pg)
-    else:
-        http = get_url(url, cookie = mycookie, referrer = url + login_pg)
+
+    http = get_url(url + index_pg, cookie = mycookie, referrer = url + login_pg)
 
     if usr_ctry != 'pl':
         cntry_ls = re.compile('<a href="'+ url + cntry_pg + usr_ctry + '(.+?)"').findall(http)
@@ -213,7 +224,8 @@ def IMB_chls(url, mycookie):
     
         http = get_url(url + channel_pg, cookie = mycookie, referrer = url + index_pg)
         rnew_ls = re.compile('window.location\s=\s"http://www.imb-plus.tv/user/renew.php"').findall(http)
-
+        track(channel_pg, mycookie)
+      
         if len(rnew_ls) and usr_tst != "true":
             item = xbmcgui.ListItem("Renew Membership")
             xbmcplugin.addDirectoryItem(pluginhandle, "", item, False)  
@@ -243,6 +255,7 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
     #xbmc.executebuiltin("Container.SetViewMode(503)") #Media Info
 
     http = get_url(url + chpg, cookie = cook, referrer = rfr)
+    track(chpg, cook) 
 
     uid_ls = re.compile('<body onload="onLoad\((.+?), (.+?), (.+?), (.+?)\)">').findall(http)
     uid = re.sub("\'", "", uid_ls[0][3])
@@ -316,9 +329,12 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
 
 def IMB_chpl(url, chrn, chlg, cook, rfr, tzvl, uid):     
     dbg_log('-IMB_chpl:'+ '\n')
-    vlc_url = url + 'lib/ajax/aux_act_json.php?' + 'order=' + uid + '&ch=' + chrn + '&tz=' + tzvl + '&ts=0' + '&t=' + str(random.random())
+    vlc_pg = 'lib/ajax/aux_act_json.php?'
+    vlc_url = url + vlc_pg + 'order=' + uid + '&ch=' + chrn + '&tz=' + tzvl + '&ts=0' + '&t=' + str(random.random())
     vlc = get_url(vlc_url, cookie = cook, referrer = rfr)
     dbg_log(vlc)
+    track(vlc_pg, cook)  
+      
     lnk_ls = re.compile('"url":"(.+?)"').findall(vlc)
     if len(lnk_ls) :
         #vlink = re.sub('\\/','/',lnk_ls[0])
