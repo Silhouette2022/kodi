@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.1
+# Rev. 0.2.4
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 
-dbg = 1
+dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
