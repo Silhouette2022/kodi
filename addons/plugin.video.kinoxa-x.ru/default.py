@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.4
+# Rev. 0.2.5
 
 
 import urllib,urllib2,re,sys
@@ -190,6 +190,7 @@ def KNX_ctlg(url):
                 ( "/load/sortirovka_po_godam/filmy_2011_goda/51", '2011 год'),
                 ( "/load/sortirovka_po_godam/filmy_2010_goda/52", '2010 год'),
                 ( "/load/sortirovka_po_godam/filmy_2009_goda/53", '2009 год'),
+                ( "/load/kategorii/kachestvo_full_hd/66", 'FULL HD'),
                 ( "/load/kategorii/filmy_v_3d/67", 'Фильмы в 3D'),
                 ( "/load/kategorii/komedii/30", 'Комедии'),
                 ( "/load/kategorii/boeviki/31", 'Боевики'),
