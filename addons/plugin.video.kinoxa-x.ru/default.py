@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.6
+# Rev. 0.2.7
 
 
 import urllib,urllib2,re,sys
@@ -68,23 +68,24 @@ def KNX_list(url, page, type):
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')    
     
+
     if type == 'find':
         entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
         msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"})
     else:
         entry_id = re.compile("entryID[0-9]")
         entrys = BeautifulSoup(http).findAll('div',{"id":entry_id})
- 
+
     for eid in entrys:
         
         if type == 'find':
             films = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))
             plots = re.compile('style=".*?">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))
         else:
-            films = re.compile('<a href="(.*?)"><h3 style=".*?">(.*?)</h3></a>').findall(str(eid))
+            films = re.compile('<a href="(.*?)"><h[0-9] style=".*?">(.*?)</h[0-9]></a>').findall(str(eid))
             plots = re.compile('<span class="kr-opis-rol">(.*?)</noindex>').findall(re.sub('[\n\r\t]', ' ',str(eid)))
             imgs = re.compile('<img src="(.*?)"').findall(str(eid))
-        
+
         for href, title in films:
             title = re.sub('<.*?>', '',title)
             try: img = imgs[0]
@@ -97,12 +98,10 @@ def KNX_list(url, page, type):
 
             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
             item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-            uri = sys.argv[0] + '?mode=view' \
-            + '&url=' + urllib.quote_plus(href) \
-            + '&img=' + urllib.quote_plus(img) \
-            + '&name=' + urllib.quote_plus(title)
-#            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            uri = sys.argv[0] + '?mode=play' \
+            + '&url=' + urllib.quote_plus(href)
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
             dbg_log('- uri:'+  uri + '\n')
             i = i + 1
                 
@@ -120,45 +119,68 @@ def KNX_list(url, page, type):
     xbmcplugin.endOfDirectory(pluginhandle) 
 
 
-    
-def KNX_view(url, img, name):     
-    dbg_log('-KNX_view:'+ '\n')
+def KNX_list2(url, page):
+    dbg_log('-KNX_list:' + '\n')
     dbg_log('- url:'+  url + '\n')
-    dbg_log('- img:'+  img + '\n')
-    dbg_log('- name:'+  name + '\n')
-    
-    http = get_url(url)
-    iframes = re.compile('<iframe src="(.*?)"').findall(http)
-    if len(iframes) == 0:
-        iframes = re.compile("<iframe height='.*?' width='.*?' frameborder='.*?' src='(.*?)'").findall(http)
-    
-    i = 1
-    for file in iframes:    
-        if len(iframes) > 1:
-            title = str(i) + ' - ' + name
-        else:
-            title = name
-        i += 1
+    dbg_log('- page:'+  page + '\n')
 
-        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-        uri = sys.argv[0] + '?mode=play' \
-        + '&url=' + urllib.quote_plus(file)
-        item.setProperty('IsPlayable', 'true')
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
+
+    n_url = url + page
+        
+    dbg_log('- n_url:'+  n_url + '\n')
+    
+    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+    
+    http = get_url(n_url)
+    i = 0
+    
+    entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
+    msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"})
+
+    for eid in entrys:
+
+        films = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))
+        plots = re.compile('style=".*?">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))
+        
+        for href, title in films:
+            img = ''
+            title = re.sub('<.*?>', '',title)
+            try: plot = re.sub('<.*?>', '',plots[0])
+            except: plot = title
+            dbg_log('-TITLE %s'%title)
+            dbg_log('-PLOT %s'%plot)
+
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
+            uri = sys.argv[0] + '?mode=play' \
+            + '&url=' + urllib.quote_plus(href)
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+            dbg_log('- uri:'+  uri + '\n')
+            i = i + 1
+                
+    if i:
+        item = xbmcgui.ListItem('<NEXT PAGE>')
+        uri = sys.argv[0] + '?mode=list&page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
-
-    xbmcplugin.endOfDirectory(pluginhandle)
+      
+ 
+    xbmcplugin.endOfDirectory(pluginhandle) 
     
 def KNX_play(url):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     
-
     http = get_url(url)
-    flvs = re.compile("file : '(.*?)'").findall(http)
-    if len(flvs):
-        item = xbmcgui.ListItem(path = flvs[0])
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    iframes = re.compile('<iframe src="(.*?)"').findall(http)
+    
+    if len(iframes):
+        http = get_url(iframes[0])
+        flvs = re.compile("file : '(.*?)'").findall(http)
+        if len(flvs):
+            item = xbmcgui.ListItem(path = flvs[0])
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 def KNX_ctlg(url):
     dbg_log('-KNX_ctlg:' + '\n')
@@ -169,7 +191,6 @@ def KNX_ctlg(url):
                 ( "/load/sortirovka_po_godam/filmy_2011_goda/51", '2011 год'),
                 ( "/load/sortirovka_po_godam/filmy_2010_goda/52", '2010 год'),
                 ( "/load/sortirovka_po_godam/filmy_2009_goda/53", '2009 год'),
-                ( "/load/kategorii/kachestvo_full_hd/66", 'FULL HD'),
                 ( "/load/kategorii/filmy_v_3d/67", 'Фильмы в 3D'),
                 ( "/load/kategorii/komedii/30", 'Комедии'),
                 ( "/load/kategorii/boeviki/31", 'Боевики'),
@@ -260,8 +281,6 @@ params=get_params()
 type = ''
 mode=''
 url=''
-imag=''
-name=''
 
 try:
     mode=params['mode']
@@ -279,14 +298,6 @@ try:
     type=urllib.unquote_plus(params['type'])
     dbg_log('-TYPE:'+ type + '\n')
 except: pass
-try: 
-    imag=urllib.unquote_plus(params['img'])
-    dbg_log('-IMaG:'+ imag + '\n')
-except: pass
-try: 
-    name=urllib.unquote_plus(params['name'])
-    dbg_log('-NAME:'+ name + '\n')
-except: pass
 
 if url=='':
     url = page_pg
@@ -295,6 +306,6 @@ if mode == '': KNX_list(url, page, type)
 elif mode == 'ctlg': KNX_ctlg(url)
 elif mode == 'play': KNX_play(url)
 elif mode == 'find': KNX_find()
-elif mode == 'view': KNX_view(url, imag, name)
+#elif mode == 'list': KNX_list(url, page)
 
 
