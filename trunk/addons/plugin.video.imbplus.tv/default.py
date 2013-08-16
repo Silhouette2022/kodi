@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.5.7
+# Rev. 0.5.8
 
 
 import urllib,urllib2,re,sys,os,time,random
@@ -38,9 +38,10 @@ usr_allch = "false"
 
 def track(page_url, cook):
 
-#    gif = get_url("http://c.statcounter.com/8968112/0/56d3dd23/1/")
   try:
-    gif = get_url("http://c.statcounter.com/t.php?sc_project=8968112&camefrom="+page_url+"&u="+usr_log+"&java=0&security=56d3dd23&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+  
+#    gif = get_url("http://c.statcounter.com/t.php?sc_project=8968112&camefrom="+page_url+"&u="+usr_log+"&java=0&security=56d3dd23&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+    pass
   except:
     pass
     
@@ -93,8 +94,9 @@ def get_events(url, events, chGr):
     oneline = re.sub('\n', '', htpg)
     htpg = re.sub('<tr class="day">', '<class/><tr class="day">', oneline)
     oneline = re.sub('</table>', '<class/></table>', htpg)
-
+    #print oneline
     pg_ls = re.compile('<tr class="day"><td colspan="3">(.*?), (.*?)</td></tr>(.*?)<class/>').findall(oneline)
+
     if len(pg_ls) == 0:
         return events
 
@@ -155,9 +157,11 @@ def get_evline(events, tm, prg=None):
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
     dbg_log(url)
     req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
-    req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
-    req.add_header('Accept-Language', 'ru,en;q=0.9')
+   
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
+    req.add_header('Accept', 'text/html, */*')
+    req.add_header('Accept-Language', 'en-US,en')
+
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
     if data: 
@@ -277,7 +281,9 @@ def IMB_chtz(url, chrn, chlg, chgr, cook, rfr, chpg):
           httm = get_url(time_pg + tm_ref[usr_ctry])
           tml_ls = re.compile('<th class=w5>Current Time</th><td><strong id=ct  class=big>(.*?)</strong>').findall(httm)
           if len(tml_ls):
-              if dbg_gd: dbg_log(tml_ls[0]) #Monday, March 12, 2012 at 7:20:27 AM
+              if dbg_gd: dbg_log(tml_ls[0]) 
+              #Monday, March 12, 2012 at 7:20:27 AM
+              #Cуббота 17 август 2013 г. 00:06:23
               tml = time.mktime(time.strptime(tml_ls[0],"%A, %B %d, %Y at %I:%M:%S %p"))
             
     tz_ls = re.compile("<option name='time_zone' class='box' id=\"(.+?)\" value=\"(.+?)\" (.+?)>(.+?)</option>").findall(http)
