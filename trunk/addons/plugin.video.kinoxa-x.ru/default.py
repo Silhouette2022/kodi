@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.7
+# Rev. 0.2.8
 
 
 import urllib,urllib2,re,sys
@@ -174,9 +174,9 @@ def KNX_play(url):
     
     http = get_url(url)
     iframes = re.compile('<iframe src="(.*?)"').findall(http)
-    
+
     if len(iframes):
-        http = get_url(iframes[0])
+        http = get_url(iframes[1])
         flvs = re.compile("file : '(.*?)'").findall(http)
         if len(flvs):
             item = xbmcgui.ListItem(path = flvs[0])
