@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.2.5
+# Rev. 0.3.0
 
 
 
@@ -199,8 +199,10 @@ def INC_prls(url, id, name, pdate, thumbnail, mycookie):
           for ent in jdata[it]:
               item = xbmcgui.ListItem(ent[u'startTime'] + '-' + ent[u'title'], iconImage=thumbnail, thumbnailImage=thumbnail)
               uri = sys.argv[0] + '?mode=arpl'
-              uri += '&id='+urllib.quote_plus(id) + '&name='+urllib.quote_plus(name)
+              uri += '&url='+urllib.quote_plus(INC_url + '/channel/schedule/sch_id/' + ent[u'id'] + '/date/' + pdate)                                                
+              uri += '&id='+urllib.quote_plus(ent[u'id']) + '&name='+urllib.quote_plus(name)
               uri += '&pdate='+urllib.quote_plus(pdate) + '&ptime='+urllib.quote_plus(ent[u'startTime'])
+              uri += '&cook=' + urllib.quote_plus(mycookie)
               item.setInfo( type='video', infoLabels={'title': name, 'plot': name})
               item.setProperty('IsPlayable', 'true')              
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
@@ -208,15 +210,20 @@ def INC_prls(url, id, name, pdate, thumbnail, mycookie):
     xbmcplugin.endOfDirectory(pluginhandle)
 
 
-def INC_arpl(url, id, name, pdate, ptime):
+def INC_arpl(url, id, name, pdate, ptime, mycookie):
     dbg_log('-INC_arpl')
-    vlink = 'http://194.187.205.237' + '/video/' + id + '/' + pdate + '/' + ptime + '_' + name +'.mkv'
-    dbg_log(vlink)
-    item = xbmcgui.ListItem(path =  vlink)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-        
-        
-
+    
+    response = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)    
+    response = re.sub('[\r\n]', ' ', response)
+    
+    play_links = re.compile("lnks\s*=\s*\[\'(http://inetcom.tv/lookRecord/[a-zA-Z0-9]+)\'];").findall(response)
+    if len(play_links):
+        for link in play_links:
+            dbg_log('archive stream link: ' + str(link))
+            
+            item = xbmcgui.ListItem(path =  link)
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)            
+            break
    
 def get_params():
     param=[]
@@ -295,7 +302,7 @@ elif mode == 'live': INC_live(INC_urlw + INC_ch, cook)
 elif mode == 'chls': INC_chls(cook)
 elif mode == 'dtls': INC_dtls(url, name, thumbnail, cook)
 elif mode == 'prls': INC_prls(url, id, name, pdate, thumbnail, cook)
-elif mode == 'arpl': INC_arpl(url, id, name, pdate, ptime)
+elif mode == 'arpl': INC_arpl(url, id, name, pdate, ptime, cook)
 elif mode == None: INC_start()
 
 dbg_log('CLOSE:')
