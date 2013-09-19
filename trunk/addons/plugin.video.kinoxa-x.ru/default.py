@@ -1,12 +1,28 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.9
+# Rev. 0.3.0
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
+
+try:
+  # Import UnifiedSearch
+  sys.path.append(os.path.dirname(__file__)+ '/../plugin.video.unified.search')
+  from unified_search import UnifiedSearch
+except: pass
+
+__settings__ = xbmcaddon.Addon(id='plugin.video.kinoxa-x.ru')
+use_translit = __settings__.getSetting('translit')
+
+try:  
+  import Translit as translit
+  translit = translit.Translit()  
+except: use_translit = 'false'
+
+
 
 dbg = 0
 
@@ -17,6 +33,11 @@ page_pg = start_pg + "/load/0-"
 fdpg_pg = ";t=0;md=;p="
 find_pg = start_pg + "/search/?q="
 
+def gettranslit(msg):
+    if use_translit == 'true': 
+        return translit.rus(msg)
+    else: return msg
+    
 
 def dbg_log(line):
     if dbg: print line
@@ -46,7 +67,8 @@ def KNX_list(url, page, type):
     dbg_log('-KNX_list:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
-    
+    dbg_log('- type:'+  type + '\n')
+        
     if type == 'ctlg':
         n_url = url + '-' + page + '-2'
     else:
@@ -54,7 +76,8 @@ def KNX_list(url, page, type):
         
     dbg_log('- n_url:'+  n_url + '\n')
     
-    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+    if type != 'unis':
+        xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
     
     http = get_url(n_url)
     i = 0
@@ -69,16 +92,17 @@ def KNX_list(url, page, type):
             dbg_log('- uri:'+  uri + '\n')    
     
 
-    if type == 'find':
+    if type == 'find' or type == 'unis':
         entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
         msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"})
+        unis_res = []
     else:
         entry_id = re.compile("entryID[0-9]")
         entrys = BeautifulSoup(http).findAll('div',{"id":entry_id})
 
     for eid in entrys:
         
-        if type == 'find':
+        if type == 'find' or type == 'unis':
             films = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))
             plots = re.compile('style=".*?">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))
         else:
@@ -96,27 +120,37 @@ def KNX_list(url, page, type):
             dbg_log('-IMG %s'%img)
             dbg_log('-PLOT %s'%plot)
 
-            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-            item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-            uri = sys.argv[0] + '?mode=play' \
-            + '&url=' + urllib.quote_plus(href)
-            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-            dbg_log('- uri:'+  uri + '\n')
-            i = i + 1
-                
-    if i:
-        item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-        dbg_log('- uri:'+  uri + '\n')
-        if type != 'find':
-            item = xbmcgui.ListItem('<NEXT PAGE +5>')
-            uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-            dbg_log('- uri:'+  uri + '\n')        
- 
-    xbmcplugin.endOfDirectory(pluginhandle) 
+            if type != 'unis':
+                item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+                item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
+                uri = sys.argv[0] + '?mode=play' \
+                + '&url=' + urllib.quote_plus(href)
+                item.setProperty('IsPlayable', 'true')
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+                dbg_log('- uri:'+  uri + '\n')
+                i = i + 1
+            else:
+              try:
+                  unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
+              except: pass
+
+    if type == 'unis':
+      try: UnifiedSearch().collect(unis_res)
+      except:  pass
+    else:
+      if i :
+          item = xbmcgui.ListItem('<NEXT PAGE>')
+          uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type
+          xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+          dbg_log('- uri:'+  uri + '\n')
+          if type != 'find':
+              item = xbmcgui.ListItem('<NEXT PAGE +5>')
+              uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type
+              xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+              dbg_log('- uri:'+  uri + '\n')        
+     
+      xbmcplugin.endOfDirectory(pluginhandle) 
+
 
 
 def KNX_list2(url, page):
@@ -254,7 +288,7 @@ def KNX_find():
     kbd.setHeading('ПОИСК')
     kbd.doModal()
     if kbd.isConfirmed():
-        stxt = uni2enc(kbd.getText())
+        stxt = uni2enc(gettranslit(kbd.getText()))
         furl = find_pg + stxt + fdpg_pg
         dbg_log('- furl:'+  furl + '\n')
         KNX_list(furl, '1', 'find')
@@ -304,6 +338,9 @@ try:
     dbg_log('-TYPE:'+ type + '\n')
 except: pass
 
+keyword = params['keyword'] if 'keyword' in params else None
+unified = params['unified'] if 'unified' in params else None
+
 if url=='':
     url = page_pg
 
@@ -311,6 +348,10 @@ if mode == '': KNX_list(url, page, type)
 elif mode == 'ctlg': KNX_ctlg(url)
 elif mode == 'play': KNX_play(url)
 elif mode == 'find': KNX_find()
+elif mode == 'search': 
+    url = find_pg + uni2enc(gettranslit(keyword)) + fdpg_pg
+    KNX_list(url, '1', 'unis')
+    
 #elif mode == 'list': KNX_list(url, page)
 
 
