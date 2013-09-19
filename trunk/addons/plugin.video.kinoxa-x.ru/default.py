@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.2.8
+# Rev. 0.2.9
 
 
 import urllib,urllib2,re,sys
@@ -174,12 +174,17 @@ def KNX_play(url):
     
     http = get_url(url)
     iframes = re.compile('<iframe src="(.*?)"').findall(http)
-
+    
     if len(iframes):
         http = get_url(iframes[1])
-        flvs = re.compile("file : '(.*?)'").findall(http)
+        flvs = re.compile('src="http(.*?)"').findall(http)
+        hrefs = re.compile('<a href="(.*?)">').findall(http)
+
         if len(flvs):
-            item = xbmcgui.ListItem(path = flvs[0])
+            item = xbmcgui.ListItem(path = "http" + flvs[0])
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        elif len(hrefs):
+            item = xbmcgui.ListItem(path = "http" + hrefs[0])
             xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 def KNX_ctlg(url):
