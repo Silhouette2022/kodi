@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
 import urllib,urllib2,re,sys
@@ -131,7 +131,7 @@ def KNX_list(url, page, type):
                 i = i + 1
             else:
               try:
-                  unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
+                unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
               except: pass
 
     if type == 'unis':
@@ -213,12 +213,14 @@ def KNX_play(url):
         http = get_url(iframes[1])
         flvs = re.compile('src="http(.*?)"').findall(http)
         hrefs = re.compile('<a href="(.*?)">').findall(http)
-
-        if len(flvs):
+        if len(flvs) > 1:
+            item = xbmcgui.ListItem(path = "http" + flvs[1])
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        elif len(flvs):
             item = xbmcgui.ListItem(path = "http" + flvs[0])
             xbmcplugin.setResolvedUrl(pluginhandle, True, item)
         elif len(hrefs):
-            item = xbmcgui.ListItem(path = "http" + hrefs[0])
+            item = xbmcgui.ListItem(path = hrefs[0])
             xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 def KNX_ctlg(url):
