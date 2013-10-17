@@ -1,12 +1,27 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.5.1
+# Rev. 0.6.0
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
+
+
+try:
+  # Import UnifiedSearch
+  sys.path.append(os.path.dirname(__file__)+ '/../plugin.video.unified.search')
+  from unified_search import UnifiedSearch
+except: pass
+
+__settings__ = xbmcaddon.Addon(id='plugin.video.new-kino.net')
+use_translit = __settings__.getSetting('translit')
+
+try:  
+  import Translit as translit
+  translit = translit.Translit()  
+except: use_translit = 'false'
 
 dbg = 0
 
@@ -16,6 +31,11 @@ start_pg = "http://new-kino.net/"
 page_pg = "page/"
 find_pg = "http://new-kino.net/?do=search&subaction=search&story="
 search_start = "&search_start="
+
+def gettranslit(msg):
+    if use_translit == 'true': 
+        return translit.rus(msg)
+    else: return msg
 
 def dbg_log(line):
     if dbg: print line
@@ -48,6 +68,14 @@ def NKN_start(url, page, cook):
     dbg_log('- cook:'+  cook + '\n')    
     ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
               ('<ПОИСК>', '?mode=find')]
+    unis_res = []
+    unis_en = False
+    
+    if cook == "unis":
+        cook = ""
+        unis_en = True
+        
+              
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
     else:
@@ -59,7 +87,8 @@ def NKN_start(url, page, cook):
         cook = re.search('<cookie>(.+?)</cookie>', horg).group(1)
     i = 0
     
-    for ctTitle, ctMode  in ext_ls:
+    if unis_en == False:
+      for ctTitle, ctMode  in ext_ls:
         item = xbmcgui.ListItem(ctTitle)
         uri = sys.argv[0] + ctMode + '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
@@ -80,11 +109,12 @@ def NKN_start(url, page, cook):
                 dbg_log('-HREF %s'%href)
                 infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" /></a><!--TEnd--></div>(.*?)</div>').findall(str(sa))
                 for logo, alt, title, plot in infos:
-                    img = start_pg + logo
-                    dbg_log('-TITLE %s'%title)
-                    dbg_log('-IMG %s'%img)
-                    dbg_log('-PLOT %s'%plot)
-
+                  img = start_pg + logo
+                  dbg_log('-TITLE %s'%title)
+                  dbg_log('-IMG %s'%img)
+                  dbg_log('-PLOT %s'%plot)
+                  
+                  if unis_en == False:
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
                     item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
                     uri = sys.argv[0] + '?mode=view' \
@@ -93,8 +123,15 @@ def NKN_start(url, page, cook):
                     xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                     dbg_log('- uri:'+  uri + '\n')
                     i = i + 1
-                
-    if i:
+                  else:
+                    try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.new-kino.net'})
+                    except: pass
+    
+    if unis_en == True:
+      try: UnifiedSearch().collect(unis_res)
+      except:  pass
+    else:
+      if i:
         item = xbmcgui.ListItem('<NEXT PAGE>')
         uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
@@ -104,7 +141,7 @@ def NKN_start(url, page, cook):
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')        
  
-    xbmcplugin.endOfDirectory(pluginhandle) 
+      xbmcplugin.endOfDirectory(pluginhandle) 
 
 
 def NKN_view(url, img, name, cook):     
@@ -265,6 +302,9 @@ try:
     dbg_log('-COOK:'+ cook + '\n')
 except: pass
 
+keyword = params['keyword'] if 'keyword' in params else None
+unified = params['unified'] if 'unified' in params else None
+
 if url=='':
     url = start_pg
 
@@ -273,6 +313,10 @@ elif mode == 'ctlg': NKN_ctlg(url, cook)
 elif mode == 'view': NKN_view(url, imag, name, cook)
 elif mode == 'play': NKN_play(url, cook)
 elif mode == 'find': NKN_find(cook)
+elif mode == 'show': NKN_view(url, imag, "Play Video", cook)
+elif mode == 'search': 
+    url = find_pg + uni2cp(gettranslit(keyword))
+    NKN_start(url, '1', 'unis')
 
 
 
