@@ -99,6 +99,20 @@
   </extension>
 </addon>
 
+<addon id="plugin.video.rodina.tv" name="[COLOR FF23a0e3]Rodina.TV[/COLOR]" version="1.0.0" provider-name="Rodina TV">
+  <requires>
+	<import addon="xbmc.python" version="2.0"/>
+	<import addon="script.module.xbmc.helpers" version="2.0.1"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Rodina.TV – Новости, кино, музыка, спортивные трансляции, кинозал, архив программ за 2 недели.</summary>
+    <description>Rodina.TV – это качественное русскоязычное и интернациональное интернет телевидение в любой точке земного шара, в которой есть проводной или беспроводной интернет. Спортивные трансляции, кино, новости, музыка.
+Сервис ТВ онлайн позволяет смотреть эфирные русскоязычные и другие каналы, пользоваться онлайн кинозалом со множеством новинок и киноклассикой. В вашем распоряжении архив программ за  2 недели, а также функция тайм-шифт (задержка телевещания на определённое время).</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="plugin.video.sonet.by" name="Sonet.by" version="0.4.4" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="1.0"/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
