@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+    <string id="1000">Просмотр ТВ</string>
+    <string id="1001">Кинозал</string>
+    <string id="1002">Поиск</string>
+    <string id="1003">Жанры</string>
+    <string id="1004">Все</string>    
+    <string id="2000">Прямой эфир</string>
+    <string id="2001">Задержка вещания</string>
+    <string id="2002">Архив телепередач</string>    
+    <string id="2003">Настройки</string>  
+	<string id="10000">Russian</string>
+	<string id="11000">Общие настройки</string>
+	<string id="11003">Абонемент</string>
+	<string id="11004">Пароль</string>
+	<string id="11005">Родительский код</string>
+	<string id="11006">Скорость вещания</string>
+	<string id="11007">Задержка вещания в часах</string>
+	<string id="11008">Сервер вещания</string>
+	<string id="11009">Часовой пояс</string>
+	<string id="11010">Управлять режимом просмотра</string>
+	<string id="20001">Понедельник</string>
+	<string id="20002">Вторник</string>
+	<string id="20003">Среда</string>
+	<string id="20004">Четверг</string>
+	<string id="20005">Пятница</string>
+	<string id="20006">Суббота</string>
+	<string id="20007">Воскресение</string>	
+	<string id="20008">-Еще-></string>	
+</strings>

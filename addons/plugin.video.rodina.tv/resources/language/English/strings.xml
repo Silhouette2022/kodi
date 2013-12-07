@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<strings>
+    <string id="1000">Watch TV</string>
+    <string id="1001">Movie Theater</string>
+    <string id="1002">Search</string>
+    <string id="1003">Genres</string>
+    <string id="1004">All</string>
+    <string id="2000">Live TV</string>
+    <string id="2001">Time-Shifted TV</string>
+    <string id="2002">Archives</string>
+    <string id="2003">Settings</string>
+	<string id="10000">English</string>
+	<string id="11000">General settings</string> 
+	<string id="11003">Pass ID</string>
+	<string id="11004">Password</string>
+	<string id="11005">Parental code</string>
+	<string id="11006">Bitrate</string>
+	<string id="11007">Timeshift in hours</string>
+	<string id="11008">Streaming server</string>
+	<string id="11009">Timezone</string>
+	<string id="11010">Control view mode</string>
+	<string id="20001">Monday</string>
+	<string id="20002">Tuesday</string>
+	<string id="20003">Wednesday</string>
+	<string id="20004">Thursday</string>
+	<string id="20005">Friday</string>
+	<string id="20006">Saturday</string>
+	<string id="20007">Sunday</string>
+	<string id="20008">-Next-></string>
+</strings>
