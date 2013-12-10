@@ -1,2 +1,6 @@
 [B]1.0.0[/B]
 Initial revision
+[B]1.1.0[/B]
+Added sort and search in cyrillic
+[B]1.1.1[/B]
+Removed external dependencies

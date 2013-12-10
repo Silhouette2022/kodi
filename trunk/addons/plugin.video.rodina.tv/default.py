@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.0
+# Rev. 1.1.1
 
 
 _VERSION_ = '1.0.0'
@@ -12,18 +12,18 @@ import xbmc, xbmcplugin, xbmcgui, xbmcaddon
 import uuid
 import hashlib
 
-#try:
-#    sys.path.append(os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
-#    import XbmcHelpers
-#except:
-#    try:
-#        sys.path.insert(0, os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
-#        import XbmcHelpers
-#    except:
-#        sys.path.append(os.path.join(os.getcwd(), r'resources', r'lib'))
-#        import XbmcHelpers
+try:
+    sys.path.append(os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
+    import XbmcHelpers
+except:
+    try:
+        sys.path.insert(0, os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
+        import XbmcHelpers
+    except:
+        sys.path.append(os.path.join(os.getcwd(), r'resources', r'lib'))
+        import XbmcHelpers
         
-import XbmcHelpers
+#import XbmcHelpers
 common = XbmcHelpers
 common.plugin = "Rodina TV"
 
