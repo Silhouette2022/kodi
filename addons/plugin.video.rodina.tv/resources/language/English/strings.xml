@@ -5,6 +5,11 @@
     <string id="1002">Search</string>
     <string id="1003">Genres</string>
     <string id="1004">All</string>
+    <string id="1005">SORT</string>
+    <string id="1006">IMDB Rating</string>
+    <string id="1007">KinoPoisk rating</string> 
+    <string id="1008">Production Date</string> 
+    <string id="1009">Added Date</string>             
     <string id="2000">Live TV</string>
     <string id="2001">Time-Shifted TV</string>
     <string id="2002">Archives</string>
@@ -26,5 +31,6 @@
 	<string id="20005">Friday</string>
 	<string id="20006">Saturday</string>
 	<string id="20007">Sunday</string>
-	<string id="20008">-Next-></string>
+	<string id="20008">-NEXT-></string>
+	<string id="20009">Part</string>
 </strings>

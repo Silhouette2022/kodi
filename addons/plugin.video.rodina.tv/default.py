@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.0.0
+# Rev. 1.1.0
 
 
 _VERSION_ = '1.0.0'
@@ -88,7 +88,7 @@ class RodinaTV():
         self.ss = self.addon.getSetting('ss')   
         self.view_mode = self.addon.getSetting('view_mode')      
 
-        self.debug = True
+        self.debug = False
         common.dbg = self.debug
 
     def main(self):
@@ -113,6 +113,7 @@ class RodinaTV():
         self.count = params['count'] if 'count' in params else ''
         self.offset = params['offset'] if 'offset' in params else ''
         self.word = params['word'] if 'word' in params else ''
+        self.sort = params['sort'] if 'sort' in params else ''
                                 
         if mode == 'tv':
             self.m_tv()
@@ -140,6 +141,8 @@ class RodinaTV():
             self.m_film()             
         elif mode == 'set':
             self.m_set() 
+        elif mode == 'sort':
+            self.m_sort()             
         else:
             self.m_main()
             
@@ -247,6 +250,7 @@ class RodinaTV():
             self.timeserver = common.parseDOM(resp["content"], "entity", ret="timeserver")[0]
             if status == "success":
                 self.get_auth = False
+#                print resp["content"]
                 return resp["content"]
             else:
                 self.xmlerror(resp["content"])
@@ -261,17 +265,12 @@ class RodinaTV():
         depg = {}
         a_raw = common.parseDOM(sepg, "row")
         for raw in a_raw:
-#            print '----------'
-#            print raw.encode('utf8')   
             try: numb = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
             except: numb = ''
             if numb != '':
                 a_progs = common.parseDOM(raw, "array", attrs={"name": "programmes"})
                 l_progs = []
                 for progs in a_progs:
-#                    print '----------------------'
-#                    print progs.encode('utf8')
-
                     a_title = common.parseDOM(progs, "item", attrs={"name": "title"})
                     a_pid = common.parseDOM(progs, "item", attrs={"name": "pid"})
                     a_utstart = common.parseDOM(progs, "item", attrs={"name": "ut_start"})
@@ -286,7 +285,7 @@ class RodinaTV():
                             desc = a_desc[j]
                             j += 1
                         else: desc = ''
-
+                        
                         ststart = time.strftime("%H:%M",time.localtime(float(a_utstart[i])))
                         ststop = time.strftime("%H:%M",time.localtime(float(a_utstop[i])))
                         l_progs.append([ststart, ststop, a_title[i], desc, a_pid[i], a_has_rec[i]])
@@ -320,7 +319,7 @@ class RodinaTV():
                 self.portal = common.parseDOM(resp, "item", attrs={"name": "portal"})[0]
                 self.ttl = common.parseDOM(resp, "item", attrs={"name": "ttl"})[0]
                 
-    def list_items(self, ictlg, view):
+    def list_items(self, ictlg, view, films=False):
         self.log("-list_items:")
         
         for ctUrl, ctIcon, ctFolder, ctLabels  in ictlg:
@@ -332,8 +331,7 @@ class RodinaTV():
 #              'aired':start,
 #              'premiered':start,
 #              'duration':length}
-#            if ctPlot == None: infoLabels={'title': ctTitle}
-#            else: infoLabels={'title': ctTitle, 'plot': ctPlot}    
+
             item.setInfo( type='Video', infoLabels=ctLabels)
             if ctFolder == False: item.setProperty('IsPlayable', 'true')
             item.setProperty('fanart_image', self.fanart)
@@ -341,12 +339,21 @@ class RodinaTV():
             self.log("ctTitle: %s"  % ctTitle) 
             self.log("ctUrl: %s"  % ctUrl) 
             self.log("ctIcon: %s"  % ctIcon) 
+            
+        if self.view_mode == 'true':
+            if films == False:
+                xbmcplugin.setContent(self.handle, 'Episodes')
+                self.log('Episodes')
+            else:
+                xbmcplugin.setContent(self.handle, 'Movies')
+                self.log('Movies')
+                if view: 
+                    xbmc.executebuiltin('Container.SetViewMode("515")')
+                    self.log('SetViewMode("515")')
+                else:
+                    xbmc.executebuiltin('Container.SetViewMode("503")')
+                    self.log('SetViewMode("503")')   
         
-        xbmcplugin.setContent(self.handle, 'episodes')
-        if self.view_mode and view: 
-            xbmc.executebuiltin('Container.SetViewMode("515")')
-        else:
-            xbmc.executebuiltin('Container.SetViewMode("503")')
         xbmcplugin.endOfDirectory(self.handle)
         
     def get_client(self):
@@ -355,7 +362,7 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_client_info')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: print resp      
+            if self.debug: self.log(resp)
   
     def get_settings(self):
         self.log("-get_settings:")
@@ -363,7 +370,7 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_settings')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: print resp   
+            if self.debug: self.log(resp)  
                     
     def get_tstatus(self):
         self.log("-get_tstatus:")
@@ -371,13 +378,11 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_token_status')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: print resp     
+            if self.debug: self.log(resp)    
 
     def set_settings(self, ts='0'):
         self.log("-set_settings:")
         
-#        key = 'dc|bitrate|tshift'
-#        value = '%s|%s|%s' % (self.ss, self.br, ts)
         key = 'bitrate|tshift'
         value = '%s|%s' % (self.br, ts)
         req = self.portal + '?token=%s&query=%s&key="%s"&value="%s"' % (self.token, 'set_settings', key, value)
@@ -444,30 +449,37 @@ class RodinaTV():
             for chan in a_chan:
                 a_raw = common.parseDOM(chan, "row")
                 for raw in a_raw:
-                    cats = common.parseDOM(raw, "array", attrs={"name": "categories"})[0]
-                    cat = common.parseDOM(cats, "item")[0]
+                    try: cats = common.parseDOM(raw, "array", attrs={"name": "categories"})[0]
+                    except: cats = ''
+                    try: cat = common.parseDOM(cats, "item")[0]
+                    except: cat = ''
                     if cat == self.cat:
-                        has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
-                        title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
-                        number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                        try: has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
+                        except: has_passwd = '0'
+                        try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                        except: title = ''
+                        try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                        except: number = ''
 #                        has_record = common.parseDOM(raw, "item", attrs={"name": "has_record"})[0]
                         a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
                         a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
                         if len(a_icon100) > 0:
-                            icon = a_icon100[0]
+                            try: icon = a_icon100[0]
+                            except: icon = ''
                         elif len(a_icon45) > 0:
-                            icon = a_icon45[0]
-                        else:
-                            icon = self.path_icons_tv
+                            try: icon = a_icon45[0]
+                            except: icon = ''
+                        if icon == '': icon = self.path_icons_tv
 
                         plot = ''
-                        try:
-                            lepg = d_epg[number]
-                            for ebgn, eend, ename, edescr, pid, rec in lepg:
-                                plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
-                        except: pass
-
-                        ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon), icon, False, {'title': title, 'plot':plot}))
+                        if title != '' and number != '':
+                            try:
+                                lepg = d_epg[number]
+                                for ebgn, eend, ename, edescr, pid, rec in lepg:
+                                    plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
+                            except: pass
+                            plot = plot.replace('&quot;','`').replace('&amp;',' & ')
+                            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon), icon, False, {'title': title, 'plot':plot}))
 
             self.list_items(ct_chan, True)            
 
@@ -500,7 +512,8 @@ class RodinaTV():
             resp = self.getPage({"link": req})
 
         if resp != None:
-            url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
+            try: url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
+            except: return
             item = xbmcgui.ListItem(path = url)
             xbmcplugin.setResolvedUrl(self.handle, True, item)
             self.log("-play_url:%s" % url)
@@ -520,24 +533,31 @@ class RodinaTV():
             for chan in a_chan:
                 a_raw = common.parseDOM(chan, "row")
                 for raw in a_raw:
-                    cats = common.parseDOM(raw, "array", attrs={"name": "categories"})[0]
-                    cat = common.parseDOM(cats, "item")[0]
+                    try: cats = common.parseDOM(raw, "array", attrs={"name": "categories"})[0]
+                    except: cats = ''
+                    try: cat = common.parseDOM(cats, "item")[0]
+                    except: cat = ''
                     if cat == self.cat:
-                        has_record = common.parseDOM(raw, "item", attrs={"name": "has_record"})[0]
+                        try: has_record = common.parseDOM(raw, "item", attrs={"name": "has_record"})[0]
+                        except: has_record = ''
                         if has_record == '1':
-                            has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
-                            title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
-                            number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                            try: has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
+                            except: has_passwd = '0'
+                            try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                            except: title = ''
+                            try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                            except: number = ''
                             a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
                             a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
                             if len(a_icon100) > 0:
-                                icon = a_icon100[0]
+                                try: icon = a_icon100[0]
+                                except: icon = ''
                             elif len(a_icon45) > 0:
-                                icon = a_icon45[0]
-                            else:
-                                icon = self.path_icons_tv
-
-                            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.token, self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}))
+                                try: icon = a_icon45[0]
+                                except: icon = ''
+                            if icon == '' : icon = self.path_icons_tv
+                            if title != '' and number != '':
+                                ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.token, self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}))
 
             self.list_items(ct_chan, True)   
             
@@ -607,12 +627,22 @@ class RodinaTV():
                                           
         self.list_items(ct_main, True)
 
+    def uni2enc(self, ustr):
+        raw = ''
+        uni = unicode(ustr, 'utf8')
+        uni_sz = len(uni)
+        for i in xrange(len(ustr)):
+            raw += ('%%%02X') % ord(ustr[i])        
+        return raw
+    
     def m_search(self):
         self.log("-m_kino:")
 
         if self.word == '':
-            self.word = common.getUserInput('', '')
+            self.word = self.uni2enc(common.getUserInput('', ''))
             self.offset = '0'
+#            self.word = '%D0%BB%D0%B5%D1%82%D0%BE'
+
         
         if self.word != '':
             self.authorize()
@@ -627,20 +657,29 @@ class RodinaTV():
                     ct_search = []
                     a_raw = common.parseDOM(resp, "row")
                     for raw in a_raw:
-                        title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
-                        small_desc = common.parseDOM(raw, "item", attrs={"name": "small_desc"})[0]
-                        imdb_rate = common.parseDOM(raw, "item", attrs={"name": "imdb_rate"})[0]
-                        file_count = common.parseDOM(raw, "item", attrs={"name": "file_count"})[0]
-                        kp_rate = common.parseDOM(raw, "item", attrs={"name": "kp_rate"})[0]
-                        fid = common.parseDOM(raw, "item", attrs={"name": "fid"})[0]
-                        year = common.parseDOM(raw, "item", attrs={"name": "year"})[0]
-                        small_cover = common.parseDOM(raw, "item", attrs={"name": "small_cover"})[0]
+                        try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                        except: title = ''
+                        try: small_desc = common.parseDOM(raw, "item", attrs={"name": "small_desc"})[0]
+                        except: small_desc = ''
+                        try: kp_rate = common.parseDOM(raw, "item", attrs={"name": "kp_rate"})[0]
+                        except: kp_rate= ''
+                        try: imdb_rate = common.parseDOM(raw, "item", attrs={"name": "imdb_rate"})[0]
+                        except: imdb_rate = kp_rate
+                        try: file_count = common.parseDOM(raw, "item", attrs={"name": "file_count"})[0]
+                        except: file_count= ''
+                        try: fid = common.parseDOM(raw, "item", attrs={"name": "fid"})[0]
+                        except: fid= ''
+                        try: year = common.parseDOM(raw, "item", attrs={"name": "year"})[0]
+                        except: year= ''
+                        try: small_cover = common.parseDOM(raw, "item", attrs={"name": "small_cover"})[0]
+                        except: small_cover= ''
 
-    
-                        ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
-                         {'title': title, 
-                          'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
-                          'year':year} ))
+                        if title != '' and fid != '':
+                            ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
+                             {'title': title, 
+                             'rating': imdb_rate, 
+                              'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
+                              'year':year} ))
 
                     if len(a_raw) >= 12:
                         ct_search.append(('?mode=%s&token=%s&portal=%s&word=%s&offset=%s' % ('search', self.token, self.portal, self.word, str(int(self.offset) + 12)), '', True, {'title': self.language(20008)}))
@@ -657,19 +696,23 @@ class RodinaTV():
 
         if resp != None:
             ct_genres = []
-            genres = common.parseDOM(resp, "array", attrs={"name": "genres"})[0]
+            try: genres = common.parseDOM(resp, "array", attrs={"name": "genres"})[0]
+            except: genres = ''
             a_raw = common.parseDOM(genres, "row")
             for raw in a_raw:
-                cnt = common.parseDOM(raw, "item", attrs={"name": "count"})[0]
-                title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
-                number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
-
-                ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', self.cicon), 
-                self.cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
+                try: cnt = common.parseDOM(raw, "item", attrs={"name": "count"})[0]
+                except: cnt = ''
+                try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                except: title = ''
+                try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                except: number = ''
+                if title != '' and number != '':
+                    ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', self.cicon), 
+                    self.cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
 
             self.list_items(ct_genres, True)   
 
-        
+
     def m_all(self):
         self.log("-m_kino:")
         
@@ -681,6 +724,9 @@ class RodinaTV():
             if self.numb != '':
                 key += '|num_genre'
                 value += '|%s' % (self.numb)
+            if self.sort != '':
+                key += '|sort'
+                value += '|%s' % (self.sort)                
             req = self.portal + '?token=%s&query=%s' % (self.token, 'get_cinema_films')
             req += '&key="%s"&value="%s"' % (key, value)
             resp = self.getPage({"link": req})
@@ -688,26 +734,41 @@ class RodinaTV():
             if resp != None:
                 ct_search = []
                 a_raw = common.parseDOM(resp, "row")
+                print len(a_raw)
+                if len(a_raw) >= 12:
+                    req = '?mode=%s&token=%s&portal=%s' % ('sort', self.token, self.portal)
+                    if self.numb != '': req += '&numb=%s' % self.numb
+                    ct_search.append((req, self.path_icons_kino, True, {'title': self.language(1005)}))
+                print ct_search
                 for raw in a_raw:
-                    title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
-                    small_desc = common.parseDOM(raw, "item", attrs={"name": "small_desc"})[0]
-                    imdb_rate = common.parseDOM(raw, "item", attrs={"name": "imdb_rate"})[0]
-                    file_count = common.parseDOM(raw, "item", attrs={"name": "file_count"})[0]
-                    kp_rate = common.parseDOM(raw, "item", attrs={"name": "kp_rate"})[0]
-                    fid = common.parseDOM(raw, "item", attrs={"name": "fid"})[0]
-                    year = common.parseDOM(raw, "item", attrs={"name": "year"})[0]
-                    small_cover = common.parseDOM(raw, "item", attrs={"name": "small_cover"})[0]
-
-
-                    ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
-                     {'title': title, 
-                      'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
-                      'year':year} ))
+                    try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                    except: title = ''
+                    try: small_desc = common.parseDOM(raw, "item", attrs={"name": "small_desc"})[0]
+                    except: small_desc = ''
+                    try: kp_rate = common.parseDOM(raw, "item", attrs={"name": "kp_rate"})[0]
+                    except: kp_rate = ''
+                    try: imdb_rate = common.parseDOM(raw, "item", attrs={"name": "imdb_rate"})[0]
+                    except: imdb_rate = kp_rate
+                    try: file_count = common.parseDOM(raw, "item", attrs={"name": "file_count"})[0]
+                    except: file_count = ''
+                    try: fid = common.parseDOM(raw, "item", attrs={"name": "fid"})[0]
+                    except: fid = ''
+                    try: year = common.parseDOM(raw, "item", attrs={"name": "year"})[0]
+                    except: year = ''
+                    try: small_cover = common.parseDOM(raw, "item", attrs={"name": "small_cover"})[0]
+                    except: small_cover = ''
+                    if title != '' and fid != '':
+                        ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
+                         {'title': title, 
+                          'rating': imdb_rate,                         
+                          'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
+                          'year':year} ))
                 if len(a_raw) >= 12:
                     req = '?mode=%s&token=%s&portal=%s&offset=%s' % ('all', self.token, self.portal, str(int(self.offset) + 12))
                     if self.numb != '': req += '&numb=%s' % self.numb
+                    if self.sort != '': req += '&sort=%s' % self.sort
                     ct_search.append((req, '', True, {'title': self.language(20008)}))
-                self.list_items(ct_search, True) 
+                self.list_items(ct_search, True, True) 
 
  
     def m_film(self):
@@ -726,45 +787,101 @@ class RodinaTV():
         if resp != None:
             ct_films = []
             a_files = common.parseDOM(resp, "array", attrs={"name": "files"})
-            desc = common.parseDOM(resp, "item", attrs={"name": "full_desc"})[0]
-            icon = common.parseDOM(resp, "item", attrs={"name": "big_cover"})[0]
+            try: desc = common.parseDOM(resp, "item", attrs={"name": "full_desc"})[0]
+            except: desc = ''
+            try: icon = common.parseDOM(resp, "item", attrs={"name": "big_cover"})[0]
+            except: icon = ''
+            
+            try: country = common.parseDOM(resp, "item", attrs={"name": "country"})[0]
+            except: country = ''
+            try: prod_date = common.parseDOM(resp, "item", attrs={"name": "prod_date"})[0]
+            except: prod_date = ''
+
+            try: rate_imdb = common.parseDOM(resp, "item", attrs={"name": "rate_imdb"})[0]
+            except: rate_imdb = ''
+            try: rate_kp = common.parseDOM(resp, "item", attrs={"name": "rate_kp"})[0]
+            except: rate_kp = ''
+            if rate_imdb == '': rate_imdb = rate_kp
+                                    
+            a_genres = common.parseDOM(resp, "array", attrs={"name": "genres"})
+            genre = ''
+            for genres in a_genres:
+                a_gen = common.parseDOM(genres, "item", attrs={"name": "title"})
+                for gen in a_gen:
+                    genre += '%s, ' % gen 
+            
+            a_actors = common.parseDOM(resp, "array", attrs={"name": "actors"})
+            cast = []
+            for actors in a_actors:
+                a_act = common.parseDOM(actors, "item", attrs={"name": "title"})
+                for act in a_act:
+                    cast.append(act)
+
+            a_dir = common.parseDOM(resp, "array", attrs={"name": "producers"})
+            director = ''
+            for dirs in a_dir:
+                a_dir = common.parseDOM(dirs, "item", attrs={"name": "title"})
+                for dir in a_dir:
+                    director += '%s, ' % dir 
+                                 
             rest = resp
-            rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "producers"})[0].encode('utf8'), '@@')
-            rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "genres"})[0].encode('utf8'), '@@')
-            rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "actors"})[0].encode('utf8'), '@@')
-            title = common.parseDOM(rest, "item", attrs={"name": "title"})[-1]
+            try: rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "producers"})[0].encode('utf8'), '@@')
+            except: pass
+            try: rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "genres"})[0].encode('utf8'), '@@')
+            except: pass
+            try: rest = rest.replace(common.parseDOM(resp, "array", attrs={"name": "actors"})[0].encode('utf8'), '@@')
+            except: pass
+            try: title = common.parseDOM(rest, "item", attrs={"name": "title"})[-1]
+            except: title = ''
+
             for efile in a_files:
                 a_quals = common.parseDOM(resp, "array", attrs={"name": "qualities"})
+                if len(a_quals) > 1: i = 1
+                else: i = 0
                 for quals in a_quals:
                     a_lid = common.parseDOM(quals, "item", attrs={"name": "lid"})
                     a_qual= common.parseDOM(quals, "item", attrs={"name": "quality_number"})
                     a_comb = zip(a_lid, a_qual)
+                    if len(a_qual) > 1: q = 1
+                    else: q = 0
                     for lid, qual in a_comb:
+                        if q > 0: qn = 'Q%s-' % qual
+                        else: qn = ''
+                        if i > 0: 
+                            name = '%s%s (%s %s)' % (qn, title, self.language(20009), str(i))
+                            i += 1
+                        else: name = '%s%s' % (qn, title)
+                        
                         ct_films.append(('?mode=%s&token=%s&portal=%s&lid=%s' % ('tvplay', self.token, self.portal, lid), icon, False,
-                                {'title': 'Q%s-%s' % (qual, title), 
+                                {'title': name, 
+                                 'genre': genre[0:-2], 
+                                 'director': director[0:-2], 
+                                 'country': country, 
+                                 'year': prod_date, 
+                                 'rating': rate_imdb, 
                                  'plot': desc} ))
                         
-            self.list_items(ct_films, False) 
-                                                
-#            url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
-#            item = xbmcgui.ListItem(path = url)
-#            xbmcplugin.setResolvedUrl(self.handle, True, item)
-#            self.log("-play_url:%s" % url)                          
-            
+            self.list_items(ct_films, False, True) 
 
-                                
-
-    def get_text(self, prompt='', hidden = False):
-        kbd = xbmc.Keyboard()
-        kbd.setDefault('')
-        if hidden: kbd.setHiddenInput(True)
-        kbd.setHeading(prompt)
-        kbd.doModal()
-        keyword = None
-        if kbd.isConfirmed():
-                keyword = kbd.getText()
-        return keyword
-
+       
+    def m_sort(self):
+        self.log("-m_sort:")
+        
+        ct_smode = [(self.language(1006), 'imdb'),
+                    (self.language(1007), 'kp'),
+                    (self.language(1008), 'proddate'),
+                    (self.language(1009), 'pubdate')]
+                    
+        ct_sort = []
+        creq = '?mode=%s&token=%s&portal=%s&offset=%s' % ('all', self.token, QT(self.portal), '0')
+        if self.numb != '':
+            creq += '&numb=%s' % (self.numb)
+        for smode in ct_smode:
+            req = creq + '&sort=%s' % (smode[1])
+            ct_sort.append( (req, self.path_icons_kino, True, {'title': smode[0]}))
+                                         
+        self.list_items(ct_sort, True)
+        
     # *** Add-on helpers
     def log(self, message):
         if self.debug:
