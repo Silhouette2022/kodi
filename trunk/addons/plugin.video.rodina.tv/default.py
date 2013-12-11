@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.1
+# Rev. 1.1.2
 
 
 _VERSION_ = '1.0.0'
@@ -70,16 +70,23 @@ class RodinaTV():
         self.timeserver = ''
        
         self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
-        self.path_resources = os.path.join(self.path, 'resources')
-        self.path_icons = os.path.join(self.path_resources, 'icons')
-        self.path_icons_tv = os.path.join(self.path_icons, 'icon_tv_small.png')
-        self.path_icons_td = os.path.join(self.path_icons, 'icon_timedelay_small.png')
-        self.path_icons_ts = os.path.join(self.path_icons, 'icon_timeshift_small.png')
-        self.path_icons_kino = os.path.join(self.path_icons, 'icon_kinozal_small.png')
-        self.path_icons_info = os.path.join(self.path_icons, 'icon_info_small.png')
+#        self.path_resources = os.path.join(self.path, 'resources')
+#        self.path_icons = os.path.join(self.path_resources, 'icons')
+#        self.path_icons_tv = os.path.join(self.path_icons, 'icon_tv_small.png')
+#        self.path_icons_td = os.path.join(self.path_icons, 'icon_timedelay_small.png')
+#        self.path_icons_ts = os.path.join(self.path_icons, 'icon_timeshift_small.png')
+#        self.path_icons_kino = os.path.join(self.path_icons, 'icon_kinozal_small.png')
+#        self.path_icons_info = os.path.join(self.path_icons, 'icon_info_small.png')
+        self.path_resources = xbmc.translatePath(self.path + '/resources')
+        self.path_icons = xbmc.translatePath(self.path_resources + '/icons')
+        self.path_icons_tv = xbmc.translatePath(self.path_icons + '/icon_tv_small.png')
+        self.path_icons_td = xbmc.translatePath(self.path_icons + '/icon_timedelay_small.png')
+        self.path_icons_ts = xbmc.translatePath(self.path_icons + '/icon_timeshift_small.png')
+        self.path_icons_kino = xbmc.translatePath(self.path_icons + '/icon_kinozal_small.png')
+        self.path_icons_info = xbmc.translatePath(self.path_icons + '/icon_info_small.png')
                 
-        self.profile_chan = xbmc.translatePath(os.path.join(self.profile, 'cache_c.tmp'))
-        self.profile_epg = xbmc.translatePath(os.path.join(self.profile, 'cache_e.tmp'))
+        self.profile_chan = xbmc.translatePath('special://temp/' + 'rodinatvc.tmp')
+        self.profile_epg = xbmc.translatePath('special://temp/' + 'rodinatve.tmp')
 
         self.uid = self.addon.getSetting('uid')
         self.pwd = self.addon.getSetting('pwd')
