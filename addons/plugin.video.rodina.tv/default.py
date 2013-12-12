@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.2
+# Rev. 1.1.3
 
 
 _VERSION_ = '1.0.0'
+_ADDOD_ID_= 'plugin.video.rodina.tv'
 
 import os, re, sys, datetime, time
 import urllib, urllib2
@@ -13,17 +14,15 @@ import uuid
 import hashlib
 
 try:
-    sys.path.append(os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
     import XbmcHelpers
 except:
     try:
-        sys.path.insert(0, os.path.join(Addon.getAddonInfo('path'), r'resources', r'lib'))
+        sys.path.append(os.path.join(xbmc.translatePath(xbmcaddon.Addon(_ADDON_ID_).getAddonInfo('path')).decode('utf-8'), r'resources', r'lib'))
         import XbmcHelpers
     except:
-        sys.path.append(os.path.join(os.getcwd(), r'resources', r'lib'))
+        sys.path.insert(0, os.path.join(xbmc.translatePath(xbmcaddon.Addon(_ADDON_ID_).getAddonInfo('path')).decode('utf-8'), r'resources', r'lib'))
         import XbmcHelpers
-        
-#import XbmcHelpers
+
 common = XbmcHelpers
 common.plugin = "Rodina TV"
 
@@ -35,10 +34,18 @@ opener = urllib2.build_opener(cookie_handler)
 def QT(url): return urllib.quote_plus(url)
     
 #def dt(u): return datetime.datetime.utcfromtimestamp(u)
+class ccache():
+    def __init__(self):
+        self.type = ''
+        self.query = ''
+        self.fname = ''
+        self.ttl = 0
+        self.ctime = 0.0
+    
 
 class RodinaTV():
     def __init__(self):
-        self.id = 'plugin.video.rodina.tv'
+        self.id = _ADDOD_ID_
         self.addon = xbmcaddon.Addon(self.id)
         self.icon = self.addon.getAddonInfo('icon')
         self.fanart = self.addon.getAddonInfo('fanart')
@@ -85,8 +92,8 @@ class RodinaTV():
         self.path_icons_kino = xbmc.translatePath(self.path_icons + '/icon_kinozal_small.png')
         self.path_icons_info = xbmc.translatePath(self.path_icons + '/icon_info_small.png')
                 
-        self.profile_chan = xbmc.translatePath('special://temp/' + 'rodinatvc.tmp')
-        self.profile_epg = xbmc.translatePath('special://temp/' + 'rodinatve.tmp')
+        self.cache_chan = xbmc.translatePath('special://temp/' + 'rodinatvc.tmp')
+        self.cache_epg = xbmc.translatePath('special://temp/' + 'rodinatve.tmp')
 
         self.uid = self.addon.getSetting('uid')
         self.pwd = self.addon.getSetting('pwd')
@@ -95,7 +102,7 @@ class RodinaTV():
         self.ss = self.addon.getSetting('ss')   
         self.view_mode = self.addon.getSetting('view_mode')      
 
-        self.debug = False
+        self.debug = True
         common.dbg = self.debug
 
     def main(self):
@@ -182,20 +189,20 @@ class RodinaTV():
         cache = ''
         if type == 'tv':
             cquery = '&query=%s' % 'get_channels'
-            fn = self.profile_chan
+            fn = self.cache_chan
             tt = time.time()
         elif type == 'etv':
             cquery = '&query=%s&key="period|count"&value="%s|%s"' % ('get_epg', 60*60*3, 3)
-            fn = self.profile_epg
+            fn = self.cache_epg
             tt = time.time()
         elif type == 'dtv':
             tstart = str(int(time.time()))
             cquery = '&query=%s&key="start|period|count"&value="%s|%s|%s"' % ('get_epg', tstart, 60*60*3, 3)
-            fn = self.profile_epg
+            fn = self.cache_epg
             tt = time.time()
         elif type == 'atv':
             cquery = '&query=%s&key="start|period|number"&value="%s|%s|%s"' % ('get_epg', self.adt, 60*60*24, self.numb)
-            fn = self.profile_epg
+            fn = self.cache_epg
             tt = float(self.adt)
             type += self.numb
         else: return
@@ -267,7 +274,7 @@ class RodinaTV():
             
         return None
         
-    def epg2dict(self, sepg, tconv = True):
+    def epg2dict(self, sepg):
         self.log("-epg2dict:")
         depg = {}
         a_raw = common.parseDOM(sepg, "row")
@@ -419,8 +426,8 @@ class RodinaTV():
                                           
         self.list_items(ct_main, True)
         
-        self.cached_rst(self.profile_chan)
-        self.cached_rst(self.profile_epg)
+        self.cached_rst(self.cache_chan)
+        self.cached_rst(self.cache_epg)
 
     def m_cat(self, nmode='tv'):
         self.log("-m_cat:")
@@ -596,7 +603,7 @@ class RodinaTV():
         self.log("-m_aepg:")
 
         ct_chan = []    
-        d_epg = self.epg2dict(self.cached_get('atv'), False)
+        d_epg = self.epg2dict(self.cached_get('atv'))
         lepg = d_epg[self.numb]
         for ebgn, eend, ename, edescr, pid, rec in lepg:
             title = '%s-%s %s' % (ebgn, eend, ename)
@@ -620,8 +627,8 @@ class RodinaTV():
         else:
             self.error('Authorization failed')
 
-        self.cached_rst(self.profile_chan)
-        self.cached_rst(self.profile_epg)        
+        self.cached_rst(self.cache_chan)
+        self.cached_rst(self.cache_epg)        
         self.params = ''
         self.main()
         
