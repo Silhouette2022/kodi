@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.3
+# Rev. 1.2.0
 
 
 _VERSION_ = '1.0.0'
@@ -13,25 +13,507 @@ import xbmc, xbmcplugin, xbmcgui, xbmcaddon
 import uuid
 import hashlib
 
-try:
-    import XbmcHelpers
-except:
-    try:
-        sys.path.append(os.path.join(xbmc.translatePath(xbmcaddon.Addon(_ADDON_ID_).getAddonInfo('path')).decode('utf-8'), r'resources', r'lib'))
-        import XbmcHelpers
-    except:
-        sys.path.insert(0, os.path.join(xbmc.translatePath(xbmcaddon.Addon(_ADDON_ID_).getAddonInfo('path')).decode('utf-8'), r'resources', r'lib'))
-        import XbmcHelpers
+#import io
+import inspect
+import time
+import HTMLParser
+import json
 
-common = XbmcHelpers
-common.plugin = "Rodina TV"
 
-import cookielib
-cookiejar = cookielib.LWPCookieJar()
-cookie_handler = urllib2.HTTPCookieProcessor(cookiejar)
-opener = urllib2.build_opener(cookie_handler)
+
+#import cookielib
+#cookiejar = cookielib.LWPCookieJar()
+#cookie_handler = urllib2.HTTPCookieProcessor(cookiejar)
+#opener = urllib2.build_opener(cookie_handler)
 
 def QT(url): return urllib.quote_plus(url)
+
+class Helpers():
+	def __init__(self):
+		self.version = u"2.0.1"
+		self.plugin = u"Helpers-" + self.version
+		self.USERAGENT = u"Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1"
+		self.dbg = False
+		self.dbglevel = 3
+
+		# This function raises a keyboard for user input
+	def getUserInput(self, title=u"Input", default=u"", hidden=False):
+		self.log("", 5)
+		result = None
+
+		# Fix for when this functions is called with default=None
+		if not default:
+			default = u""
+
+		keyboard = xbmc.Keyboard(default, title)
+		keyboard.setHiddenInput(hidden)
+		keyboard.doModal()
+
+		if keyboard.isConfirmed():
+			result = keyboard.getText()
+
+		self.log(repr(result), 5)
+		return result
+
+
+	# This function raises a keyboard numpad for user input
+	def getUserInputNumbers(self, title=u"Input", default=u""):
+		self.log("", 5)
+		result = None
+
+		# Fix for when this functions is called with default=None
+		if not default:
+			default = u""
+
+		keyboard = xbmcgui.Dialog()
+		result = keyboard.numeric(0, title, default)
+
+		self.log(repr(result), 5)
+		return str(result)
+
+
+	# Converts the request url passed on by xbmc to the plugin into a dict of key-value pairs
+	def getParameters(self, parameterString):
+		self.log("", 5)
+		commands = {}
+		#parameterString = urllib.unquote_plus(parameterString)
+		splitCommands = parameterString[parameterString.find('?') + 1:].split('&')
+
+		for command in splitCommands:
+			if (len(command) > 0):
+				splitCommand = command.split('=')
+				key = splitCommand[0]
+				value = splitCommand[1]
+				commands[key] = value
+
+		self.log(repr(commands), 5)
+		return commands
+
+
+	def replaceHTMLCodes(self, txt):
+		self.log(repr(txt), 5)
+
+		# Fix missing ; in &#<number>;
+		txt = re.sub("(&#[0-9]+)([^;^0-9]+)", "\\1;\\2", self.makeUTF8(txt))
+
+		txt = HTMLParser.HTMLParser().unescape(txt)
+		txt = txt.replace("&amp;", "&")
+		self.log(repr(txt), 5)
+		return txt
+
+
+	def stripTags(self, html):
+		self.log(repr(html), 5)
+		sub_start = html.find("<")
+		sub_end = html.find(">")
+		while sub_start < sub_end and sub_start > -1:
+			html = html.replace(html[sub_start:sub_end + 1], "").strip()
+			sub_start = html.find("<")
+			sub_end = html.find(">")
+
+		self.log(repr(html), 5)
+		return html
+
+
+	def _getDOMContent(self, html, name, match, ret):  # Cleanup
+		self.log("match: " + match, 3)
+
+		endstr = "</" + name  # + ">"
+
+		start = html.find(match)
+		end = html.find(endstr, start)
+		pos = html.find("<" + name, start + 1 )
+
+		self.log(str(start) + " < " + str(end) + ", pos = " + str(pos) + ", endpos: " + str(end), 8)
+
+		while pos < end and pos != -1:  # Ignore too early </endstr> return
+			tend = html.find(endstr, end + len(endstr))
+			if tend != -1:
+				end = tend
+			pos = html.find("<" + name, pos + 1)
+			self.log("loop: " + str(start) + " < " + str(end) + " pos = " + str(pos), 8)
+
+		self.log("start: %s, len: %s, end: %s" % (start, len(match), end), 3)
+		if start == -1 and end == -1:
+			result = u""
+		elif start > -1 and end > -1:
+			result = html[start + len(match):end]
+		elif end > -1:
+			result = html[:end]
+		elif start > -1:
+			result = html[start + len(match):]
+
+		if ret:
+			endstr = html[end:html.find(">", html.find(endstr)) + 1]
+			result = match + result + endstr
+
+		self.log("done result length: " + str(len(result)), 3)
+		return result
+
+	def _getDOMAttributes(self, match, name, ret):
+		self.log("", 3)
+		lst = re.compile('<' + name + '.*?' + ret + '=(.[^>]*?)>', re.M | re.S).findall(match)
+		ret = []
+		for tmp in lst:
+			cont_char = tmp[0]
+			if cont_char in "'\"":
+				self.log("Using %s as quotation mark" % cont_char, 3)
+
+				# Limit down to next variable.
+				if tmp.find('=' + cont_char, tmp.find(cont_char, 1)) > -1:
+					tmp = tmp[:tmp.find('=' + cont_char, tmp.find(cont_char, 1))]
+
+				# Limit to the last quotation mark
+				if tmp.rfind(cont_char, 1) > -1:
+					tmp = tmp[1:tmp.rfind(cont_char)]
+			else:
+				self.log("No quotation mark found", 3)
+				if tmp.find(" ") > 0:
+					tmp = tmp[:tmp.find(" ")]
+				elif tmp.find("/") > 0:
+					tmp = tmp[:tmp.find("/")]
+				elif tmp.find(">") > 0:
+					tmp = tmp[:tmp.find(">")]
+
+			ret.append(tmp.strip())
+
+		self.log("Done: " + repr(ret), 3)
+		return ret
+
+	def _getDOMElements(self, item, name, attrs):
+		self.log("", 3)
+		lst = []
+		for key in attrs:
+			lst2 = re.compile('(<' + name + '[^>]*?(?:' + key + '=[\'"]' + attrs[key] + '[\'"].*?>))', re.M | re.S).findall(item)
+			if len(lst2) == 0 and attrs[key].find(" ") == -1:  # Try matching without quotation marks
+				lst2 = re.compile('(<' + name + '[^>]*?(?:' + key + '=' + attrs[key] + '.*?>))', re.M | re.S).findall(item)
+
+			if len(lst) == 0:
+				self.log("Setting main list " + repr(lst2), 5)
+				lst = lst2
+				lst2 = []
+			else:
+				self.log("Setting new list " + repr(lst2), 5)
+				test = range(len(lst))
+				test.reverse()
+				for i in test:  # Delete anything missing from the next list.
+					if not lst[i] in lst2:
+						self.log("Purging mismatch " + str(len(lst)) + " - " + repr(lst[i]), 3)
+						del(lst[i])
+
+		if len(lst) == 0 and attrs == {}:
+			self.log("No list found, trying to match on name only", 3)
+			lst = re.compile('(<' + name + '>)', re.M | re.S).findall(item)
+			if len(lst) == 0:
+				lst = re.compile('(<' + name + ' .*?>)', re.M | re.S).findall(item)
+
+		self.log("Done: " + str(type(lst)), 3)
+		return lst
+
+	def parseDOM(self, html, name=u"", attrs={}, ret=False):
+		self.log("Name: " + repr(name) + " - Attrs:" + repr(attrs) + " - Ret: " + repr(ret) + " - HTML: " + str(type(html)), 3)
+		#self.log("BLA: " + repr(type(html)) + " - " + repr(type(name)))
+
+		if isinstance(name, str): # Should be handled
+			try:
+				name = name #.decode("utf-8")
+			except:
+				self.log("Couldn't decode name binary string: " + repr(name))
+
+		if isinstance(html, str):
+			try:
+				html = [html.decode("utf-8")] # Replace with chardet thingy
+			except:
+				self.log("Couldn't decode html binary string. Data length: " + repr(len(html)))
+				html = [html]
+		elif isinstance(html, unicode):
+			html = [html]
+		elif not isinstance(html, list):
+			self.log("Input isn't list or string/unicode.")
+			return u""
+
+		if not name.strip():
+			self.log("Missing tag name")
+			return u""
+
+		ret_lst = []
+		for item in html:
+			temp_item = re.compile('(<[^>]*?\n[^>]*?>)').findall(item)
+			for match in temp_item:
+				item = item.replace(match, match.replace("\n", " "))
+
+			lst = self._getDOMElements(item, name, attrs)
+
+			if isinstance(ret, str):
+				self.log("Getting attribute %s content for %s matches " % (ret, len(lst) ), 3)
+				lst2 = []
+				for match in lst:
+					lst2 += self._getDOMAttributes(match, name, ret)
+				lst = lst2
+			else:
+				self.log("Getting element content for %s matches " % len(lst), 3)
+				lst2 = []
+				for match in lst:
+					self.log("Getting element content for %s" % match, 4)
+					temp = self._getDOMContent(item, name, match, ret).strip()
+					item = item[item.find(temp, item.find(match)) + len(temp):]
+					lst2.append(temp)
+				lst = lst2
+			ret_lst += lst
+
+		self.log("Done: " + repr(ret_lst), 3)
+		return ret_lst
+
+
+	def extractJS(self, data, function=False, variable=False, match=False, evaluate=False, values=False):
+		self.log("")
+		scripts = self.parseDOM(data, "script")
+		if len(scripts) == 0:
+			self.log("Couldn't find any script tags. Assuming javascript file was given.")
+			scripts = [data]
+
+		lst = []
+		self.log("Extracting", 4)
+		for script in scripts:
+			tmp_lst = []
+			if function:
+				tmp_lst = re.compile(function + '\(.*?\).*?;', re.M | re.S).findall(script)
+			elif variable:
+				tmp_lst = re.compile(variable + '[ ]+=.*?;', re.M | re.S).findall(script)
+			else:
+				tmp_lst = [script]
+			if len(tmp_lst) > 0:
+				self.log("Found: " + repr(tmp_lst), 4)
+				lst += tmp_lst
+			else:
+				self.log("Found nothing on: " + script, 4)
+
+		test = range(0, len(lst))
+		test.reverse()
+		for i in test:
+			if match and lst[i].find(match) == -1:
+				self.log("Removing item: " + repr(lst[i]), 10)
+				del lst[i]
+			else:
+				self.log("Cleaning item: " + repr(lst[i]), 4)
+				if lst[i][0] == u"\n":
+					lst[i] == lst[i][1:]
+				if lst[i][len(lst) -1] == u"\n":
+					lst[i] == lst[i][:len(lst)- 2]
+				lst[i] = lst[i].strip()
+
+		if values or evaluate:
+			for i in range(0, len(lst)):
+				self.log("Getting values %s" % lst[i])
+				if function:
+					if evaluate: # include the ( ) for evaluation
+						data = re.compile("(\(.*?\))", re.M | re.S).findall(lst[i])
+					else:
+						data = re.compile("\((.*?)\)", re.M | re.S).findall(lst[i])
+				elif variable:
+					tlst = re.compile(variable +".*?=.*?;", re.M | re.S).findall(lst[i])
+					data = []
+					for tmp in tlst: # This breaks for some stuff. "ad_tag": "http://ad-emea.doubleclick.net/N4061/pfadx/com.ytpwatch.entertainment/main_563326'' # ends early, must end with }
+						cont_char = tmp[0]
+						cont_char = tmp[tmp.find("=") + 1:].strip()
+						cont_char = cont_char[0]
+						if cont_char in "'\"":
+							self.log("Using %s as quotation mark" % cont_char, 1)
+							tmp = tmp[tmp.find(cont_char) + 1:tmp.rfind(cont_char)]
+						else:
+							self.log("No quotation mark found", 1)
+							tmp = tmp[tmp.find("=") + 1: tmp.rfind(";")]
+
+						tmp = tmp.strip()
+						if len(tmp) > 0:
+							data.append(tmp)
+				else:
+					self.log("ERROR: Don't know what to extract values from")
+
+				self.log("Values extracted: %s" % repr(data))
+				if len(data) > 0:
+					lst[i] = data[0]
+
+		if evaluate:
+			for i in range(0, len(lst)):
+				self.log("Evaluating %s" % lst[i])
+				data = lst[i].strip()
+				try:
+					try:
+						lst[i] = json.loads(data)
+					except:
+						self.log("Couldn't json.loads, trying eval")
+						lst[i] = eval(data)
+				except:
+					self.log("Couldn't eval: %s from %s" % (repr(data), repr(lst[i])))
+
+		self.log("Done: " + str(len(lst)))
+		return lst
+
+	def fetchPage(self, params={}):
+		get = params.get
+		link = get("link")
+		ret_obj = {}
+		if get("post_data"):
+			self.log("called for : " + repr(params['link']))
+		else:
+			self.log("called for : " + repr(params))
+
+		if not link or int(get("error", "0")) > 2:
+			self.log("giving up")
+			ret_obj["status"] = 500
+			return ret_obj
+
+		if get("post_data"):
+			if get("hide_post_data"):
+				self.log("Posting data", 2)
+			else:
+				self.log("Posting data: " + urllib.urlencode(get("post_data")), 2)
+
+			request = urllib2.Request(link, urllib.urlencode(get("post_data")))
+			request.add_header('Content-Type', 'application/x-www-form-urlencoded')
+		else:
+			self.log("Got request", 2)
+			request = urllib2.Request(link)
+
+		if get("headers"):
+			for head in get("headers"):
+				request.add_header(head[0], head[1])
+
+		request.add_header('User-Agent', self.USERAGENT)
+
+		if get("cookie"):
+			request.add_header('Cookie', get("cookie"))
+
+		if get("refering"):
+			request.add_header('Referer', get("refering"))
+
+		try:
+			self.log("connecting to server...", 1)
+
+			con = urllib2.urlopen(request)
+			ret_obj["header"] = con.info()
+			ret_obj["new_url"] = con.geturl()
+			if get("no-content", "false") == u"false" or get("no-content", "false") == "false":
+				inputdata = con.read()
+				#data_type = chardet.detect(inputdata)
+				#inputdata = inputdata.decode(data_type["encoding"])
+				ret_obj["content"] = inputdata #.decode("utf-8")
+
+			con.close()
+
+			self.log("Done")
+			ret_obj["status"] = 200
+			return ret_obj
+
+		except urllib2.HTTPError, e:
+			err = str(e)
+			self.log("HTTPError : " + err)
+			self.log("HTTPError - Headers: " + str(e.headers) + " - Content: " + e.fp.read())
+
+			params["error"] = str(int(get("error", "0")) + 1)
+			ret = self.fetchPage(params)
+
+			if not "content" in ret and e.fp:
+				ret["content"] = e.fp.read()
+				return ret
+
+			ret_obj["status"] = 500
+			return ret_obj
+
+		except urllib2.URLError, e:
+			err = str(e)
+			self.log("URLError : " + err)
+
+			time.sleep(3)
+			params["error"] = str(int(get("error", "0")) + 1)
+			ret_obj = self.fetchPage(params)
+			return ret_obj
+
+
+#	def getCookieInfoAsHTML(self, ):
+#		self.log("", 5)
+
+#		cookie = repr(cookiejar)
+#		cookie = cookie.replace("<_LWPCookieJar.LWPCookieJar[", "")
+#		cookie = cookie.replace("), Cookie(version=0,", "></cookie><cookie ")
+#		cookie = cookie.replace(")]>", "></cookie>")
+#		cookie = cookie.replace("Cookie(version=0,", "<cookie ")
+#		cookie = cookie.replace(", ", " ")
+#		self.log(repr(cookie), 5)
+#		return cookie
+
+
+	# This function implements a horrible hack related to python 2.4's terrible unicode handling.
+#	def makeAscii(self, data):
+#		self.log(repr(data), 5)
+		#if sys.hexversion >= 0x02050000:
+		#        return data
+
+#		try:
+#			return data.encode('ascii', "ignore")
+#		except:
+#			self.log("Hit except on : " + repr(data))
+#			s = u""
+#			for i in data:
+#				try:
+#					i.encode("ascii", "ignore")
+#				except:
+#					self.log("Can't convert character", 4)
+#					continue
+#				else:
+#					s += i
+
+#			self.log(repr(s), 5)
+#			return s
+
+
+	# This function handles stupid utf handling in python.
+	def makeUTF8(self, data):
+		self.log(repr(data), 5)
+		return data
+		try:
+			return data.decode('utf8', 'xmlcharrefreplace') # was 'ignore'
+		except:
+			self.log("Hit except on : " + repr(data))
+			s = u""
+			for i in data:
+				try:
+					i.decode("utf8", "xmlcharrefreplace")
+				except:
+					self.log("Can't convert character", 4)
+					continue
+				else:
+					s += i
+			self.log(repr(s), 5)
+			return s
+
+
+#	def openFile(self, filepath, options=u"r"):
+#		self.log(repr(filepath) + " - " + repr(options))
+#		if options.find("b") == -1:  # Toggle binary mode on failure
+#			alternate = options + u"b"
+#		else:
+#			alternate = options.replace(u"b", u"")
+
+#		try:
+#			self.log("Trying normal: %s" % options)
+#			return io.open(filepath, options)
+#		except:
+#			self.log("Fallback to binary: %s" % alternate)
+#			return io.open(filepath, alternate)
+
+
+	def log(self, description, level=0):
+		if self.dbg and self.dbglevel > level:
+			try:
+				xbmc.log((u"[%s] %s : '%s'" % (self.plugin, inspect.stack()[1][3], description)).decode("utf-8"), xbmc.LOGNOTICE)
+			except:
+				xbmc.log(u"FALLBACK [%s] %s : '%s'" % (self.plugin, inspect.stack()[1][3], repr(description)), xbmc.LOGNOTICE)
+
+
+common = Helpers()
+common.plugin = "Rodina TV"
     
 #def dt(u): return datetime.datetime.utcfromtimestamp(u)
 class ccache():
@@ -489,11 +971,16 @@ class RodinaTV():
                         if title != '' and number != '':
                             try:
                                 lepg = d_epg[number]
+                                title2nd = ''
                                 for ebgn, eend, ename, edescr, pid, rec in lepg:
+                                    if title2nd == '':
+                                        title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
                             except: pass
                             plot = plot.replace('&quot;','`').replace('&amp;',' & ')
-                            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon), icon, False, {'title': title, 'plot':plot}))
+                            title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
+                            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon),
+                                            icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}))
 
             self.list_items(ct_chan, True)            
 
