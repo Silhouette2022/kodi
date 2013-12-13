@@ -1,21 +1,20 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.2.0
+# Rev. 1.3.0
 
 
 _VERSION_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
 
-import os, re, sys, datetime, time
+import os, re, sys, time
 import urllib, urllib2
 import xbmc, xbmcplugin, xbmcgui, xbmcaddon
-import uuid
+#import uuid
 import hashlib
 
 #import io
-import inspect
-import time
+#import inspect
 import HTMLParser
 import json
 
@@ -507,9 +506,9 @@ class Helpers():
 	def log(self, description, level=0):
 		if self.dbg and self.dbglevel > level:
 			try:
-				xbmc.log((u"[%s] %s : '%s'" % (self.plugin, inspect.stack()[1][3], description)).decode("utf-8"), xbmc.LOGNOTICE)
+				xbmc.log((u"[%s] : '%s'" % (self.plugin, description)).decode("utf-8"), xbmc.LOGNOTICE)
 			except:
-				xbmc.log(u"FALLBACK [%s] %s : '%s'" % (self.plugin, inspect.stack()[1][3], repr(description)), xbmc.LOGNOTICE)
+				xbmc.log(u"FALLBACK [%s] : '%s'" % (self.plugin, repr(description)), xbmc.LOGNOTICE)
 
 
 common = Helpers()
@@ -581,8 +580,10 @@ class RodinaTV():
         self.pwd = self.addon.getSetting('pwd')
         self.tsd = self.addon.getSetting('tsd')
         self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
-        self.ss = self.addon.getSetting('ss')   
-        self.view_mode = self.addon.getSetting('view_mode')      
+        self.ss = self.addon.getSetting('ss')
+        self.view_mode = self.addon.getSetting('view_mode')
+        self.view_epg = self.addon.getSetting('view_epg')
+        self.serial = self.addon.getSetting('serial')
 
         self.debug = True
         common.dbg = self.debug
@@ -807,7 +808,7 @@ class RodinaTV():
                     + '?device=%s&version=%s&sid=%s&login=%s&passwd=%s&serial=%s' % 
                     (device, version, sid, self.uid, 
                     hashlib.md5( rand + hashlib.md5(self.pwd).hexdigest()).hexdigest(),
-                    uuid.getnode())})
+                    self.serial)})
                     
             if resp != None:
                 self.get_auth = False
@@ -891,6 +892,11 @@ class RodinaTV():
         if self.uid == "":
             if not self.m_set(): return
             
+        if self.serial == '':
+            import uuid
+            self.serial = '%s' % uuid.uuid4()
+            self.addon.setSetting('serial', self.serial)
+
         self.authorize()
         if self.token == '':
             return
@@ -1117,7 +1123,8 @@ class RodinaTV():
         self.cached_rst(self.cache_chan)
         self.cached_rst(self.cache_epg)        
         self.params = ''
-        self.main()
+        
+        return True
         
     def m_kino(self):
         self.log("-m_kino:")
