@@ -4,3 +4,7 @@ Initial revision
 Added sort and search in cyrillic
 [B]1.1.1[/B]
 Removed external dependencies
+[B]1.2.0[/B]
+Added TV Guide to Live TV
+[B]1.1.1[/B]
+uuid as a serial insted of MAC
