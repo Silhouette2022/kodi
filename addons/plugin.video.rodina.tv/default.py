@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.3.0
+# Rev. 1.3.1
 
 
 _VERSION_ = '1.0.0'
@@ -558,13 +558,6 @@ class RodinaTV():
         self.timeserver = ''
        
         self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
-#        self.path_resources = os.path.join(self.path, 'resources')
-#        self.path_icons = os.path.join(self.path_resources, 'icons')
-#        self.path_icons_tv = os.path.join(self.path_icons, 'icon_tv_small.png')
-#        self.path_icons_td = os.path.join(self.path_icons, 'icon_timedelay_small.png')
-#        self.path_icons_ts = os.path.join(self.path_icons, 'icon_timeshift_small.png')
-#        self.path_icons_kino = os.path.join(self.path_icons, 'icon_kinozal_small.png')
-#        self.path_icons_info = os.path.join(self.path_icons, 'icon_info_small.png')
         self.path_resources = xbmc.translatePath(self.path + '/resources')
         self.path_icons = xbmc.translatePath(self.path_resources + '/icons')
         self.path_icons_tv = xbmc.translatePath(self.path_icons + '/icon_tv_small.png')
@@ -859,7 +852,7 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_client_info')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: self.log(resp)
+            if self.debug: print resp
   
     def get_settings(self):
         self.log("-get_settings:")
@@ -867,7 +860,7 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_settings')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: self.log(resp)  
+            if self.debug: print resp
                     
     def get_tstatus(self):
         self.log("-get_tstatus:")
@@ -875,7 +868,7 @@ class RodinaTV():
         req = self.portal + '?token=%s&query=%s' % (self.token, 'get_token_status')
         resp = self.getPage({"link": req})
         if resp != None:
-            if self.debug: self.log(resp)    
+            if self.debug: print resp
 
     def set_settings(self, ts='0'):
         self.log("-set_settings:")
@@ -979,7 +972,7 @@ class RodinaTV():
                                 lepg = d_epg[number]
                                 title2nd = ''
                                 for ebgn, eend, ename, edescr, pid, rec in lepg:
-                                    if title2nd == '':
+                                    if self.view_epg == 'true' and title2nd == '':
                                         title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
                             except: pass
