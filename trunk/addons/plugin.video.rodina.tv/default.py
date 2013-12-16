@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.3.1
+# Rev. 1.4.0
 
 
 _VERSION_ = '1.0.0'
@@ -556,6 +556,15 @@ class RodinaTV():
         self.word = ''
                         
         self.timeserver = ''
+        
+        self.numb = ''
+        self.ts = '' 
+        self.cicon = '' 
+        self.adt = ''
+        self.fid = ''
+        self.lid = ''
+        self.sort = ''
+                
        
         self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
         self.path_resources = xbmc.translatePath(self.path + '/resources')
@@ -577,9 +586,46 @@ class RodinaTV():
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
         self.serial = self.addon.getSetting('serial')
+        
+        self.icons = {}
+        self.icats = {}
 
         self.debug = True
         common.dbg = self.debug
+        
+        self.init_icons()
+
+        
+    def init_icons(self):
+        self.log("-init_icons:")
+        self.icons = { 'i_tv'   :xbmc.translatePath(self.path_icons + '/icons_1_tv.png'),
+                       'i_arch' :xbmc.translatePath(self.path_icons + '/icons_1_tvarchive.png'),
+                       'i_kino' :xbmc.translatePath(self.path_icons + '/icons_1_kino.png'),
+                       'i_set'  :xbmc.translatePath(self.path_icons + '/icons_1_settings.png'),
+                       'i_find' :xbmc.translatePath(self.path_icons + '/icons_3_1_kino_search.png'),
+                       'i_genre':xbmc.translatePath(self.path_icons + '/icons_3_2_kino_ganre.png'),
+                       'i_all'  :xbmc.translatePath(self.path_icons + '/icons_3_3_kino_all.png'),
+                       'i_tedu' :xbmc.translatePath(self.path_icons + '/icon_1_1_educa.png'),
+                       'i_tfam' :xbmc.translatePath(self.path_icons + '/icon_1_1_famil.png'),
+                       'i_tinfo':xbmc.translatePath(self.path_icons + '/icon_1_1_info.png'),
+                       'i_tkino':xbmc.translatePath(self.path_icons + '/icon_1_1_kino.png'),
+                       'i_tmult':xbmc.translatePath(self.path_icons + '/icon_1_1_mult.png'),
+                       'i_tmus' :xbmc.translatePath(self.path_icons + '/icon_1_1_music.png'),
+                       'i_trod' :xbmc.translatePath(self.path_icons + '/icon_1_1_rodni.png'),
+                       'i_tsprt':xbmc.translatePath(self.path_icons + '/icon_1_1_sport.png'),
+                       'i_txxx' :xbmc.translatePath(self.path_icons + '/icon_1_1_xxx.png')
+                     }
+                     
+        self.icats = { '105' : 'i_tedu',
+                       '101' : 'i_tfam',
+                       '107' : 'i_tinfo',
+                       '102' : 'i_tkino',
+                       '106' : 'i_tmult',
+                       '108' : 'i_tmus',
+                       '100' : 'i_trod',
+                       '104' : 'i_tsprt',
+                       '103' : 'i_txxx'
+                     }
 
     def main(self):
         self.log("Addon: %s"  % self.id)
@@ -899,11 +945,10 @@ class RodinaTV():
 #        self.get_client()
 #        self.get_settings()
         
-        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('cat', self.token, QT(self.portal), self.path_icons_tv,), self.path_icons_tv,   True, {'title': self.language(2000)} ),
-#                  ('?mode=%s&token=%s&portal=%s&ts=%s' % ('cat', self.token, QT(self.portal), self.tsd),   self.path_icons_td,   True, {'title': self.language(2001)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('arch', self.token, QT(self.portal), self.path_icons_ts), self.path_icons_ts,   True, {'title': self.language(2002)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('kino', self.token, QT(self.portal), self.path_icons_kino), self.path_icons_kino, True, {'title': self.language(1001)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('set', self.token, QT(self.portal), self.path_icons_info), self.path_icons_info, True, {'title': self.language(2003)}) ]
+        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('cat', self.token, QT(self.portal), self.icons['i_tv'],), self.icons['i_tv'],   True, {'title': self.language(2000)} ),
+                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('arch', self.token, QT(self.portal), self.icons['i_arch']), self.icons['i_arch'],   True, {'title': self.language(2002)}),
+                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('kino', self.token, QT(self.portal), self.icons['i_kino']), self.icons['i_kino'], True, {'title': self.language(1001)}),
+                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('set', self.token, QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.language(2003)}) ]
                                           
         self.list_items(ct_main, True)
         
@@ -926,7 +971,9 @@ class RodinaTV():
                 for title, numb in a_comb:
                     params = '?mode=%s&cat=%s&token=%s&portal=%s' % (nmode, numb, self.token, QT(self.portal))
                     if self.ts != '': params += ('&ts=%s' % self.ts)
-                    ct_cat.append((params, self.cicon, True, {'title': title}))
+                    try: cicon = self.icons[self.icats[numb]]
+                    except: cicon = self.cicon
+                    ct_cat.append((params, cicon, True, {'title': title}))
 
             self.list_items(ct_cat, True)
             
@@ -967,6 +1014,7 @@ class RodinaTV():
                         if icon == '': icon = self.path_icons_tv
 
                         plot = ''
+                        title2nd = ''
                         if title != '' and number != '':
                             try:
                                 lepg = d_epg[number]
@@ -1122,9 +1170,9 @@ class RodinaTV():
     def m_kino(self):
         self.log("-m_kino:")
         
-        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('search', self.token, QT(self.portal), self.path_icons_kino), self.path_icons_kino, True, {'title': self.language(1002)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('genres', self.token, QT(self.portal), self.path_icons_kino), self.path_icons_kino, True, {'title': self.language(1003)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s&offset=%s' % ('all', self.token, QT(self.portal), self.path_icons_kino, '0'), self.path_icons_kino,    True, {'title': self.language(1004)}) ]
+        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('search', self.token, QT(self.portal), self.icons['i_find']), self.icons['i_find'], True, {'title': self.language(1002)}),
+                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('genres', self.token, QT(self.portal), self.icons['i_genre']), self.icons['i_genre'], True, {'title': self.language(1003)}),
+                   ('?mode=%s&token=%s&portal=%s&icon=%s&offset=%s' % ('all', self.token, QT(self.portal), self.icons['i_all'], '0'), self.icons['i_all'],    True, {'title': self.language(1004)}) ]
                                           
         self.list_items(ct_main, True)
 
@@ -1239,7 +1287,7 @@ class RodinaTV():
                 if len(a_raw) >= 12:
                     req = '?mode=%s&token=%s&portal=%s' % ('sort', self.token, self.portal)
                     if self.numb != '': req += '&numb=%s' % self.numb
-                    ct_search.append((req, self.path_icons_kino, True, {'title': self.language(1005)}))
+                    ct_search.append((req, self.icons['i_kino'], True, {'title': self.language(1005)}))
                 print ct_search
                 for raw in a_raw:
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]

@@ -16,6 +16,7 @@
     <string id="2003">Settings</string>
 	<string id="10000">English</string>
 	<string id="11000">General settings</string> 
+	<string id="11001">View settings</string> 
 	<string id="11003">Pass ID</string>
 	<string id="11004">Password</string>
 	<string id="11005">Parental code</string>
