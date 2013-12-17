@@ -12,4 +12,6 @@ uuid as a serial insted of MAC
 Added settings switch to 2nd line EPG
 [B]1.4.0[/B]
 New icons
+[B]1.4.1[/B]
+Extra icons for movie genres
 
