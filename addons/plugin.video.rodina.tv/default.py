@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.4.0
+# Rev. 1.4.1
 
 
 _VERSION_ = '1.0.0'
@@ -588,14 +588,13 @@ class RodinaTV():
         self.serial = self.addon.getSetting('serial')
         
         self.icons = {}
-        self.icats = {}
+#        self.icats = {}
 
         self.debug = True
         common.dbg = self.debug
         
         self.init_icons()
-
-        
+     
     def init_icons(self):
         self.log("-init_icons:")
         self.icons = { 'i_tv'   :xbmc.translatePath(self.path_icons + '/icons_1_tv.png'),
@@ -604,27 +603,40 @@ class RodinaTV():
                        'i_set'  :xbmc.translatePath(self.path_icons + '/icons_1_settings.png'),
                        'i_find' :xbmc.translatePath(self.path_icons + '/icons_3_1_kino_search.png'),
                        'i_genre':xbmc.translatePath(self.path_icons + '/icons_3_2_kino_ganre.png'),
+                       '12':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_action.png'),
+                       '8':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_adventure.png'),
+                       '30':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_anime.png'),
+                       '40':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_biography.png'),
+                       '32':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_childrens.png'),
+                       '5':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_comedy.png'),
+                       '14':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_detective.png'),
+                       '20':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_documentary.png'),
+                       '7':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_drama.png'),
+                       '9':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_family.png'),
+                       '18':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_fantastic.png'),
+                       '17':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_fantasy.png'),
+                       '25':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_historical.png'),
+                       '22':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_horror.png'),
+                       '6':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_melodrama.png'),
+                       '21':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_military.png'),
+                       '10':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_mult.png'),
+                       '41':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_music.png'),
+                       '23':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_musical.png'),
+                       '34':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_mystic.png'),
+                       '00':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_other.png'),
+                       '24':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_sport.png'),
+                       '13':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_thriller.png'),
+                       '19':xbmc.translatePath(self.path_icons + '/icons_3_2_ganre_western.png'),
                        'i_all'  :xbmc.translatePath(self.path_icons + '/icons_3_3_kino_all.png'),
-                       'i_tedu' :xbmc.translatePath(self.path_icons + '/icon_1_1_educa.png'),
-                       'i_tfam' :xbmc.translatePath(self.path_icons + '/icon_1_1_famil.png'),
-                       'i_tinfo':xbmc.translatePath(self.path_icons + '/icon_1_1_info.png'),
-                       'i_tkino':xbmc.translatePath(self.path_icons + '/icon_1_1_kino.png'),
-                       'i_tmult':xbmc.translatePath(self.path_icons + '/icon_1_1_mult.png'),
-                       'i_tmus' :xbmc.translatePath(self.path_icons + '/icon_1_1_music.png'),
-                       'i_trod' :xbmc.translatePath(self.path_icons + '/icon_1_1_rodni.png'),
-                       'i_tsprt':xbmc.translatePath(self.path_icons + '/icon_1_1_sport.png'),
-                       'i_txxx' :xbmc.translatePath(self.path_icons + '/icon_1_1_xxx.png')
-                     }
-                     
-        self.icats = { '105' : 'i_tedu',
-                       '101' : 'i_tfam',
-                       '107' : 'i_tinfo',
-                       '102' : 'i_tkino',
-                       '106' : 'i_tmult',
-                       '108' : 'i_tmus',
-                       '100' : 'i_trod',
-                       '104' : 'i_tsprt',
-                       '103' : 'i_txxx'
+                       '105' :xbmc.translatePath(self.path_icons + '/icon_1_1_educa.png'),
+                       '101' :xbmc.translatePath(self.path_icons + '/icon_1_1_famil.png'),
+                       '107':xbmc.translatePath(self.path_icons + '/icon_1_1_info.png'),
+                       '102':xbmc.translatePath(self.path_icons + '/icon_1_1_kino.png'),
+                       '106':xbmc.translatePath(self.path_icons + '/icon_1_1_mult.png'),
+                       '108' :xbmc.translatePath(self.path_icons + '/icon_1_1_music.png'),
+                       '100' :xbmc.translatePath(self.path_icons + '/icon_1_1_rodni.png'),
+                       '104':xbmc.translatePath(self.path_icons + '/icon_1_1_sport.png'),
+                       '103' :xbmc.translatePath(self.path_icons + '/icon_1_1_xxx.png')
                      }
 
     def main(self):
@@ -858,6 +870,20 @@ class RodinaTV():
     def list_items(self, ictlg, view, films=False):
         self.log("-list_items:")
         
+        if self.view_mode == 'true':
+            if films == False:
+                xbmcplugin.setContent(self.handle, 'Episodes')
+                self.log('Episodes')
+            else:
+                xbmcplugin.setContent(self.handle, 'Movies')
+                self.log('Movies')
+                if view: 
+                    xbmc.executebuiltin('Container.SetViewMode("515")')
+                    self.log('SetViewMode("515")')
+                else:
+                    xbmc.executebuiltin('Container.SetViewMode("503")')
+                    self.log('SetViewMode("503")')         
+        
         for ctUrl, ctIcon, ctFolder, ctLabels  in ictlg:
             ctTitle = ctLabels['title']
             item = xbmcgui.ListItem(ctTitle, iconImage=ctIcon, thumbnailImage=ctIcon)
@@ -876,20 +902,6 @@ class RodinaTV():
             self.log("ctUrl: %s"  % ctUrl) 
             self.log("ctIcon: %s"  % ctIcon) 
             
-        if self.view_mode == 'true':
-            if films == False:
-                xbmcplugin.setContent(self.handle, 'Episodes')
-                self.log('Episodes')
-            else:
-                xbmcplugin.setContent(self.handle, 'Movies')
-                self.log('Movies')
-                if view: 
-                    xbmc.executebuiltin('Container.SetViewMode("515")')
-                    self.log('SetViewMode("515")')
-                else:
-                    xbmc.executebuiltin('Container.SetViewMode("503")')
-                    self.log('SetViewMode("503")')   
-        
         xbmcplugin.endOfDirectory(self.handle)
         
     def get_client(self):
@@ -971,7 +983,7 @@ class RodinaTV():
                 for title, numb in a_comb:
                     params = '?mode=%s&cat=%s&token=%s&portal=%s' % (nmode, numb, self.token, QT(self.portal))
                     if self.ts != '': params += ('&ts=%s' % self.ts)
-                    try: cicon = self.icons[self.icats[numb]]
+                    try: cicon = self.icons[numb]
                     except: cicon = self.cicon
                     ct_cat.append((params, cicon, True, {'title': title}))
 
@@ -1255,9 +1267,11 @@ class RodinaTV():
                 except: title = ''
                 try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                 except: number = ''
+                try: cicon = self.icons[number]
+                except: cicon = self.cicon
                 if title != '' and number != '':
-                    ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', self.cicon), 
-                    self.cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
+                    ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', cicon), 
+                    cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
 
             self.list_items(ct_genres, True)   
 
@@ -1287,7 +1301,7 @@ class RodinaTV():
                 if len(a_raw) >= 12:
                     req = '?mode=%s&token=%s&portal=%s' % ('sort', self.token, self.portal)
                     if self.numb != '': req += '&numb=%s' % self.numb
-                    ct_search.append((req, self.icons['i_kino'], True, {'title': self.language(1005)}))
+                    ct_search.append((req, self.icons['i_find'], True, {'title': self.language(1005)}))
                 print ct_search
                 for raw in a_raw:
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
