@@ -14,4 +14,6 @@ Added settings switch to 2nd line EPG
 New icons
 [B]1.4.1[/B]
 Extra icons for movie genres
+[B]1.5.0[/B]
+New fanart, new authorization logic
 
