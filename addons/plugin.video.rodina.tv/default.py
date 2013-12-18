@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.4.1
+# Rev. 1.5.0
 
 
 _VERSION_ = '1.0.0'
@@ -697,8 +697,8 @@ class RodinaTV():
     def xmlerror(self, xml):
         msg = common.parseDOM(xml, "item", attrs={"name": "message"})[0]
         code  = common.parseDOM(xml, "item", attrs={"name": "code"})[0]
-        if code == '4002':
-            self.log('%s: %s' % (code, msg));
+        if code == '4002' or code == '3002':
+            self.error('%s: %s' % (code, msg));
             self.get_auth = True
             return 
         self.showErrorMessage('%s: %s' % (code, msg))
@@ -722,20 +722,20 @@ class RodinaTV():
         self.log("-cached_get: %s" % type)
         cache = ''
         if type == 'tv':
-            cquery = '&query=%s' % 'get_channels'
+            cquery = '?query=%s' % 'get_channels'
             fn = self.cache_chan
             tt = time.time()
         elif type == 'etv':
-            cquery = '&query=%s&key="period|count"&value="%s|%s"' % ('get_epg', 60*60*3, 3)
+            cquery = '?query=%s&key="period|count"&value="%s|%s"' % ('get_epg', 60*60*3, 3)
             fn = self.cache_epg
             tt = time.time()
         elif type == 'dtv':
             tstart = str(int(time.time()))
-            cquery = '&query=%s&key="start|period|count"&value="%s|%s|%s"' % ('get_epg', tstart, 60*60*3, 3)
+            cquery = '?query=%s&key="start|period|count"&value="%s|%s|%s"' % ('get_epg', tstart, 60*60*3, 3)
             fn = self.cache_epg
             tt = time.time()
         elif type == 'atv':
-            cquery = '&query=%s&key="start|period|number"&value="%s|%s|%s"' % ('get_epg', self.adt, 60*60*24, self.numb)
+            cquery = '?query=%s&key="start|period|number"&value="%s|%s|%s"' % ('get_epg', self.adt, 60*60*24, self.numb)
             fn = self.cache_epg
             tt = float(self.adt)
             type += self.numb
@@ -763,20 +763,12 @@ class RodinaTV():
             
         if cache == '':
             self.log("--empty")
-#            tv = self.portal + '?token=%s&query=%s' % (self.token, 'get_channels')
-#            resp = self.getPage({"link": tv})       
-#            if self.get_auth == True:
-#                self.log("--get_auth")
-#                self.authorize()
-#                if self.get_auth == False:
-#                    self.log("--getpage")
-#                    resp = self.getPage({"link": tv})
 
-            self.authorize()
-            if self.get_auth == False:
-                self.log("--getpage")
-                req = self.portal + '?token=%s' % self.token + cquery
-                resp = self.getPage({"link": req})
+#            self.authorize()
+#            if self.get_auth == False:
+#                self.log("--getUrlPage")
+            req = self.portal + cquery
+            resp = self.getUrlPage( req)
 
 
             if resp != None:
@@ -802,11 +794,29 @@ class RodinaTV():
                 return resp["content"]
             else:
                 self.xmlerror(resp["content"])
+                self.get_auth = True
             
         else:
             self.showErrorMessage('Error: %s' % (str(resp["status"])))
             
         return None
+        
+        
+    def getUrlPage(self, link):
+        self.log("-getUrlPage:")
+        resp = self.getPage({'link':'%s&token=%s' % (link, self.token)})
+        cycle = 0
+        while self.get_auth == True:
+            self.log("--authorize:")
+            self.authorize()
+            if self.get_auth == False:
+                self.log("--getPage:")
+                resp = self.getPage({'link':'%s&token=%s' % (link, self.token)})
+
+            cycle += 1
+            if cycle > 5: break
+
+        return resp
         
     def epg2dict(self, sepg):
         self.log("-epg2dict:")
@@ -847,6 +857,7 @@ class RodinaTV():
 
         device = 'xbmc'
         version = _VERSION_
+        self.get_auth = True
         
         resp = self.getPage({"link": self.auth})
         if resp != None:
@@ -877,12 +888,6 @@ class RodinaTV():
             else:
                 xbmcplugin.setContent(self.handle, 'Movies')
                 self.log('Movies')
-                if view: 
-                    xbmc.executebuiltin('Container.SetViewMode("515")')
-                    self.log('SetViewMode("515")')
-                else:
-                    xbmc.executebuiltin('Container.SetViewMode("503")')
-                    self.log('SetViewMode("503")')         
         
         for ctUrl, ctIcon, ctFolder, ctLabels  in ictlg:
             ctTitle = ctLabels['title']
@@ -901,30 +906,46 @@ class RodinaTV():
             self.log("ctTitle: %s"  % ctTitle) 
             self.log("ctUrl: %s"  % ctUrl) 
             self.log("ctIcon: %s"  % ctIcon) 
-            
+
+        if self.view_mode == 'true':
+            skin_used = xbmc.getSkinDir()
+            if 'confluence' in skin_used:
+                if view: 
+                    xbmc.executebuiltin('Container.SetViewMode("515")')
+                    self.log('SetViewMode("515")')
+                else:
+                    xbmc.executebuiltin('Container.SetViewMode("503")')
+                    self.log('SetViewMode("503")')   
+                                
         xbmcplugin.endOfDirectory(self.handle)
+#        print 'view_mode = %s' % self.view_mode
+#        print 'films = %s' % films
+#        print 'view = %s' % view
+        
+
+                            
         
     def get_client(self):
         self.log("-get_client:")
         
-        req = self.portal + '?token=%s&query=%s' % (self.token, 'get_client_info')
-        resp = self.getPage({"link": req})
+        req = self.portal + '?query=%s' % ('get_client_info')
+        resp = self.getUrlPage( req)
         if resp != None:
             if self.debug: print resp
   
     def get_settings(self):
         self.log("-get_settings:")
         
-        req = self.portal + '?token=%s&query=%s' % (self.token, 'get_settings')
-        resp = self.getPage({"link": req})
+        req = self.portal + '?query=%s' % ('get_settings')
+        resp = self.getUrlPage( req)
         if resp != None:
             if self.debug: print resp
                     
     def get_tstatus(self):
         self.log("-get_tstatus:")
         
-        req = self.portal + '?token=%s&query=%s' % (self.token, 'get_token_status')
-        resp = self.getPage({"link": req})
+        req = self.portal + '?query=%s' % ('get_token_status')
+        resp = self.getUrlPage( req)
         if resp != None:
             if self.debug: print resp
 
@@ -933,8 +954,8 @@ class RodinaTV():
         
         key = 'bitrate|tshift'
         value = '%s|%s' % (self.br, ts)
-        req = self.portal + '?token=%s&query=%s&key="%s"&value="%s"' % (self.token, 'set_settings', key, value)
-        resp = self.getPage({"link": req})
+        req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_settings', key, value)
+        resp = self.getUrlPage( req)
         if resp != None:
             self.log('--resp:%s' % resp)
             
@@ -1041,7 +1062,7 @@ class RodinaTV():
                             ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon),
                                             icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}))
 
-            self.list_items(ct_chan, True)            
+            self.list_items(ct_chan, self.view_epg != 'true')
 
 
     def tv_play(self):
@@ -1052,24 +1073,24 @@ class RodinaTV():
         if self.has_pwd == '1': pcode = common.getUserInput(self.language(11005), '', True)
         
         resp = None
-        self.authorize()
-        if self.get_auth == False:
-            req = self.portal + '?token=%s&query=%s' % (self.token, 'get_url')
+#        self.authorize()
+#        if self.get_auth == False:
+        req = self.portal + '?query=%s' % ('get_url')
 
-            if self.pid == '' and self.lid == '':
-                key = "number"
-                value = self.numb
-            elif self.lid == '':
-                key = "pid"
-                value = self.pid
-            else:
-                key = "lid"
-                value = self.lid
-            if self.has_pwd == '1':
-                key += "|passwd"
-                value += '|' + hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
-            req += '&key="%s"&value="%s"' % (key, value)
-            resp = self.getPage({"link": req})
+        if self.pid == '' and self.lid == '':
+            key = "number"
+            value = self.numb
+        elif self.lid == '':
+            key = "pid"
+            value = self.pid
+        else:
+            key = "lid"
+            value = self.lid
+        if self.has_pwd == '1':
+            key += "|passwd"
+            value += '|' + hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
+        req += '&key="%s"&value="%s"' % (key, value)
+        resp = self.getUrlPage( req)
 
         if resp != None:
             try: url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
@@ -1186,7 +1207,7 @@ class RodinaTV():
                    ('?mode=%s&token=%s&portal=%s&icon=%s' % ('genres', self.token, QT(self.portal), self.icons['i_genre']), self.icons['i_genre'], True, {'title': self.language(1003)}),
                    ('?mode=%s&token=%s&portal=%s&icon=%s&offset=%s' % ('all', self.token, QT(self.portal), self.icons['i_all'], '0'), self.icons['i_all'],    True, {'title': self.language(1004)}) ]
                                           
-        self.list_items(ct_main, True)
+        self.list_items(ct_main, True, True)
 
     def uni2enc(self, ustr):
         raw = ''
@@ -1206,13 +1227,13 @@ class RodinaTV():
 
         
         if self.word != '':
-            self.authorize()
-            if self.get_auth == False:
+#            self.authorize()
+#            if self.get_auth == False:
                 key = 'word|offset|count'
                 value = '%s|%s|%s' % (self.word, self.offset, '12')
-                req = self.portal + '?token=%s&query=%s' % (self.token, 'get_cinema_search')
+                req = self.portal + '?query=%s' % ('get_cinema_search')
                 req += '&key="%s"&value="%s"' % (key, value)
-                resp = self.getPage({"link": req})
+                resp = self.getUrlPage( req)
                 
                 if resp != None:
                     ct_search = []
@@ -1244,16 +1265,16 @@ class RodinaTV():
 
                     if len(a_raw) >= 12:
                         ct_search.append(('?mode=%s&token=%s&portal=%s&word=%s&offset=%s' % ('search', self.token, self.portal, self.word, str(int(self.offset) + 12)), '', True, {'title': self.language(20008)}))
-                    self.list_items(ct_search, True) 
+                    self.list_items(ct_search, True, True) 
 
     def m_genres(self):
         self.log("-m_genres:")
         
         resp = None
-        self.authorize()
-        if self.get_auth == False:
-            req = self.portal + '?token=%s&query=%s' % (self.token, 'get_cinema_genre_info')
-            resp = self.getPage({"link": req})
+#        self.authorize()
+#        if self.get_auth == False:
+        req = self.portal + '?query=%s' % ('get_cinema_genre_info')
+        resp = self.getUrlPage( req)
 
         if resp != None:
             ct_genres = []
@@ -1273,15 +1294,15 @@ class RodinaTV():
                     ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', cicon), 
                     cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
 
-            self.list_items(ct_genres, True)   
+            self.list_items(ct_genres, True, True)   
 
 
     def m_all(self):
-        self.log("-m_kino:")
-        
-        resp = None
-        self.authorize()
-        if self.get_auth == False:
+            self.log("-m_kino:")
+            
+            resp = None
+#        self.authorize()
+#        if self.get_auth == False:
             key = 'offset|count'
             value = '%s|%s' % (self.offset, '12')
             if self.numb != '':
@@ -1290,9 +1311,9 @@ class RodinaTV():
             if self.sort != '':
                 key += '|sort'
                 value += '|%s' % (self.sort)                
-            req = self.portal + '?token=%s&query=%s' % (self.token, 'get_cinema_films')
+            req = self.portal + '?query=%s' % ('get_cinema_films')
             req += '&key="%s"&value="%s"' % (key, value)
-            resp = self.getPage({"link": req})
+            resp = self.getUrlPage( req)
             
             if resp != None:
                 ct_search = []
@@ -1338,14 +1359,14 @@ class RodinaTV():
         self.log("-f_play:")
         
         resp = None
-        self.authorize()
-        if self.get_auth == False:
+#        self.authorize()
+#        if self.get_auth == False:
 
-            req = self.portal + '?token=%s&query=%s' % (self.token, 'get_cinema_desc')
-            key = "fid"
-            value = self.fid
-            req += '&key="%s"&value="%s"' % (key, value)
-            resp = self.getPage({"link": req})
+        req = self.portal + '?query=%s' % ('get_cinema_desc')
+        key = "fid"
+        value = self.fid
+        req += '&key="%s"&value="%s"' % (key, value)
+        resp = self.getUrlPage( req)
         
         if resp != None:
             ct_films = []
@@ -1441,9 +1462,9 @@ class RodinaTV():
             creq += '&numb=%s' % (self.numb)
         for smode in ct_smode:
             req = creq + '&sort=%s' % (smode[1])
-            ct_sort.append( (req, self.path_icons_kino, True, {'title': smode[0]}))
+            ct_sort.append( (req, self.icons['i_find'], True, {'title': smode[0]}))
                                          
-        self.list_items(ct_sort, True)
+        self.list_items(ct_sort, True, True)
         
     # *** Add-on helpers
     def log(self, message):
