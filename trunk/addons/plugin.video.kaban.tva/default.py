@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.4.8
+# Rev. 0.5.0
 
 
 
@@ -18,7 +18,7 @@ KTV_arch = '/archive'
 KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
 
-dbg = 0
+dbg = 1
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
@@ -174,36 +174,37 @@ def KTV_play(url, name, thumbnail, plot):
         response    = getURL(plnk + '/player.jsx')
     except:
         response    = getURL(url)
-    
+
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
-    #print ef_ls
     if len(ef_ls):
         url_ls = re.compile('rtmp:(.+?).stream').findall(Decode(ef_ls[0]))
-        if len(url_ls):
-            i = 0
+
+        lurl = []
         for ur in url_ls:
-            hurl = 'http:' + url_ls[i] + '.stream'
+            hurl = 'rtmp:' + ur + '.stream'
+            lurl.append(hurl)
             dbg_log('hrl = %s'%hurl)
-            try:            
-              http = urllib2.urlopen(hurl, None, 5)
-            except:
-              i += 1
-              dbg_log('--not playing')
-              continue
             
-            rtmp_streamer = re.sub('http','rtmp',hurl)
-            furl = rtmp_streamer
+        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+        sPlayer     = xbmc.Player()
+        sPlayList.clear()
+
+        furl = ''
+        i = 0
+        for hurl in lurl:
+            furl = hurl
             furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
             furl += ' pageUrl=%s'%KTV_url
-            furl += ' tcUrl=%s'%rtmp_streamer
-            furl += ' flashVer=\'WIN 11,2,202,235\''
-            
+            furl += ' tcUrl=%s'%hurl
+            furl += " flashVer=\'WIN 11,2,202,235\'"
+            item = xbmcgui.ListItem(path = furl)
+            sPlayList.add(furl, item, i)
+            i = i + 1
             xbmc.log('furl = %s'%furl)
             
-            item = xbmcgui.ListItem(path = furl)
-            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-
+        if len(lurl) > 0:
             dbg_log('--playing') 
+            sPlayer.play(sPlayList)
 
         
 def KTV_chls(url):
