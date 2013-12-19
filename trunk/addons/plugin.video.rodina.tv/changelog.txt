@@ -16,4 +16,5 @@ New icons
 Extra icons for movie genres
 [B]1.5.0[/B]
 New fanart, new authorization logic
-
+[B]1.5.1[/B]
+Bug fix

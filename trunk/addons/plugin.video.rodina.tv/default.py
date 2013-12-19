@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.5.0
+# Rev. 1.5.1
 
 
 _VERSION_ = '1.0.0'
@@ -956,8 +956,8 @@ class RodinaTV():
         value = '%s|%s' % (self.br, ts)
         req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_settings', key, value)
         resp = self.getUrlPage( req)
-        if resp != None:
-            self.log('--resp:%s' % resp)
+#        if resp != None:
+#            self.log('--resp:%s' % resp)
             
     def m_main(self):
         self.log("-m_main:")
