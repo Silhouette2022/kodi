@@ -18,3 +18,5 @@ Extra icons for movie genres
 New fanart, new authorization logic
 [B]1.5.1[/B]
 Bug fix
+[B]1.5.2[/B]
+gzip is on
