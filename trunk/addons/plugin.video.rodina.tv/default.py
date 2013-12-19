@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.5.1
+# Rev. 1.5.2
 
 
 _VERSION_ = '1.0.0'
@@ -804,14 +804,14 @@ class RodinaTV():
         
     def getUrlPage(self, link):
         self.log("-getUrlPage:")
-        resp = self.getPage({'link':'%s&token=%s' % (link, self.token)})
+        resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
         cycle = 0
         while self.get_auth == True:
             self.log("--authorize:")
             self.authorize()
             if self.get_auth == False:
                 self.log("--getPage:")
-                resp = self.getPage({'link':'%s&token=%s' % (link, self.token)})
+                resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
 
             cycle += 1
             if cycle > 5: break
