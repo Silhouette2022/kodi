@@ -20,3 +20,5 @@ New fanart, new authorization logic
 Bug fix
 [B]1.5.2[/B]
 gzip is on
+[B]1.5.3[/B]
+Bug fix

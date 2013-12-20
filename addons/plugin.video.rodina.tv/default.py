@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.5.2
+# Rev. 1.5.3
 
 
 _VERSION_ = '1.0.0'
@@ -522,7 +522,47 @@ class ccache():
         self.fname = ''
         self.ttl = 0
         self.ctime = 0.0
+        
+
+
+
+class XBMCPlayer(xbmc.Player):
+    def __init__( self, *args, **kwargs ):
+        self.is_active = True
+        print "#XBMCPlayer#"
     
+    def onPlayBackPaused( self ):
+        xbmc.log("#Im paused#")
+        
+    def onPlayBackResumed( self ):
+        xbmc.log("#Im Resumed #")
+        
+    def onPlayBackStarted( self ):
+        print "#Playback Started#"
+        try:
+            print "#Im playing :: " + self.getPlayingFile()
+        except:
+            print "#I failed get what Im playing#"
+            
+    def onPlayBackEnded( self ):
+        print "#Playback Ended#"
+        self.is_active = False
+        
+    def onPlayBackStopped( self ):
+        print "## Playback Stopped ##"
+        self.is_active = False
+        
+    def onPlayBackSeek(self, time, seekOffset):
+        print "## Playback Seek ##"
+        xbmc.log("#seekOffset: %s #" % seekOffset)
+        xbmc.log("#time: %s #" % time)
+    
+    def sleep(self, s):
+        xbmc.sleep(s) 
+
+
+
+
 
 class RodinaTV():
     def __init__(self):
@@ -1087,8 +1127,10 @@ class RodinaTV():
             key = "lid"
             value = self.lid
         if self.has_pwd == '1':
-            key += "|passwd"
-            value += '|' + hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
+            self.authorize()
+            if self.get_auth == False:
+                key += "|passwd"
+                value += '|' + hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
         req += '&key="%s"&value="%s"' % (key, value)
         resp = self.getUrlPage( req)
 
@@ -1098,6 +1140,14 @@ class RodinaTV():
             item = xbmcgui.ListItem(path = url)
             xbmcplugin.setResolvedUrl(self.handle, True, item)
             self.log("-play_url:%s" % url)
+
+#            sPlayer = XBMCPlayer()
+#            sPlayer.play(url, item)
+            
+
+#            while sPlayer.is_active:
+#                sPlayer.sleep(100)
+            
  
                 
 
@@ -1318,12 +1368,10 @@ class RodinaTV():
             if resp != None:
                 ct_search = []
                 a_raw = common.parseDOM(resp, "row")
-                print len(a_raw)
                 if len(a_raw) >= 12:
                     req = '?mode=%s&token=%s&portal=%s' % ('sort', self.token, self.portal)
                     if self.numb != '': req += '&numb=%s' % self.numb
                     ct_search.append((req, self.icons['i_find'], True, {'title': self.language(1005)}))
-                print ct_search
                 for raw in a_raw:
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
                     except: title = ''
