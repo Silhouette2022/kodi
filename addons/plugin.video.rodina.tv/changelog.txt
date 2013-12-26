@@ -22,3 +22,5 @@ Bug fix
 gzip is on
 [B]1.5.3[/B]
 Bug fix
+[B]1.6.0[/B]
+COntrol of parental code

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.5.3
+# Rev. 1.6.0
 
 
 _VERSION_ = '1.0.0'
@@ -560,10 +560,6 @@ class XBMCPlayer(xbmc.Player):
     def sleep(self, s):
         xbmc.sleep(s) 
 
-
-
-
-
 class RodinaTV():
     def __init__(self):
         self.id = _ADDOD_ID_
@@ -582,7 +578,7 @@ class RodinaTV():
         self.auth = self.api + '/auth.xml'
         self.get_auth = False
 
-        self.token = ''
+#        self.token = ''
         self.portal = ''
         self.ttl = ''
         
@@ -626,6 +622,7 @@ class RodinaTV():
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
         self.serial = self.addon.getSetting('serial')
+        self.token = self.addon.getSetting('token')
         
         self.icons = {}
 #        self.icats = {}
@@ -687,7 +684,7 @@ class RodinaTV():
         
         mode = params['mode'] if 'mode' in params else None
         self.cat = params['cat'] if 'cat' in params else ''
-        self.token = params['token'] if 'token' in params else ''
+#        self.token = params['token'] if 'token' in params else ''
         self.portal = urllib.unquote_plus(params['portal']) if 'portal' in params else ''
         self.numb = params['numb'] if 'numb' in params else ''
         self.has_pwd = params['pwd'] if 'pwd' in params else ''    
@@ -702,6 +699,8 @@ class RodinaTV():
         self.offset = params['offset'] if 'offset' in params else ''
         self.word = params['word'] if 'word' in params else ''
         self.sort = params['sort'] if 'sort' in params else ''
+        
+
                                 
         if mode == 'tv':
             self.m_tv()
@@ -729,6 +728,10 @@ class RodinaTV():
             self.m_film()             
         elif mode == 'set':
             self.m_set() 
+        elif mode == 'setall':
+            self.m_setall() 
+        elif mode == 'setpc':
+            self.m_setpcode()                         
         elif mode == 'sort':
             self.m_sort()             
         else:
@@ -842,19 +845,22 @@ class RodinaTV():
         return None
         
         
-    def getUrlPage(self, link):
+    def getUrlPage(self, link, max=5):
         self.log("-getUrlPage:")
+        self.token = self.addon.getSetting('token')
         resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
         cycle = 0
         while self.get_auth == True:
+            cycle += 1
+            if cycle > max: break
+                    
             self.log("--authorize:")
             self.authorize()
             if self.get_auth == False:
                 self.log("--getPage:")
                 resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
 
-            cycle += 1
-            if cycle > 5: break
+
 
         return resp
         
@@ -917,6 +923,7 @@ class RodinaTV():
                 self.token = common.parseDOM(resp, "item", attrs={"name": "token"})[0]
                 self.portal = common.parseDOM(resp, "item", attrs={"name": "portal"})[0]
                 self.ttl = common.parseDOM(resp, "item", attrs={"name": "ttl"})[0]
+                self.addon.setSetting('token', self.token)
                 
     def list_items(self, ictlg, view, films=False):
         self.log("-list_items:")
@@ -986,8 +993,8 @@ class RodinaTV():
         
         req = self.portal + '?query=%s' % ('get_token_status')
         resp = self.getUrlPage( req)
-        if resp != None:
-            if self.debug: print resp
+#        if resp != None:
+#            if self.debug: print resp
 
     def set_settings(self, ts='0'):
         self.log("-set_settings:")
@@ -1018,10 +1025,10 @@ class RodinaTV():
 #        self.get_client()
 #        self.get_settings()
         
-        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('cat', self.token, QT(self.portal), self.icons['i_tv'],), self.icons['i_tv'],   True, {'title': self.language(2000)} ),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('arch', self.token, QT(self.portal), self.icons['i_arch']), self.icons['i_arch'],   True, {'title': self.language(2002)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('kino', self.token, QT(self.portal), self.icons['i_kino']), self.icons['i_kino'], True, {'title': self.language(1001)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('set', self.token, QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.language(2003)}) ]
+        ct_main = [('?mode=%s&portal=%s&icon=%s' % ('cat', QT(self.portal), self.icons['i_tv'],), self.icons['i_tv'],   True, {'title': self.language(22000)} ),
+                   ('?mode=%s&portal=%s&icon=%s' % ('arch', QT(self.portal), self.icons['i_arch']), self.icons['i_arch'],   True, {'title': self.language(22002)}),
+                   ('?mode=%s&portal=%s&icon=%s' % ('kino', QT(self.portal), self.icons['i_kino']), self.icons['i_kino'], True, {'title': self.language(21001)}),
+                   ('?mode=%s&portal=%s&icon=%s' % ('setall', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.language(22003)}) ]
                                           
         self.list_items(ct_main, True)
         
@@ -1042,7 +1049,7 @@ class RodinaTV():
                 a_numb = common.parseDOM(cat, "item", attrs={"name": "number"})
                 a_comb = zip(a_title, a_numb)
                 for title, numb in a_comb:
-                    params = '?mode=%s&cat=%s&token=%s&portal=%s' % (nmode, numb, self.token, QT(self.portal))
+                    params = '?mode=%s&cat=%s&portal=%s' % (nmode, numb, QT(self.portal))
                     if self.ts != '': params += ('&ts=%s' % self.ts)
                     try: cicon = self.icons[numb]
                     except: cicon = self.cicon
@@ -1099,7 +1106,7 @@ class RodinaTV():
                             except: pass
                             plot = plot.replace('&quot;','`').replace('&amp;',' & ')
                             title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
-                            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.token, self.portal, number, has_passwd, icon),
+                            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.portal, number, has_passwd, icon),
                                             icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}))
 
             self.list_items(ct_chan, self.view_epg != 'true')
@@ -1110,13 +1117,15 @@ class RodinaTV():
         
         if self.has_rec == '0': return
         
-        if self.has_pwd == '1': pcode = common.getUserInput(self.language(11005), '', True)
+        if self.has_pwd == '1': 
+            pcode = common.getUserInput(self.language(11005), '', True)
+            if pcode == None or pcode == '': return
         
         resp = None
 #        self.authorize()
 #        if self.get_auth == False:
         req = self.portal + '?query=%s' % ('get_url')
-
+        self.token = self.addon.getSetting('token')
         if self.pid == '' and self.lid == '':
             key = "number"
             value = self.numb
@@ -1127,7 +1136,8 @@ class RodinaTV():
             key = "lid"
             value = self.lid
         if self.has_pwd == '1':
-            self.authorize()
+            self.get_tstatus()
+#            self.authorize()
             if self.get_auth == False:
                 key += "|passwd"
                 value += '|' + hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
@@ -1188,7 +1198,7 @@ class RodinaTV():
                                 except: icon = ''
                             if icon == '' : icon = self.path_icons_tv
                             if title != '' and number != '':
-                                ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.token, self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}))
+                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}))
 
             self.list_items(ct_chan, True)   
             
@@ -1211,8 +1221,8 @@ class RodinaTV():
         for dt in range(dnow+(24*60*60), dnow - (14*24*60*60), -(24*60*60)):
             lt = time.localtime(dt)
             title = time.strftime("%x ", lt) + dweek[lt.tm_wday]
-            ct_date.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
-            ('aepg', self.token, self.portal, self.numb, self.has_pwd, self.cicon, dt), self.cicon, True, {'title': title}))
+            ct_date.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
+            ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, dt), self.cicon, True, {'title': title}))
             
         self.list_items(ct_date, True)
 
@@ -1228,9 +1238,17 @@ class RodinaTV():
             if rec != '1': title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
 
 
-            ct_chan.append(('?mode=%s&token=%s&portal=%s&numb=%s&pwd=%s&icon=%s&pid=%s&rec=%s' % ('tvplay', self.token, self.portal, self.numb, self.has_pwd, self.cicon, pid, rec), self.cicon, False, {'title': title, 'plot':plot}))
+            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&pid=%s&rec=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, pid, rec), self.cicon, False, {'title': title, 'plot':plot}))
 
         self.list_items(ct_chan, False)   
+        
+    def m_setall(self):
+        self.log("-m_setall:")
+        
+        ct_setall = [('?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.language(22003)}),
+                     ('?mode=%s&portal=%s&icon=%s' % ('setpc', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.language(11005)}) ]
+                                          
+        self.list_items(ct_setall, True)
                  
     def m_set(self):
         self.log("-m_set:")
@@ -1250,12 +1268,53 @@ class RodinaTV():
         
         return True
         
+    def check_pcode(self, pcode):
+        self.log("-check_pcode:")
+        key = "passwd"
+        value = hashlib.md5( self.token + hashlib.md5(pcode).hexdigest()).hexdigest()
+        req = self.portal + '?query=%s&key="%s"&value="%s"' % ('check_control_passwd', key, value)
+        resp = self.getUrlPage(req, max = 0)
+        if resp == None or resp == '': return False
+        else: return True
+        
+    def set_pcode(self, old, new):
+        self.log("-set_pcode:")
+        key = "old|new"
+        value = hashlib.md5( self.token + hashlib.md5(old).hexdigest()).hexdigest() + '|' + hashlib.md5(new).hexdigest()
+        req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_control_passwd', key, value)
+        resp = self.getUrlPage(req, max = 0)
+        if resp == None or resp == '': return False
+        else: return True
+       
+    def m_setpcode(self):
+        self.log("-m_setpcode:")
+        npcode = common.getUserInput('%s %s %s' % (self.language(22004), self.language(22006), self.language(11005)), '', True)
+        if npcode != None and npcode != '':
+            rpcode = common.getUserInput('%s %s %s' % (self.language(22005), self.language(22006), self.language(11005)), '', True)
+            if rpcode != None and rpcode != '':
+                opcode = common.getUserInput('%s %s %s' % (self.language(22004), self.language(22007), self.language(11005)), '', True)
+                if opcode != None and opcode != '':
+                    if npcode == rpcode:
+                        self.get_tstatus()
+                        if self.get_auth == False:
+                            if self.check_pcode(opcode) == True:
+                                if self.set_pcode(opcode, rpcode) == False:
+                                    self.showErrorMessage(self.language(22008))
+                                    
+                            else: self.showErrorMessage(self.language(22008))
+                                    
+                    else: self.showErrorMessage(self.language(22008))
+                
+                
+
+        
+        
     def m_kino(self):
         self.log("-m_kino:")
         
-        ct_main = [('?mode=%s&token=%s&portal=%s&icon=%s' % ('search', self.token, QT(self.portal), self.icons['i_find']), self.icons['i_find'], True, {'title': self.language(1002)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s' % ('genres', self.token, QT(self.portal), self.icons['i_genre']), self.icons['i_genre'], True, {'title': self.language(1003)}),
-                   ('?mode=%s&token=%s&portal=%s&icon=%s&offset=%s' % ('all', self.token, QT(self.portal), self.icons['i_all'], '0'), self.icons['i_all'],    True, {'title': self.language(1004)}) ]
+        ct_main = [('?mode=%s&portal=%s&icon=%s' % ('search', QT(self.portal), self.icons['i_find']), self.icons['i_find'], True, {'title': self.language(21002)}),
+                   ('?mode=%s&portal=%s&icon=%s' % ('genres', QT(self.portal), self.icons['i_genre']), self.icons['i_genre'], True, {'title': self.language(21003)}),
+                   ('?mode=%s&portal=%s&icon=%s&offset=%s' % ('all', QT(self.portal), self.icons['i_all'], '0'), self.icons['i_all'],    True, {'title': self.language(21004)}) ]
                                           
         self.list_items(ct_main, True, True)
 
@@ -1307,14 +1366,14 @@ class RodinaTV():
                         except: small_cover= ''
 
                         if title != '' and fid != '':
-                            ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
+                            ct_search.append(('?mode=%s&portal=%s&fid=%s' % ('film', self.portal, fid), small_cover, True,
                              {'title': title, 
                              'rating': imdb_rate, 
                               'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
                               'year':year} ))
 
                     if len(a_raw) >= 12:
-                        ct_search.append(('?mode=%s&token=%s&portal=%s&word=%s&offset=%s' % ('search', self.token, self.portal, self.word, str(int(self.offset) + 12)), '', True, {'title': self.language(20008)}))
+                        ct_search.append(('?mode=%s&portal=%s&word=%s&offset=%s' % ('search', self.portal, self.word, str(int(self.offset) + 12)), '', True, {'title': self.language(20008)}))
                     self.list_items(ct_search, True, True) 
 
     def m_genres(self):
@@ -1341,7 +1400,7 @@ class RodinaTV():
                 try: cicon = self.icons[number]
                 except: cicon = self.cicon
                 if title != '' and number != '':
-                    ct_genres.append(( '?mode=%s&token=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.token, self.portal, number, '0', cicon), 
+                    ct_genres.append(( '?mode=%s&portal=%s&numb=%s&offset=%s&icon=%s' % ('all', self.portal, number, '0', cicon), 
                     cicon, True, {'title': '[B]%s [/B][COLOR FF999999](%s)[/COLOR]' % (title, cnt)} ))
 
             self.list_items(ct_genres, True, True)   
@@ -1369,9 +1428,9 @@ class RodinaTV():
                 ct_search = []
                 a_raw = common.parseDOM(resp, "row")
                 if len(a_raw) >= 12:
-                    req = '?mode=%s&token=%s&portal=%s' % ('sort', self.token, self.portal)
+                    req = '?mode=%s&portal=%s' % ('sort', self.portal)
                     if self.numb != '': req += '&numb=%s' % self.numb
-                    ct_search.append((req, self.icons['i_find'], True, {'title': self.language(1005)}))
+                    ct_search.append((req, self.icons['i_find'], True, {'title': self.language(21005)}))
                 for raw in a_raw:
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
                     except: title = ''
@@ -1390,13 +1449,13 @@ class RodinaTV():
                     try: small_cover = common.parseDOM(raw, "item", attrs={"name": "small_cover"})[0]
                     except: small_cover = ''
                     if title != '' and fid != '':
-                        ct_search.append(('?mode=%s&token=%s&portal=%s&fid=%s' % ('film', self.token, self.portal, fid), small_cover, True,
+                        ct_search.append(('?mode=%s&portal=%s&fid=%s' % ('film', self.portal, fid), small_cover, True,
                          {'title': title, 
                           'rating': imdb_rate,                         
                           'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
                           'year':year} ))
                 if len(a_raw) >= 12:
-                    req = '?mode=%s&token=%s&portal=%s&offset=%s' % ('all', self.token, self.portal, str(int(self.offset) + 12))
+                    req = '?mode=%s&portal=%s&offset=%s' % ('all', self.portal, str(int(self.offset) + 12))
                     if self.numb != '': req += '&numb=%s' % self.numb
                     if self.sort != '': req += '&sort=%s' % self.sort
                     ct_search.append((req, '', True, {'title': self.language(20008)}))
@@ -1484,7 +1543,7 @@ class RodinaTV():
                             i += 1
                         else: name = '%s%s' % (qn, title)
                         
-                        ct_films.append(('?mode=%s&token=%s&portal=%s&lid=%s' % ('tvplay', self.token, self.portal, lid), icon, False,
+                        ct_films.append(('?mode=%s&portal=%s&lid=%s' % ('tvplay', self.portal, lid), icon, False,
                                 {'title': name, 
                                  'genre': genre[0:-2], 
                                  'director': director[0:-2], 
@@ -1499,13 +1558,13 @@ class RodinaTV():
     def m_sort(self):
         self.log("-m_sort:")
         
-        ct_smode = [(self.language(1006), 'imdb'),
-                    (self.language(1007), 'kp'),
-                    (self.language(1008), 'proddate'),
-                    (self.language(1009), 'pubdate')]
+        ct_smode = [(self.language(21006), 'imdb'),
+                    (self.language(21007), 'kp'),
+                    (self.language(21008), 'proddate'),
+                    (self.language(21009), 'pubdate')]
                     
         ct_sort = []
-        creq = '?mode=%s&token=%s&portal=%s&offset=%s' % ('all', self.token, QT(self.portal), '0')
+        creq = '?mode=%s&portal=%s&offset=%s' % ('all', QT(self.portal), '0')
         if self.numb != '':
             creq += '&numb=%s' % (self.numb)
         for smode in ct_smode:
