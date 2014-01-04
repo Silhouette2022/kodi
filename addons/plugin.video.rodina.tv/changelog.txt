@@ -24,3 +24,6 @@ gzip is on
 Bug fix
 [B]1.6.0[/B]
 COntrol of parental code
+[B]1.7.0[/B]
+Added support for Favorites
+
