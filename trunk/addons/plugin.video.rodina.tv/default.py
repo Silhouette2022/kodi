@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.7.0
+# Rev. 1.7.1
 
-_REVISION_ = '1.7.0'
+_REVISION_ = '1.7.1'
 
 _VERSION_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1478,7 +1478,7 @@ class RodinaTV():
                              {'title': title, 
                              'rating': imdb_rate, 
                               'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
-                              'year':year} ))
+                              'year':year}, [] ))
 
                     if len(a_raw) >= 12:
                         ct_search.append(('?mode=%s&portal=%s&word=%s&offset=%s' % ('search', self.portal, self.word, str(int(self.offset) + 12)), '', True, {'title': self.language(20008)}, []))
@@ -1538,7 +1538,7 @@ class RodinaTV():
                 if len(a_raw) >= 12:
                     req = '?mode=%s&portal=%s' % ('sort', self.portal)
                     if self.numb != '': req += '&numb=%s' % self.numb
-                    ct_search.append((req, self.icons['i_find'], True, {'title': self.language(21005)}))
+                    ct_search.append((req, self.icons['i_find'], True, {'title': self.language(21005)}, []))
                 for raw in a_raw:
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
                     except: title = ''
@@ -1561,7 +1561,7 @@ class RodinaTV():
                          {'title': title, 
                           'rating': imdb_rate,                         
                           'plot': '%s IMDB: %s Kinopoisk:%s\n%s' % (year, imdb_rate, kp_rate, small_desc),
-                          'year':year} ))
+                          'year':year} , []))
                 if len(a_raw) >= 12:
                     req = '?mode=%s&portal=%s&offset=%s' % ('all', self.portal, str(int(self.offset) + 12))
                     if self.numb != '': req += '&numb=%s' % self.numb
@@ -1705,6 +1705,12 @@ class RodinaTV():
     def set_fav(self, fav_numb, chan_numb, place = ''):
         self.log("-set_fav:")
         if place == '':
+
+             
+#            mydisplay = MyClass()
+#            mydisplay .doModal()
+#            del mydisplay
+            
             a_color = []
             sz = 1
             resp = self.cached_get('fav')
@@ -1757,6 +1763,39 @@ class RodinaTV():
 
     def encode(self, string):
         return string.decode('cp1251').encode('utf-8')
+
+ACTION_PREVIOUS_MENU = 10
+ACTION_SELECT_ITEM = 7
+ACTION_PARENT_DIR = 9
+ 
+class MyClass(xbmcgui.WindowDialog):
+  def __init__(self):
+    self.strActionInfo = xbmcgui.ControlLabel(100, 120, 200, 200, '', 'font13', '0xFFFF00FF')
+    self.addControl(self.strActionInfo)
+    self.strActionInfo.setLabel('Push BACK to quit, A to display text and B to erase it')
+    self.slider = xbmcgui.ControlSlider(100, 250, 350, 40)
+    self.addControl(self.slider)
+
+    
+  def onAction(self, action):
+    if action == ACTION_PREVIOUS_MENU:
+      self.close()
+
+class ChildClass(xbmcgui.WindowDialog):
+  def __init__(self):
+    self.addControl(xbmcgui.ControlImage(0,0,800,600, 'background.png'))
+    self.strActionInfo = xbmcgui.ControlLabel(200, 60, 200, 200, '', 'font14', '0xFFBBFFBB')
+    self.addControl(self.strActionInfo)
+    self.strActionInfo.setLabel('Push BACK to return to the first window')
+    self.strActionInfo = xbmcgui.ControlLabel(240, 200, 200, 200, '', 'font13', '0xFFFFFF99')
+    self.addControl(self.strActionInfo)
+    self.strActionInfo.setLabel('This is the child window')
+ 
+  def onAction(self, action):
+    if action == ACTION_PREVIOUS_MENU:
+      self.close()
+      
+
         
 rodina = RodinaTV()
 rodina.main()        
