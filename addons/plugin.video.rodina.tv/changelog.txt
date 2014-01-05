@@ -26,4 +26,6 @@ Bug fix
 COntrol of parental code
 [B]1.7.0[/B]
 Added support for Favorites
+[B]1.7.1[/B]
+Bug fix
 

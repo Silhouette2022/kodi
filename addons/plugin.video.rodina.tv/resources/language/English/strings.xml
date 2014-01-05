@@ -28,8 +28,8 @@
     <string id="22016">AQUA</string>  
     <string id="22017">GREY</string>  
     <string id="22018">WHITE</string>
-    <string id="23001">Delete from Rodina.TV FAVORITES</string>
-    <string id="23002">Add to Rodina.TV FAVORITES</string>
+    <string id="23001">RodinaTV Add to Favorites</string>
+    <string id="23002">RodinaTV Delete from Favorites</string>
 	<string id="10000">English</string>
 	<string id="11000">General settings</string> 
 	<string id="11001">View settings</string> 
