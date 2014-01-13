@@ -137,9 +137,9 @@
 	</extension>
 </addon>
 
-<addon id="script.rodina.tv"
+<addon id="script.service.rodina.tv"
        name="RodinaTV Service Script"
-       version="1.0.0"
+       version="1.0.1"
        provider-name="Rodina TV">
   <requires>
     <import addon="xbmc.python" version="1.0"/>
