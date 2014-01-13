@@ -1,11 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.7.1
+# Rev. 2.0.0
 
-_REVISION_ = '1.7.1'
+_REVISION_ = '2.0.0'
 
-_VERSION_ = '1.0.0'
+_DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
 
 import os, re, sys, time
@@ -18,6 +18,11 @@ import hashlib
 #import inspect
 import HTMLParser
 import json
+
+#try:
+#  sys.path.append(os.path.dirname(__file__)+ '/../script.service.rodina.tv')
+#  from rodina import RodinaPlayer
+#except: pass
 
 
 
@@ -514,6 +519,8 @@ class Helpers():
 
 common = Helpers()
 common.plugin = "Rodina TV"
+
+shstart = 0
     
 #def dt(u): return datetime.datetime.utcfromtimestamp(u)
 class ccache():
@@ -524,39 +531,39 @@ class ccache():
         self.ttl = 0
         self.ctime = 0.0
         
-class XBMCPlayer(xbmc.Player):
-    def __init__( self, *args, **kwargs ):
-        self.is_active = True
-        print "#XBMCPlayer#"
+#class XBMCPlayer(xbmc.Player):
+#    def __init__( self, *args, **kwargs ):
+#        self.is_active = True
+#        print "#XBMCPlayer#"
     
-    def onPlayBackPaused( self ):
-        xbmc.log("#Im paused#")
+#    def onPlayBackPaused( self ):
+#        xbmc.log("#Im paused#")
         
-    def onPlayBackResumed( self ):
-        xbmc.log("#Im Resumed #")
+#    def onPlayBackResumed( self ):
+#        xbmc.log("#Im Resumed #")
         
-    def onPlayBackStarted( self ):
-        print "#Playback Started#"
-        try:
-            print "#Im playing :: " + self.getPlayingFile()
-        except:
-            print "#I failed get what Im playing#"
+#    def onPlayBackStarted( self ):
+#        print "#Playback Started#"
+#        try:
+#            print "#Im playing :: " + self.getPlayingFile()
+#        except:
+#            print "#I failed get what Im playing#"
             
-    def onPlayBackEnded( self ):
-        print "#Playback Ended#"
-        self.is_active = False
+#    def onPlayBackEnded( self ):
+#        print "#Playback Ended#"
+#        self.is_active = False
         
-    def onPlayBackStopped( self ):
-        print "## Playback Stopped ##"
-        self.is_active = False
+#    def onPlayBackStopped( self ):
+#        print "## Playback Stopped ##"
+#        self.is_active = False
         
-    def onPlayBackSeek(self, time, seekOffset):
-        print "## Playback Seek ##"
-        xbmc.log("#seekOffset: %s #" % seekOffset)
-        xbmc.log("#time: %s #" % time)
+#    def onPlayBackSeek(self, time, seekOffset):
+#        print "## Playback Seek ##"
+#        xbmc.log("#seekOffset: %s #" % seekOffset)
+#        xbmc.log("#time: %s #" % time)
     
-    def sleep(self, s):
-        xbmc.sleep(s) 
+#    def sleep(self, s):
+#        xbmc.sleep(s) 
 
 class RodinaTV():
     def __init__(self):
@@ -567,6 +574,8 @@ class RodinaTV():
         self.profile = self.addon.getAddonInfo('profile')
 
         self.language = self.addon.getLocalizedString
+        
+        print sys.argv
 
         self.handle = int(sys.argv[1])
         self.params = sys.argv[2]
@@ -599,7 +608,10 @@ class RodinaTV():
         self.fid = ''
         self.lid = ''
         self.sort = ''
-                
+        self.start = ''
+        self.place = ''
+        self.stime = ''
+        self.sval = ''
        
         self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
         self.path_resources = xbmc.translatePath(self.path + '/resources')
@@ -691,12 +703,8 @@ class RodinaTV():
                        '103' :xbmc.translatePath(self.path_icons + '/icon_1_1_xxx.png')
                      }
 
-    def main(self):
-        self.log("Addon: %s"  % self.id)
-        self.log("Params: %s" % self.params)
-
-        params = common.getParameters(self.params)
-        
+    def init_self(self, params):
+    
         self.mode = params['mode'] if 'mode' in params else None
         self.cat = params['cat'] if 'cat' in params else ''
 #        self.token = params['token'] if 'token' in params else ''
@@ -714,9 +722,19 @@ class RodinaTV():
         self.offset = params['offset'] if 'offset' in params else ''
         self.word = params['word'] if 'word' in params else ''
         self.sort = params['sort'] if 'sort' in params else ''
-        place = params['place'] if 'place' in params else ''
+        self.start = params['start'] if 'start' in params else ''
+        self.place = params['place'] if 'place' in params else ''
+        self.stime = params['time'] if 'time' in params else ''
+        self.sval = params['seek'] if 'seek' in params else ''    
+    
+    def main(self):
+        self.log("Addon: %s"  % self.id)
+        self.log("Params: %s" % self.params)
 
-                                
+        params = common.getParameters(self.params)
+           
+        self.init_self(params)
+       
         if self.mode == 'tv':
             self.m_tv()
         elif self.mode == 'cat':
@@ -749,10 +767,6 @@ class RodinaTV():
             self.m_setpcode()                         
         elif self.mode == 'sort':
             self.m_sort()             
-        elif self.mode == 'afav':
-            self.addfav()   
-        elif self.mode == 'dfav':
-            self.delfav()   
         elif self.mode == 'fcattv':
             self.m_fav() 
         elif self.mode == 'fcatatv':
@@ -762,7 +776,11 @@ class RodinaTV():
         elif self.mode == 'favatv':
             self.m_atv(sub='fav') 
         elif self.mode == 'favset':
-            self.set_fav(self.cat, self.numb, place)             
+            self.set_fav(self.cat, self.numb, self.place)
+        elif self.mode == 'shift':
+            self.set_shift() 
+        elif self.mode == 'seek':
+            self.seek()
         else:
             self.m_main()
             
@@ -927,7 +945,7 @@ class RodinaTV():
                         
                         ststart = time.strftime("%H:%M",time.localtime(float(a_utstart[i])))
                         ststop = time.strftime("%H:%M",time.localtime(float(a_utstop[i])))
-                        l_progs.append([ststart, ststop, a_title[i], desc, a_pid[i], a_has_rec[i]])
+                        l_progs.append([ststart, ststop, a_title[i], desc, a_pid[i], a_has_rec[i], a_utstart[i]])
                     
                     depg[numb] = l_progs
 
@@ -937,7 +955,7 @@ class RodinaTV():
     def authorize(self):
 
         device = 'xbmc'
-        version = _VERSION_
+        devver = _DEV_VER_
         self.get_auth = True
         
         resp = self.getPage({"link": self.auth})
@@ -949,7 +967,7 @@ class RodinaTV():
         
             resp = self.getPage({"link": self.auth 
                     + '?device=%s&version=%s&sid=%s&login=%s&passwd=%s&serial=%s' % 
-                    (device, version, sid, self.uid, 
+                    (device, devver, sid, self.uid, 
                     hashlib.md5( rand + hashlib.md5(self.pwd).hexdigest()).hexdigest(),
                     self.serial)})
                     
@@ -1174,7 +1192,7 @@ class RodinaTV():
                             try:
                                 lepg = d_epg[number]
                                 title2nd = ''
-                                for ebgn, eend, ename, edescr, pid, rec in lepg:
+                                for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
                                     if self.view_epg == 'true' and title2nd == '':
                                         title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
@@ -1187,7 +1205,7 @@ class RodinaTV():
             self.list_items(ct_chan, self.view_epg != 'true')
 
 
-    def tv_play(self):
+    def tv_play(self, seek = 0):
         self.log("-tv_play:")
         
         if self.has_rec == '0': return
@@ -1204,12 +1222,34 @@ class RodinaTV():
         if self.pid == '' and self.lid == '':
             key = "number"
             value = self.numb
-        elif self.lid == '':
-            key = "pid"
-            value = self.pid
+#        elif self.lid == '':
+#            key = "pid"
+#            value = self.pid
         else:
             key = "lid"
             value = self.lid
+        if self.start != '':
+            key += "|start"
+            if seek == 0: 
+                start = self.start
+                self.addon.setSetting('params', self.params)
+            else: 
+                self.log(self.start)
+                self.log(str(seek))
+                self.start = self.addon.getSetting('start')
+                self.log(self.start)
+                
+                start = str(int(self.start) + seek)
+                
+                
+                self.log(start)
+            
+            self.addon.setSetting('start', start)
+            value += '|' + start
+            self.addon.setSetting('arch_on', 'true')
+
+
+        
         if self.has_pwd == '1':
             self.get_tstatus()
 #            self.authorize()
@@ -1223,11 +1263,14 @@ class RodinaTV():
             try: url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
             except: return
             item = xbmcgui.ListItem(path = url)
-            xbmcplugin.setResolvedUrl(self.handle, True, item)
+
             self.log("-play_url:%s" % url)
 
-#            sPlayer = XBMCPlayer()
-#            sPlayer.play(url, item)
+            if seek == 0:
+                xbmcplugin.setResolvedUrl(self.handle, True, item)
+            else:
+                sPlayer = xbmc.Player()
+                sPlayer.play(url, item)
             
 
 #            while sPlayer.is_active:
@@ -1339,13 +1382,18 @@ class RodinaTV():
         ct_chan = []    
         d_epg = self.epg2dict(self.cached_get('atv'))
         lepg = d_epg[self.numb]
-        for ebgn, eend, ename, edescr, pid, rec in lepg:
+        for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
+            popup = []
             title = '%s-%s %s' % (ebgn, eend, ename)
             plot = '[COLOR FF999999]%s[/COLOR]' % (edescr)
-            if rec != '1': title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
+            if rec != '1':
+                title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
+            else: 
+                uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('shift', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart)
+                popup.append(('RodinaTV Shift to Start', 'RunPlugin(%s)'%uri2,))
+            
 
-
-            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&pid=%s&rec=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, pid, rec), self.cicon, False, {'title': title, 'plot':plot}, []))
+            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
 
         self.list_items(ct_chan, False)   
         
@@ -1705,12 +1753,6 @@ class RodinaTV():
     def set_fav(self, fav_numb, chan_numb, place = ''):
         self.log("-set_fav:")
         if place == '':
-
-             
-#            mydisplay = MyClass()
-#            mydisplay .doModal()
-#            del mydisplay
-            
             a_color = []
             sz = 1
             resp = self.cached_get('fav')
@@ -1748,6 +1790,22 @@ class RodinaTV():
             
         self.cached_rst(self.cache_fav) 
         xbmc.executebuiltin('Container.Refresh')
+        
+    def set_shift(self):
+        self.log("-set_shift:")    
+         
+        mydisplay = MyClass()
+        mydisplay .doModal()
+        shstart = int(mydisplay.slider.getPercent())
+        del mydisplay
+
+        shstart = 300
+        self.start = str(int(self.start) + shstart)
+        self.tv_play()
+        
+#        uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, self.has_rec, self.start)
+#        xbmc.executebuiltin('RunPlugin(%s)'%uri2)
+            
             
     # *** Add-on helpers
     def log(self, message, level = 1):
@@ -1763,37 +1821,86 @@ class RodinaTV():
 
     def encode(self, string):
         return string.decode('cp1251').encode('utf-8')
+        
+    def seek(self):
+        self.log("-seek:")
+        self.log("--stime:" + self.stime)
+        self.log("--sval:" + self.sval)
+        self.params = self.addon.getSetting('params')
+        self.log("--new params: " + self.params)
+        seek = int(self.stime)
+        seek += int(self.sval)
+        params = common.getParameters(self.params)
+        self.init_self(params)
+        self.tv_play(seek=seek)
+        
 
 ACTION_PREVIOUS_MENU = 10
 ACTION_SELECT_ITEM = 7
 ACTION_PARENT_DIR = 9
+ACTION_BACK  = 92
+
  
 class MyClass(xbmcgui.WindowDialog):
+#class MyClass(xbmcgui.Window):
   def __init__(self):
-    self.strActionInfo = xbmcgui.ControlLabel(100, 120, 200, 200, '', 'font13', '0xFFFF00FF')
-    self.addControl(self.strActionInfo)
-    self.strActionInfo.setLabel('Push BACK to quit, A to display text and B to erase it')
-    self.slider = xbmcgui.ControlSlider(100, 250, 350, 40)
+    self.id = _ADDOD_ID_
+    self.addon = xbmcaddon.Addon(self.id)  
+    self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
+    self.path_resources = xbmc.translatePath(self.path + '/resources')
+    self.path_icons = xbmc.translatePath(self.path_resources + '/icons')
+    
+    self.pw = 715
+    self.ph = 440
+    self.slw = 600
+    self.slh = 40
+    self.lw = 400
+    self.lh = 20
+    self.pcw = 60
+    self.pch = 20
+    self.sw = self.getWidth()
+    self.sh = self.getHeight()
+    if self.pw > self.sw: self.pw = self.sw
+    if self.ph > self.sh: self.ph = self.sh
+    self.pX = int((self.sw - self.pw)/2)
+    self.pY = int((self.sh - self.ph)/2)
+    self.slX = int((self.sw - self.slw)/2)
+    self.slY = int((self.sh - self.slh)/2)
+    self.lX = int((self.sw - self.lw)/2)
+    self.lY = int((self.sh - self.lh)/4)
+    self.pcX = int((self.sw - self.pcw)/2.75)
+    self.pcY = int((self.sh - self.pch)/2.75)
+   
+
+    self.addControl(xbmcgui.ControlImage(self.pX, self.pY, self.pw, self.ph, self.path_icons + '/dlgbkgnd.png'))
+    
+    self.strTitle = xbmcgui.ControlLabel(self.lX, self.lY, self.lw, self.lh, '', 'font13', '0xFF00FFFF')
+    self.addControl(self.strTitle)
+    self.strTitle.setLabel('Slide to Start and press Ok or Enter')
+
+    self.slider = xbmcgui.ControlSlider(self.slX, self.slY, self.slw, self.slh)
     self.addControl(self.slider)
+    self.slider.setPercent(0.0)
+        
+    self.strPercent = xbmcgui.ControlLabel(self.pcX, self.pcY, self.pcw, self.pch, '', 'font13', '0xFFFFFF00')
+    self.addControl(self.strPercent)
+    self.strPercent.setLabel('%s %%'%self.slider.getPercent())
+    self.setFocus(self.slider)
+
+    
+
 
     
   def onAction(self, action):
-    if action == ACTION_PREVIOUS_MENU:
-      self.close()
+    if action == ACTION_PREVIOUS_MENU or action == ACTION_BACK or action == ACTION_PARENT_DIR:
+        self.close()
+    elif action == ACTION_SELECT_ITEM:
+        shstart = int(self.slider.getPercent())
+        self.close()
+    else:
+        self.strPercent.setLabel('%s %%'%self.slider.getPercent())
 
-class ChildClass(xbmcgui.WindowDialog):
-  def __init__(self):
-    self.addControl(xbmcgui.ControlImage(0,0,800,600, 'background.png'))
-    self.strActionInfo = xbmcgui.ControlLabel(200, 60, 200, 200, '', 'font14', '0xFFBBFFBB')
-    self.addControl(self.strActionInfo)
-    self.strActionInfo.setLabel('Push BACK to return to the first window')
-    self.strActionInfo = xbmcgui.ControlLabel(240, 200, 200, 200, '', 'font13', '0xFFFFFF99')
-    self.addControl(self.strActionInfo)
-    self.strActionInfo.setLabel('This is the child window')
- 
-  def onAction(self, action):
-    if action == ACTION_PREVIOUS_MENU:
-      self.close()
+
       
 
         

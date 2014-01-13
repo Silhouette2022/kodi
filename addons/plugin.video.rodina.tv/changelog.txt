@@ -28,4 +28,6 @@ COntrol of parental code
 Added support for Favorites
 [B]1.7.1[/B]
 Bug fix
+[B]2.0.0[/B]
+Added service script and seek functions
 
