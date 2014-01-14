@@ -30,4 +30,7 @@ Added support for Favorites
 Bug fix
 [B]2.0.0[/B]
 Added service script and seek functions
+[B]2.0.1[/B]
+Bug fix
+
 
