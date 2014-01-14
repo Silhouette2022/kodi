@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.1
+# Rev. 2.0.2
 
-_REVISION_ = '2.0.1'
+_REVISION_ = '2.0.2'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -574,8 +574,6 @@ class RodinaTV():
         self.profile = self.addon.getAddonInfo('profile')
 
         self.language = self.addon.getLocalizedString
-        
-        print sys.argv
 
         self.handle = int(sys.argv[1])
         self.params = sys.argv[2]
@@ -1262,16 +1260,21 @@ class RodinaTV():
         if resp != None:
             try: url = common.parseDOM(resp, "item", attrs={"name": "url"})[0]
             except: return
-            item = xbmcgui.ListItem(path = url)
+
 
             self.log("-play_url:%s" % url)
 
             if seek == 0:
+                item = xbmcgui.ListItem(path = url)
                 xbmcplugin.setResolvedUrl(self.handle, True, item)
             else:
                 sPlayer = xbmc.Player()
+                tag = sPlayer.getVideoInfoTag()
+                title=tag.getTitle()
+                item = xbmcgui.ListItem(label=title, path = url)
+                item.setInfo( type='Video', infoLabels={'title':title})
+                item.setProperty('IsPlayable', 'true')
                 sPlayer.play(url, item)
-            
 
 #            while sPlayer.is_active:
 #                sPlayer.sleep(100)
@@ -1390,7 +1393,7 @@ class RodinaTV():
                 title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
             else: 
                 uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('shift', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart)
-                popup.append(('RodinaTV Shift to Start', 'RunPlugin(%s)'%uri2,))
+#                popup.append(('RodinaTV Shift to Start', 'RunPlugin(%s)'%uri2,))
             
 
             ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
