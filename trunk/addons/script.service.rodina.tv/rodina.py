@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.0
+# Rev. 1.1.1
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
