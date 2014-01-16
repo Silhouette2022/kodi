@@ -34,5 +34,7 @@ Added service script and seek functions
 Bug fix
 [B]2.0.2[/B]
 Corrected tag info after seek
+[B]2.0.3[/B]
+Some clean up
 
 
