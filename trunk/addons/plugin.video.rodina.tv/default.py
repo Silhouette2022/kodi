@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.2
+# Rev. 2.0.3
 
-_REVISION_ = '2.0.2'
+_REVISION_ = '2.0.3'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -522,7 +522,6 @@ common.plugin = "Rodina TV"
 
 shstart = 0
     
-#def dt(u): return datetime.datetime.utcfromtimestamp(u)
 class ccache():
     def __init__(self):
         self.type = ''
@@ -530,40 +529,6 @@ class ccache():
         self.fname = ''
         self.ttl = 0
         self.ctime = 0.0
-        
-#class XBMCPlayer(xbmc.Player):
-#    def __init__( self, *args, **kwargs ):
-#        self.is_active = True
-#        print "#XBMCPlayer#"
-    
-#    def onPlayBackPaused( self ):
-#        xbmc.log("#Im paused#")
-        
-#    def onPlayBackResumed( self ):
-#        xbmc.log("#Im Resumed #")
-        
-#    def onPlayBackStarted( self ):
-#        print "#Playback Started#"
-#        try:
-#            print "#Im playing :: " + self.getPlayingFile()
-#        except:
-#            print "#I failed get what Im playing#"
-            
-#    def onPlayBackEnded( self ):
-#        print "#Playback Ended#"
-#        self.is_active = False
-        
-#    def onPlayBackStopped( self ):
-#        print "## Playback Stopped ##"
-#        self.is_active = False
-        
-#    def onPlayBackSeek(self, time, seekOffset):
-#        print "## Playback Seek ##"
-#        xbmc.log("#seekOffset: %s #" % seekOffset)
-#        xbmc.log("#time: %s #" % time)
-    
-#    def sleep(self, s):
-#        xbmc.sleep(s) 
 
 class RodinaTV():
     def __init__(self):
@@ -781,7 +746,22 @@ class RodinaTV():
             self.seek()
         else:
             self.m_main()
-            
+
+    # *** Add-on helpers
+    def log(self, message, level = 1):
+        if (level < self.dbg_level) or (self.debug and self.dbg_level >= level):
+            print "[%s LOG]: %s" % (common.plugin, message.encode('utf8'))
+
+    def error(self, message):
+        print "[%s ERROR]: %s" % (common.plugin, message)
+
+    def showErrorMessage(self, msg):
+        print msg.encode('utf-8')
+        xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("ERROR", msg.encode('utf-8'), str(10 * 1000)))
+
+    def encode(self, string):
+        return string.decode('cp1251').encode('utf-8')
+                    
     def xmlerror(self, xml):
         msg = common.parseDOM(xml, "item", attrs={"name": "message"})[0]
         code  = common.parseDOM(xml, "item", attrs={"name": "code"})[0]
@@ -1794,36 +1774,7 @@ class RodinaTV():
         self.cached_rst(self.cache_fav) 
         xbmc.executebuiltin('Container.Refresh')
         
-    def set_shift(self):
-        self.log("-set_shift:")    
-         
-        mydisplay = MyClass()
-        mydisplay .doModal()
-        shstart = int(mydisplay.slider.getPercent())
-        del mydisplay
 
-        shstart = 300
-        self.start = str(int(self.start) + shstart)
-        self.tv_play()
-        
-#        uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, self.has_rec, self.start)
-#        xbmc.executebuiltin('RunPlugin(%s)'%uri2)
-            
-            
-    # *** Add-on helpers
-    def log(self, message, level = 1):
-        if (level < self.dbg_level) or (self.debug and self.dbg_level >= level):
-            print "[%s LOG]: %s" % (common.plugin, message.encode('utf8'))
-
-    def error(self, message):
-        print "[%s ERROR]: %s" % (common.plugin, message)
-
-    def showErrorMessage(self, msg):
-        print msg.encode('utf-8')
-        xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("ERROR", msg.encode('utf-8'), str(10 * 1000)))
-
-    def encode(self, string):
-        return string.decode('cp1251').encode('utf-8')
         
     def seek(self):
         self.log("-seek:")
@@ -1838,70 +1789,6 @@ class RodinaTV():
         self.tv_play(seek=seek)
         
 
-ACTION_PREVIOUS_MENU = 10
-ACTION_SELECT_ITEM = 7
-ACTION_PARENT_DIR = 9
-ACTION_BACK  = 92
-
- 
-class MyClass(xbmcgui.WindowDialog):
-#class MyClass(xbmcgui.Window):
-  def __init__(self):
-    self.id = _ADDOD_ID_
-    self.addon = xbmcaddon.Addon(self.id)  
-    self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
-    self.path_resources = xbmc.translatePath(self.path + '/resources')
-    self.path_icons = xbmc.translatePath(self.path_resources + '/icons')
-    
-    self.pw = 715
-    self.ph = 440
-    self.slw = 600
-    self.slh = 40
-    self.lw = 400
-    self.lh = 20
-    self.pcw = 60
-    self.pch = 20
-    self.sw = self.getWidth()
-    self.sh = self.getHeight()
-    if self.pw > self.sw: self.pw = self.sw
-    if self.ph > self.sh: self.ph = self.sh
-    self.pX = int((self.sw - self.pw)/2)
-    self.pY = int((self.sh - self.ph)/2)
-    self.slX = int((self.sw - self.slw)/2)
-    self.slY = int((self.sh - self.slh)/2)
-    self.lX = int((self.sw - self.lw)/2)
-    self.lY = int((self.sh - self.lh)/4)
-    self.pcX = int((self.sw - self.pcw)/2.75)
-    self.pcY = int((self.sh - self.pch)/2.75)
-   
-
-    self.addControl(xbmcgui.ControlImage(self.pX, self.pY, self.pw, self.ph, self.path_icons + '/dlgbkgnd.png'))
-    
-    self.strTitle = xbmcgui.ControlLabel(self.lX, self.lY, self.lw, self.lh, '', 'font13', '0xFF00FFFF')
-    self.addControl(self.strTitle)
-    self.strTitle.setLabel('Slide to Start and press Ok or Enter')
-
-    self.slider = xbmcgui.ControlSlider(self.slX, self.slY, self.slw, self.slh)
-    self.addControl(self.slider)
-    self.slider.setPercent(0.0)
-        
-    self.strPercent = xbmcgui.ControlLabel(self.pcX, self.pcY, self.pcw, self.pch, '', 'font13', '0xFFFFFF00')
-    self.addControl(self.strPercent)
-    self.strPercent.setLabel('%s %%'%self.slider.getPercent())
-    self.setFocus(self.slider)
-
-    
-
-
-    
-  def onAction(self, action):
-    if action == ACTION_PREVIOUS_MENU or action == ACTION_BACK or action == ACTION_PARENT_DIR:
-        self.close()
-    elif action == ACTION_SELECT_ITEM:
-        shstart = int(self.slider.getPercent())
-        self.close()
-    else:
-        self.strPercent.setLabel('%s %%'%self.slider.getPercent())
 
 
       
