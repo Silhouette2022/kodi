@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.5.0
+# Rev. 0.6.0
 
 
 
 import urllib,urllib2,re,sys,os,time
 import xbmcplugin,xbmcgui,xbmcaddon
+import json
 
 pluginhandle = int(sys.argv[1])
 __addon__       = xbmcaddon.Addon(id='plugin.video.kaban.tva') 
@@ -18,7 +19,7 @@ KTV_arch = '/archive'
 KTV_time = 'http://kaban.tv/current-time'
 #KTV_url_arch = KTV_url + KTV_arch
 
-dbg = 1
+dbg = 0
 def dbg_log(line):
   if dbg: xbmc.log(line)
 
@@ -42,7 +43,8 @@ logos = {'pervii-kanal':'pervyi_kanal',
             'u': 'iu-tv',
             'tnt': 'tnt',
             'tv3': 'tv-3',
-            'mtv': 'mtv-russia'}
+            'mtv': 'mtv-russia',
+            'pyatnica': 'piatnitsa' }
     
       
 def Decode(param):
@@ -94,6 +96,72 @@ def Decode(param):
 
         return loc_2
 
+
+def toLcTm(tzd, tmst):
+    return time.strftime("%H:%M",time.localtime((time.mktime(tmst) - tzd*3600)))
+
+def DTV_guide(url = 'http://www.debilizator.tv' ):
+    dbg_log('-DTV_online')
+    
+    dtv = {}
+    try:
+        msktmht = getURL('http://time.jp-net.ru/');
+        msktmls = re.compile('<h1 align=\'center\'>(.*?): (.*?)</h1>').findall(msktmht)
+        msktmst = time.strptime(msktmls[0][1] + ' ' + msktmls[1][1], "%Y-%d-%m %H:%M:%S")
+        tzdf = round( (time.mktime(msktmst) - time.mktime(time.localtime())) / (3600))
+    except:
+        pass
+
+    try:
+        http = getURL(url)
+    except:
+        return dtv
+            
+    oneline = re.sub( '\n', ' ', http)
+    chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</div> *?</div>').findall(oneline)
+    if len(chndls) < 2:
+        chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</a> *?</div>').findall(oneline)
+#    print chndls
+    for chndel in chndls:
+#        print chndel
+        chells = re.compile('<img class="chlogo" src="(.*?)" alt="(.*?)" title="(.*?)" />').findall(chndel[1])
+#        print chells
+        title = chells[0][2]
+
+        description = ''
+        
+        thumbnail = chells[0][0].replace('/mini', '')
+#        print thumbnail
+        
+        ptls = re.compile('<div class="prtime">(.*?)</div> *?<div class="prdesc" title=".*?">(.*?)</div>').findall(chndel[1])
+#        print ptls
+        ptlsln = len(ptls)
+
+
+        i = 1
+        while ptlsln - i + 1:
+            prtm = ptls[ptlsln - i][0]
+            prds = ptls[ptlsln - i][1]
+            #prxt = ptls[ptlsln - i][2]
+            prxt = ''
+
+            prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
+            
+            try:
+                nprtm = toLcTm(tzdf, prtmst)
+            except:
+                nprtm = prtm
+            i += 1
+            description = "[B][COLOR FF0084FF]" + nprtm + "[/COLOR] [COLOR FFFFFFFF]" + prds + "[/COLOR][/B][COLOR FF999999]" + chr(10) + prxt + "[/COLOR]" + chr(10) + description
+                    
+        if ptlsln == 0: ptlsln = 1
+        description = re.sub( '&quot;','\"',re.sub( '\(\.\.\.\)', '', description))
+        title = title.replace('Смотреть ','').replace(' онлайн','').replace(' онлайн','')
+#        print title
+        dtv[title] = description
+        
+    return dtv
+    
 def getURL(url):
     dbg_log('getURL = %s'%url)
     req = urllib2.Request(url)
@@ -123,15 +191,21 @@ def KTV_start():
     
     #KTV_chls(KTV_url + KTV_arch)
         
-def KTV_prls(url):
-    try:
-      import YaTv
-      tvp=YaTv.GetPr()
-      xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
-    except:
-      pass
         
-    
+
+            
+                    
+def KTV_prls(url):
+#    try:
+#      import YaTv
+#      tvp=YaTv.GetPr()
+#      xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+#    except:
+#      pass
+      
+    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+    epg = DTV_guide()
+   
     
     dbg_log('-KTV_prls:')
     dbg_log('url = %s'%url)
@@ -144,17 +218,22 @@ def KTV_prls(url):
             try:
                 logo = xbmc.translatePath( __addon__.getAddonInfo('path') + '\\resources\\logos\\' + logos[eng] + '.png')
             except:
+                dbg_log(eng)
                 logo = ''
             dbg_log(name)
             dbg_log(logo)
+#            try:
+#                name=descr.replace("Россия К","Культура").replace("Дисней","Канал Disney").replace("Перец","ПЕРЕЦ").replace("Рен ТВ","РЕН ТВ").replace("ТВЦ","ТВ Центр")
+#                descr = tvp[name]["plot"]
+#                tbn=tvp[name]["img"]
+#                item.setProperty('fanart_image', tbn)
+#            except:
+            tbn = logo
             try:
-                name=descr.replace("Россия К","Культура").replace("Дисней","Канал Disney").replace("Перец","ПЕРЕЦ").replace("Рен ТВ","РЕН ТВ").replace("ТВЦ","ТВ Центр")
-                descr = tvp[name]["plot"]
-                tbn=tvp[name]["img"]
-                item.setProperty('fanart_image', tbn)
-
-            except:
-                tbn = logo
+                title=name.replace("Россия К","Россия Культура").replace("Первый","Первый канал").replace("Рен ТВ","РЕН ТВ").replace("5 канал","Пятый Канал").replace("Ю","Ю-ТВ").replace("ТВ3","ТВ-3")
+#                print title
+                descr = epg[title]
+            except: pass
             
             item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
             uri = sys.argv[0] + '?mode=PLAY'
