@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.1.1
+# Rev. 1.2.0
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
@@ -91,13 +91,13 @@ class RodinaPlayer(xbmc.Player):
             
             pystep = MyPyStep(self.lng['title'])
             pystep .doModal()
-            seek = pystep.value
+            seek = pystep.value - 50.0
             del pystep
             
             if seek == None or seek == 0:
                 self.pause()
             else:
-                seek *= 60
+                seek = int(seek * 60)
                 params = 'mode=seek&time=%s&seek=%s' % (int(float(stime)), seek)
                 script = 'special://home/addons/%s/default.py' % 'plugin.video.rodina.tv'
                 xbmc.executebuiltin('XBMC.RunScript(%s, %d, %s)' % (script, 99, params))
@@ -123,10 +123,11 @@ class MyPyStep(AddonDialogWindow):
         self.lng = {'label' : __addon_lng__(30901),
                     'min'   : __addon_lng__(30902),
                     'cancel': __addon_lng__(30903),
-                    'ok'    : __addon_lng__(30904) }
+                    'ok'    : __addon_lng__(30904),
+                    'sec'   : __addon_lng__(30905) }
                     
         # Set width, height and the grid parameters
-        self.setGeometry(600, 300, 5, 2)
+        self.setGeometry(800, 300, 5, 7)
         # Call set controls method
         self.set_controls()
         # Call set navigation method.
@@ -134,18 +135,19 @@ class MyPyStep(AddonDialogWindow):
         # Connect exit events
         self.connectEventList([ACTION_NAV_BACK, ACTION_PREVIOUS_MENU, ACTION_PARENT_DIR], self.close)
 
-        self.value = 0
+        self.value = 50.0
 
     def set_controls(self):
         # Image control
         self.title = Label(self.lng['label'], alignment=ALIGN_CENTER)
-        self.placeControl(self.title, 0, 0, columnspan=2)
+        self.placeControl(self.title, 0, 0, columnspan=7)
         # Text label
-        self.label = Label('0 ' + self.lng['min'],  alignment=ALIGN_CENTER)
-        self.placeControl(self.label, 2, 0, columnspan=2)
+        self.label = Label('0 ' + self.lng['min'] + '0 ' + self.lng['sec'],
+                            alignment=ALIGN_CENTER)
+        self.placeControl(self.label, 2, 0, columnspan=7)
         
         self.slider = Slider()
-        self.placeControl(self.slider, 3, 0, columnspan=2)
+        self.placeControl(self.slider, 3, 2, columnspan=3)
         self.slider.setPercent(50)
         
         # Connect key and mouse events for slider update feedback.
@@ -161,40 +163,90 @@ class MyPyStep(AddonDialogWindow):
         
         # Cancel button
         self.cancel_button = Button(self.lng['cancel'])
-        self.placeControl(self.cancel_button, 4, 0)
+        self.placeControl(self.cancel_button, 4, 1, columnspan=2)
         # Connect Cancel button
         self.connect(self.cancel_button, self.close)
 
         # Ok button
         self.ok_button = Button(self.lng['ok'])
-        self.placeControl(self.ok_button, 4, 1)
+        self.placeControl(self.ok_button, 4, 4, columnspan=2)
         # Connect Ok button
         self.connect(self.ok_button, self.Ok)
+        
+        # plus 30 button
+        self.p30_button = Button('+30 %s'%self.lng['sec'])
+        self.placeControl(self.p30_button, 3, 5)
+        self.connect(self.p30_button, self.p30)        
+
+        # plus 5 button
+        self.p5_button = Button('+5 %s'%self.lng['min'])
+        self.placeControl(self.p5_button, 3, 6)
+        self.connect(self.p5_button, self.p5)
+        
+        # minus 30 button
+        self.m30_button = Button('-30 %s'%self.lng['sec'])
+        self.placeControl(self.m30_button, 3, 1)
+        self.connect(self.m30_button, self.m30)        
+
+        # minus 5 button
+        self.m5_button = Button('-5 %s'%self.lng['min'])
+        self.placeControl(self.m5_button, 3, 0)
+        self.connect(self.m5_button, self.m5)  
+                
                
     def set_navigation(self):
         """Set up keyboard/remote navigation between controls."""
         self.cancel_button.controlUp(self.slider)
         self.cancel_button.controlDown(self.slider)
-        self.cancel_button.controlLeft(self.ok_button)
+        self.cancel_button.controlLeft(self.m30_button)
         self.cancel_button.controlRight(self.ok_button)
         
         self.ok_button.controlUp(self.slider)
         self.ok_button.controlDown(self.slider)
         self.ok_button.controlLeft(self.cancel_button)
-        self.ok_button.controlRight(self.cancel_button)
+        self.ok_button.controlRight(self.p30_button)
         
         self.slider.controlUp(self.cancel_button)
         self.slider.controlDown(self.ok_button)
         
+        self.p30_button.controlUp(self.slider)
+        self.p30_button.controlDown(self.ok_button)
+        self.p30_button.controlLeft(self.ok_button)
+        self.p30_button.controlRight(self.p5_button)        
+        
+        self.p5_button.controlUp(self.slider)
+        self.p5_button.controlDown(self.ok_button)
+        self.p5_button.controlLeft(self.p30_button)
+        self.p5_button.controlRight(self.m5_button)   
+        
+        self.m30_button.controlUp(self.slider)
+        self.m30_button.controlDown(self.cancel_button)
+        self.m30_button.controlLeft(self.m5_button)
+        self.m30_button.controlRight(self.cancel_button)     
+        
+        self.m5_button.controlUp(self.slider)
+        self.m5_button.controlDown(self.cancel_button)
+        self.m5_button.controlLeft(self.p5_button)
+        self.m5_button.controlRight(self.cancel_button)  
+        
         # Set initial focus.
         self.setFocus(self.slider)
+        
+    def label_update(self):
+        # Update slider value label when the slider nib moves
+        try:
+            val = self.value - 50.0
+            self.label.setLabel('%d %s %d %s' % (int(val), self.lng['min'], 
+                                abs(60*(val - int(val))), self.lng['sec']) )
+        except (RuntimeError, SystemError):
+            pass
 
     def slider_update(self):
         # Update slider value label when the slider nib moves
         try:
             if self.getFocus() == self.slider:
-                self.value = int(self.slider.getPercent() - 50.0)
-                self.label.setLabel('%d %s' % (self.value, self.lng['min']))
+                self.value = self.slider.getPercent()
+                self.label_update()
                 
         except (RuntimeError, SystemError):
             pass
@@ -212,7 +264,32 @@ class MyPyStep(AddonDialogWindow):
         super(MyPyStep, self).close()
         
     def Ok(self):
-        super(MyPyStep, self).close()     
+        super(MyPyStep, self).close()
+        
+    def p30(self):
+        self.value += 0.5
+        if self.value > 100.0: self.value = 100.0
+        self.label_update()
+        self.slider.setPercent(self.value)
+        
+    def p5(self):
+        self.value += 5.0
+        if self.value > 100.0: self.value = 100.0
+        self.label_update()
+        self.slider.setPercent(self.value)
+        
+    def m30(self):
+        self.value -= 0.5
+        if self.value < 0.0: self.value = 0.0
+        self.label_update()
+        self.slider.setPercent(self.value)
+        
+    def m5(self):
+        self.value -= 5.0
+        if self.value < 0.0: self.value = 0.0
+        self.label_update()
+        self.slider.setPercent(self.value)
+        
 
     def setAnimation(self, control):
         # Set fade animation for all add-on window controls

@@ -36,5 +36,7 @@ Bug fix
 Corrected tag info after seek
 [B]2.0.3[/B]
 Some clean up
+[B]2.1.0[/B]
+new level for favorites
 
 
