@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.1.0
+# Rev. 2.2.0
 
-_REVISION_ = '2.1.0'
+_REVISION_ = '2.2.0'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1043,12 +1043,6 @@ class RodinaTV():
                     self.log('SetViewMode("503")')   
                                 
         xbmcplugin.endOfDirectory(self.handle)
-#        print 'view_mode = %s' % self.view_mode
-#        print 'films = %s' % films
-#        print 'view = %s' % view
-        
-
-                            
         
     def get_client(self):
         self.log("-get_client:")
@@ -1129,9 +1123,10 @@ class RodinaTV():
             for cat in a_cat:
                 a_title = common.parseDOM(cat, "item", attrs={"name": "title"})
                 a_numb = common.parseDOM(cat, "item", attrs={"name": "number"})
-                a_comb = zip(a_title, a_numb)
-                for title, numb in a_comb:
-                    params = '?mode=%s&cat=%s&portal=%s' % (nmode, numb, QT(self.portal))
+                a_chan = common.parseDOM(cat, "array", attrs={"name": "channels"})
+                a_comb = zip(a_title, a_numb, a_chan)
+                for title, numb, chan in a_comb:
+                    params = '?mode=%s&cat=%s&portal=%s&sort=%s' % (nmode, numb, QT(self.portal), '_'.join(common.parseDOM(chan, "item")))
                     if self.ts != '': params += ('&ts=%s' % self.ts)
                     try: cicon = self.icons[numb]
                     except: cicon = self.cicon
@@ -1155,7 +1150,8 @@ class RodinaTV():
     def m_tv(self, sub = ''):
         self.log("-m_tv:")
 
-        ct_chan = []    
+        ct_chan = []
+        d_chan = {} 
         resp = self.cached_get('tv')
         if resp != None:
             if self.ts != '':
@@ -1177,6 +1173,7 @@ class RodinaTV():
                             a_fitem = common.parseDOM(fchan, "item")
                             for fitem in a_fitem:
                                 a_fav.append(fitem)
+            
             
             for chan in a_chan:
                 a_raw = common.parseDOM(chan, "row")
@@ -1233,9 +1230,20 @@ class RodinaTV():
                             except: pass
                             plot = plot.replace('&quot;','`').replace('&amp;',' & ')
                             title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
-                            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.portal, number, has_passwd, icon),
-                                            icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}, popup))
+                            nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.portal, number, has_passwd, icon)
+                            d_chan[number] = (nUrl, icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}, popup)
 
+            
+            if self.sort == '':
+                chList = d_chan.values()
+                for chItem in chList: 
+                    ct_chan.append(chItem)
+            else:
+                a_nums = self.sort.split('_')
+                for num in a_nums:
+                    try: ct_chan.append(d_chan[num])
+                    except: pass
+    
             self.list_items(ct_chan, self.view_epg != 'true')
 
 
@@ -1324,7 +1332,8 @@ class RodinaTV():
 
     def m_atv(self, sub = ''):
         self.log("-m_atv:")
-        ct_chan = []    
+        ct_chan = []
+        d_chan = {} 
         resp = self.cached_get('tv')
         if resp != None:
             a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
@@ -1387,8 +1396,19 @@ class RodinaTV():
                                 except: icon = ''
                             if icon == '' : icon = self.path_icons_tv
                             if title != '' and number != '':
-                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
+                                nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon)
+                                d_chan[number] = (nUrl, icon, True, {'title': title}, popup)
+#                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
 
+            if self.sort == '':
+                chList = d_chan.values()
+                for chItem in chList: 
+                    ct_chan.append(chItem)
+            else:
+                a_nums = self.sort.split('_')
+                for num in a_nums:
+                    try: ct_chan.append(d_chan[num])
+                    except: pass
             self.list_items(ct_chan, True)   
             
                     

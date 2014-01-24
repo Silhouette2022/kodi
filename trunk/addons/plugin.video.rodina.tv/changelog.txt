@@ -38,5 +38,6 @@ Corrected tag info after seek
 Some clean up
 [B]2.1.0[/B]
 new level for favorites
-
+[B]2.2.0[/B]
+rating sort for channels
 
