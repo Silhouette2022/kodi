@@ -40,4 +40,7 @@ Some clean up
 new level for favorites
 [B]2.2.0[/B]
 rating sort for channels
+[B]2.3.0[/B]
+favorites handling
+
 

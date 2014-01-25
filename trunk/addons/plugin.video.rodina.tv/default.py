@@ -604,9 +604,13 @@ class RodinaTV():
         self.lng = {}
         self.init_lng()
         
-        self.colors = { '1' : '[COLOR FFFF0000]<<' + self.lng['red'] + '>>[/COLOR]',
-                        '2' : '[COLOR FFFFFF00]<<' + self.lng['yellow'] + '>>[/COLOR]',
-                        '3' : '[COLOR FF00FF00]<<' + self.lng['green'] + '>>[/COLOR]' }
+        self.color = { '1' : '[COLOR FFFF0000]',
+                       '2' : '[COLOR FFFFFF00]',
+                       '3' : '[COLOR FF00FF00]' }
+                        
+        self.colname = { '1' : self.color['1'] + '<<' + self.lng['red']   + '>>[/COLOR]',
+                         '2' : self.color['2'] + '<<' + self.lng['yellow']+ '>>[/COLOR]',
+                         '3' : self.color['3'] + '<<' + self.lng['green'] + '>>[/COLOR]' }
 #                        '4' : '[COLOR FF0000FF]' + self.language(22014) + '[/COLOR]',
 #                        '5' : '[COLOR FFFF00FF]' + self.language(22015) + '[/COLOR]',
 #                        '6' : '[COLOR FF00FFFF]' + self.language(22016) + '[/COLOR]',
@@ -693,6 +697,7 @@ class RodinaTV():
                         'green'     : self.addon.getLocalizedString(22013),
                         'add2f'     : self.addon.getLocalizedString(23001),
                         'del2f'     : self.addon.getLocalizedString(23002),
+						'delfav'    : self.addon.getLocalizedString(23003),
                         'mon'       : self.addon.getLocalizedString(20001),
                         'tue'       : self.addon.getLocalizedString(20002),
                         'wed'       : self.addon.getLocalizedString(20003),
@@ -786,6 +791,8 @@ class RodinaTV():
             self.set_shift() 
         elif self.mode == 'seek':
             self.seek()
+        elif self.mode == 'favupd':
+            self.m_favupd()            
         else:
             self.m_main()
 
@@ -1111,10 +1118,6 @@ class RodinaTV():
     def m_cat(self, nmode='tv'):
         self.log("-m_cat:")
 
-#        params = '?mode=%s&portal=%s' % ('fcat' + nmode, QT(self.portal))
-#        if self.ts != '': params += ('&ts=%s' % self.ts)
-#        ct_cat = [(params, self.cicon, True, {'title': self.lng['favs']}, [])]    
-
         ct_cat = []
         resp = self.cached_get('tv')
         
@@ -1141,7 +1144,7 @@ class RodinaTV():
                 if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
-                try: title = self.colors[numb]
+                try: title = self.colname[numb]
                 except: title = numb
                 ct_cat.append((params, cicon, True, {'title': title}, []))
                 
@@ -1461,6 +1464,7 @@ class RodinaTV():
         self.log("-m_setall:")
         
         ct_setall = [('?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['sets']}, []),
+                     ('?mode=%s&portal=%s&icon=%s' % ('favupd', QT(self.portal), self.icons['f1']), self.icons['f1'], True, {'title': self.lng['favs']}, []),
                      ('?mode=%s&portal=%s&icon=%s' % ('setpc', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['pcode']}, []) ]
                                           
         self.list_items(ct_setall, True)
@@ -1805,7 +1809,7 @@ class RodinaTV():
                 if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
-                try: title = self.colors[numb]
+                try: title = self.colname[numb]
                 except: title = numb
                 ct_fav.append((params, cicon, True, {'title': title}, []))
 
@@ -1824,12 +1828,12 @@ class RodinaTV():
                     except: pass
                     for i in range(1, sz):
                         try: 
-                            color = self.colors[str(i)]
+                            color = self.colname[str(i)]
                             a_color.append(color)
                         except: 
                             break
 
-            try: a_color.append(self.colors[str(sz)])
+            try: a_color.append(self.colname[str(sz)])
             except: pass
             dialog = xbmcgui.Dialog()
             ret = dialog.select('Choose a color', a_color)
@@ -1843,6 +1847,11 @@ class RodinaTV():
         if place != '':
             key += '|place'
             value += '|%s' % (place)
+        
+        if place != '':    
+            dialog = xbmcgui.Dialog()
+            if not dialog.yesno('Rodina.TV', '', line2=self.lng['delfav']):
+                return
         
         req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_favorites', key, value)
         resp = self.getUrlPage( req)
@@ -1865,6 +1874,66 @@ class RodinaTV():
         params = common.getParameters(self.params)
         self.init_self(params)
         self.tv_play(seek=seek)
+        
+        
+    def m_favupd(self, sub = ''):
+        self.log("-m_favupd:")
+        
+        d_fnum = {}
+        resp = self.cached_get('fav')
+        if resp != None and resp != '':
+            a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
+            a_favs = common.parseDOM(resp, "array", attrs={"name": "channels"})
+            a_comb = zip(a_numb, a_favs)
+            for numb, chan in a_comb:
+#                d_fnum[numb] = common.parseDOM(chan, "item")
+                a_item = common.parseDOM(chan, "item")
+                for item in a_item:
+                    d_fnum[item] = numb
+                
+
+        ct_chan = []
+        d_chan = {} 
+        resp = self.cached_get('tv')
+        if resp != None:
+            a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
+            for chan in a_chan:
+                a_raw = common.parseDOM(chan, "row")
+                for raw in a_raw:
+                    cadd = False
+                    popup = []
+                    print raw.encode('utf8')
+                    try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                    except: title = ''
+                    try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                    except: number = ''
+                    print title.encode('utf8')
+                    print number
+                    a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
+                    a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
+                    if len(a_icon100) > 0:
+                        try: icon = a_icon100[0]
+                        except: icon = ''
+                    elif len(a_icon45) > 0:
+                        try: icon = a_icon45[0]
+                        except: icon = ''
+                    if icon == '' : icon = self.path_icons_tv
+                    if title != '' and number != '':
+                        try: 
+                            title = self.color[d_fnum[number]] + title + '[/COLOR]'
+                            nUrl = '?mode=%s&portal=%s&cat=%s&numb=%s&place=0' % ('favset', self.portal, d_fnum[number], number)
+                        except:
+                            nUrl = '?mode=%s&portal=%s&numb=%s' % ('favset', self.portal, number)
+                        
+                        d_chan[int(number)] = (nUrl, icon, True, {'title': title}, popup)
+
+            keylist = d_chan.keys()
+            keylist.sort()
+            for key in keylist:
+                print "%s: %s" % (key, d_chan[key])
+                ct_chan.append(d_chan[key])
+                
+            self.list_items(ct_chan, True)         
         
 
 
