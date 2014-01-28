@@ -42,5 +42,7 @@ new level for favorites
 rating sort for channels
 [B]2.3.0[/B]
 favorites handling
+[B]2.3.1[/B]
+new way of favorites handling
 
 

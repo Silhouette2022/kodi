@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.2.0
+# Rev. 2.3.1
 
-_REVISION_ = '2.2.0'
+_REVISION_ = '2.3.1'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -793,6 +793,8 @@ class RodinaTV():
             self.seek()
         elif self.mode == 'favupd':
             self.m_favupd()            
+        elif self.mode == 'favlst':
+            self.m_favlst()   
         else:
             self.m_main()
 
@@ -1199,7 +1201,7 @@ class RodinaTV():
                             cadd = True
                             try: 
                                 number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
-                                uri2 = sys.argv[0] + '?mode=favset&cat=%s&numb=%s&portal=%s' % (1, number, QT(self.portal))
+                                uri2 = sys.argv[0] + '?mode=favset&numb=%s&portal=%s' % (number, QT(self.portal))
                                 popup.append((self.lng['add2f'], 'RunPlugin(%s)'%uri2,))
                             except: pass
                         
@@ -1464,7 +1466,7 @@ class RodinaTV():
         self.log("-m_setall:")
         
         ct_setall = [('?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['sets']}, []),
-                     ('?mode=%s&portal=%s&icon=%s' % ('favupd', QT(self.portal), self.icons['f1']), self.icons['f1'], True, {'title': self.lng['favs']}, []),
+                     ('?mode=%s&portal=%s&icon=%s' % ('favlst', QT(self.portal), self.icons['f1']), self.icons['f1'], True, {'title': self.lng['favs']}, []),
                      ('?mode=%s&portal=%s&icon=%s' % ('setpc', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['pcode']}, []) ]
                                           
         self.list_items(ct_setall, True)
@@ -1817,7 +1819,7 @@ class RodinaTV():
             
     def set_fav(self, fav_numb, chan_numb, place = ''):
         self.log("-set_fav:")
-        if place == '':
+        if place == '' and fav_numb == '':
             a_color = []
             sz = 1
             resp = self.cached_get('fav')
@@ -1876,7 +1878,7 @@ class RodinaTV():
         self.tv_play(seek=seek)
         
         
-    def m_favupd(self, sub = ''):
+    def m_favupd_(self, sub = ''):
         self.log("-m_favupd:")
         
         d_fnum = {}
@@ -1902,13 +1904,13 @@ class RodinaTV():
                 for raw in a_raw:
                     cadd = False
                     popup = []
-                    print raw.encode('utf8')
+#                    print raw.encode('utf8')
                     try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
                     except: title = ''
                     try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                     except: number = ''
-                    print title.encode('utf8')
-                    print number
+#                    print title.encode('utf8')
+#                    print number
                     a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
                     a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
                     if len(a_icon100) > 0:
@@ -1930,12 +1932,93 @@ class RodinaTV():
             keylist = d_chan.keys()
             keylist.sort()
             for key in keylist:
-                print "%s: %s" % (key, d_chan[key])
+#                print "%s: %s" % (key, d_chan[key])
                 ct_chan.append(d_chan[key])
                 
-            self.list_items(ct_chan, True)         
-        
+            self.list_items(ct_chan, True)
 
+    def m_favupd(self):
+        self.log("-m_favupd:")
+        
+        d_fnum = {}
+        resp = self.cached_get('fav')
+        if resp != None and resp != '':
+            a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
+            a_favs = common.parseDOM(resp, "array", attrs={"name": "channels"})
+            a_comb = zip(a_numb, a_favs)
+            for numb, chan in a_comb:
+#                d_fnum[numb] = common.parseDOM(chan, "item")
+                a_item = common.parseDOM(chan, "item")
+                for item in a_item:
+                    flist = []
+                    try: flist = d_fnum[item]
+                    except: pass
+                    flist.append(numb)
+                    d_fnum[item] = flist
+                
+
+        ct_chan = []
+        d_chan = {} 
+        resp = self.cached_get('tv')
+        if resp != None:
+            a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
+            for chan in a_chan:
+                a_raw = common.parseDOM(chan, "row")
+                for raw in a_raw:
+                    cadd = False
+                    popup = []
+                    try: title = common.parseDOM(raw, "item", attrs={"name": "title"})[0]
+                    except: title = ''
+                    try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
+                    except: number = ''
+                    a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
+                    a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
+                    if len(a_icon100) > 0:
+                        try: icon = a_icon100[0]
+                        except: icon = ''
+                    elif len(a_icon45) > 0:
+                        try: icon = a_icon45[0]
+                        except: icon = ''
+                    if icon == '' : icon = self.path_icons_tv
+                    if title != '' and number != '':
+                        nUrl = ''
+
+                        try:
+                            if self.cat in d_fnum[number]:
+                                title = self.color[self.cat] + title + '[/COLOR]'
+                                nUrl = '?mode=%s&portal=%s&cat=%s&numb=%s&place=0' % ('favset', self.portal, self.cat, number)
+                        except: pass
+                        
+                        if nUrl == '':
+                            nUrl = '?mode=%s&portal=%s&cat=%s&numb=%s' % ('favset', self.portal, self.cat, number)
+                        
+                        d_chan[int(number)] = (nUrl, icon, True, {'title': title}, popup)
+
+            keylist = d_chan.keys()
+            keylist.sort()
+            for key in keylist:
+#                print "%s: %s" % (key, d_chan[key])
+                ct_chan.append(d_chan[key])
+                
+            self.list_items(ct_chan, True)
+            
+    def m_favlst(self):
+        self.log("-m_favlist:")
+        
+        ct_cat = []
+        resp = self.cached_get('fav')
+        if resp != None and resp != '':
+            a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
+            for numb in a_numb:
+                params = '?mode=%s&cat=%s&portal=%s' % ('favupd', numb, QT(self.portal))
+                if self.ts != '': params += ('&ts=%s' % self.ts)
+                try: cicon = self.icons['f' + numb]
+                except: cicon = self.cicon
+                try: title = self.colname[numb]
+                except: title = numb
+                ct_cat.append((params, cicon, True, {'title': title}, []))
+                
+        self.list_items(ct_cat, True)
 
 
       
