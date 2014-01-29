@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.2.0
+# Rev. 1.2.1
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
@@ -142,7 +142,7 @@ class MyPyStep(AddonDialogWindow):
         self.title = Label(self.lng['label'], alignment=ALIGN_CENTER)
         self.placeControl(self.title, 0, 0, columnspan=7)
         # Text label
-        self.label = Label('0 ' + self.lng['min'] + '0 ' + self.lng['sec'],
+        self.label = Label('0 ' + self.lng['min'] + ' 0 ' + self.lng['sec'],
                             alignment=ALIGN_CENTER)
         self.placeControl(self.label, 2, 0, columnspan=7)
         
