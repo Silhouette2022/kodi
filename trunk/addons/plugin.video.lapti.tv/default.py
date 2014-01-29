@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.2.0
+# Rev. 0.3.0
 
 
 
@@ -47,7 +47,7 @@ logos = {'onechanel':'pervyi_kanal',
             'ntvchanel':'ntv',
             'stschanel':'sts',
             'rus2chanel':'rossiia_2',
-            'perec':'perets',
+            'dtvchanel':'perets',
             'ruskchanel':'rossiia_k',
             'rentvchanel':'ren_tv',
             'rus24chanel':'rossiia_24',
@@ -60,6 +60,9 @@ logos = {'onechanel':'pervyi_kanal',
             'uchanel': 'iu-tv',
             'tnt': 'tnt',
             'tv3chanel': 'tv-3',
+            'rutvchanel': 'rutv',
+            'pyatnicachanel':'piatnitsa',
+            'bredtvchanel': 'bridgetv',  
             'mtvchanel': 'mtv-russia'}
             
 chnames = {'onechanel':'Первыи_канал',
@@ -67,7 +70,7 @@ chnames = {'onechanel':'Первыи_канал',
             'ntvchanel':'НТВ',
             'stschanel':'СТС',
             'rus2chanel':'Россия_2',
-            'perec':'Перец',
+            'dtvchanel':'Перец',
             'ruskchanel':'Россия_К',
             'rentvchanel':'РЕН_ТВ',
             'rus24chanel':'Россия_24',
@@ -80,6 +83,9 @@ chnames = {'onechanel':'Первыи_канал',
             'uchanel': 'Ю_ТВ',
             'tnt': 'ТНТ',
             'tv3chanel': 'ТВ-3',
+            'pyatnicachanel': 'Пятница!',
+            'rutvchanel': 'RU_TV',
+            'bredtvchanel': 'Bridge_TV',                                    
             'mtvchanel': 'МТВ'}
     
       
@@ -187,7 +193,7 @@ def LTV_prls(url):
     http = getURL(url)
     #print http
     pr_ls = re.compile('<li><a class="(.+?)" href="(.+?)"></a></li>').findall(http)
-    #print pr_ls
+#    print pr_ls
     if len(pr_ls):
         repeat = ''
         for eng,href in pr_ls:
@@ -208,38 +214,60 @@ def LTV_prls(url):
             dbg_log(logo)
             tbn = logo
             
+            if href[0] != '/': href = '/' + href
+            
             item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
             uri = sys.argv[0] + '?mode=DTLS'
             uri += '&url='+urllib.quote_plus(url + href)
             uri += '&thumbnail='+urllib.quote_plus(logo)
+            uri += '&name='+name
             item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+            dbg_log('uri=%s'%uri)
 
 
     xbmcplugin.endOfDirectory(pluginhandle)    
     
-def LTV_play(url):
+def LTV_play(url, rtmp_file, title):
     dbg_log('-LTV_play:')
     dbg_log('url = %s'%url)
+    dbg_log('file = %s'%rtmp_file)
 
-    rtmp_file = url
-    st_ls =rtmp_file.split(' ')
-    #print st_ls
-    if len(st_ls):
-        rtmp_streamer = st_ls[0]
-        rtmp_file = rtmp_streamer
+    sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+    sPlayer     = xbmc.Player()
+    sPlayList.clear()
         
-        furl = rtmp_file
-        furl += ' swfUrl=%s'%(LTV_url + '/uppod.swf')
-        furl += ' pageUrl=%s'%LTV_url
-        furl += ' tcUrl=%s'%rtmp_streamer
-        furl += ' flashVer=\'WIN 11,2,202,235\''
+    rtmp_file = rtmp_file.replace(' or ', '|').replace(' and ', '|')
+    st_ls =rtmp_file.split('|')
+    
+    furl = ''
+    i = 0
+    st_ls.reverse()
+    for hurl in st_ls:
+        tcurl  = hurl[0:hurl.rfind('/')]
+        rtmp_streamer = tcurl[0:tcurl.rfind('/')]
+        rtmp_file = rtmp_streamer
+        tcurl  += '/'
+       
+        furl = hurl
+        furl += ' app=live/'
+        furl += ' swfUrl=%s'%('http://lapti.tv/uppod.swf')
+        furl += ' tcUrl=%s'%tcurl
+        furl += ' pageUrl=%s'%url
+        furl += ' flashVer="WIN 12,0,0,43"'
+#        furl = rtmp://46.61.223.8:1935/live/first.stream app=live/ flashVer='WIN 12,0,0,43' swfUrl=http://lapti.tv/uppod.swf tcUrl=rtmp://46.61.223.8:1935/live/
+       
+        item = xbmcgui.ListItem(label=title, path = furl)
+        sPlayList.add(furl, item, i)
+        i = i + 1
+        dbg_log('furl = %s'%furl)
+    
+    if len(st_ls) > 0:
+        dbg_log('--playing') 
+        sPlayer.play(sPlayList)
 
-        dbg_log(furl)
-
-        xbmc.log('furl = %s'%furl)
-        item = xbmcgui.ListItem(path = furl)
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+            
+            
              
 def LTV_guideOLD(furl, thumbnail):
     dbg_log('-LTV_guide:')
@@ -334,7 +362,7 @@ def LTV_guide(furl, thumbnail, pdata, pref, psys, pstream, mycookie):
     xbmcplugin.endOfDirectory(pluginhandle)
 
 
-def LTV_dates(furl, thumbnail):
+def LTV_dates(furl, thumbnail, title):
     dbg_log('-LTV_guide:')
     dbg_log('furl = %s'%furl)
     
@@ -349,11 +377,12 @@ def LTV_dates(furl, thumbnail):
 
     if len(ef_ls):
         rtmp_file = Decode(ef_ls[0])
+
         name = '-Live-'
         descr = '-Live-'
         item = xbmcgui.ListItem(name, iconImage=thumbnail, thumbnailImage=thumbnail)
         uri = sys.argv[0] + '?mode=PLAY'
-        uri += '&url='+urllib.quote_plus(rtmp_file)
+        uri += '&url='+urllib.quote_plus(furl) + '&file='+urllib.quote_plus(rtmp_file) + '&name='+title
         item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
         item.setProperty('IsPlayable', 'true')
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
@@ -436,6 +465,7 @@ pdata=''
 pref=''
 psys=''
 cookie=''
+file=''
 dbg_log('OPEN:')
 
 try:
@@ -474,12 +504,15 @@ try:
     cookie=urllib.unquote_plus(params['cookie'])
     dbg_log('-COOKIE:'+ cookie + '\n')
 except: pass
-
+try: 
+    file=urllib.unquote_plus(params['file'])
+    dbg_log('-FILE:'+ file + '\n')
+except: pass
 
 if mode == 'PLAR': LTV_plarch(url, pdata, cookie)
-elif mode == 'PLAY': LTV_play(url)
+elif mode == 'PLAY': LTV_play(url, file, name)
 elif mode == 'PRLS': LTV_prls(LTV_url)
-elif mode == 'DTLS': LTV_dates(url, thumbnail)
+elif mode == 'DTLS': LTV_dates(url, thumbnail, name)
 elif mode == 'GDLS': LTV_guide(url, thumbnail, pdata, pref, psys, name, cookie)
 elif mode == None: LTV_prls(LTV_url)
 
