@@ -44,5 +44,7 @@ rating sort for channels
 favorites handling
 [B]2.3.1[/B]
 new way of favorites handling
+[B]2.3.2[/B]
+high res icons
 
 

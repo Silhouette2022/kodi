@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.3.1
+# Rev. 2.3.2
 
-_REVISION_ = '2.3.1'
+_REVISION_ = '2.3.2'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -842,7 +842,7 @@ class RodinaTV():
         cache = ''
         skipt = False
         if type == 'tv':
-            cquery = '?query=%s' % 'get_channels'
+            cquery = '?query=%s&value=%s&key=icon' % ('get_channels', '250_250_1')
             fn = self.cache_chan
             tt = time.time()
         elif type == 'etv':
@@ -1212,12 +1212,13 @@ class RodinaTV():
                         except: title = ''
                         try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                         except: number = ''
-                        a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
-                        a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
-                        if len(a_icon100) > 0:
-                            try: icon = a_icon100[0]
+                        a_icon45 = common.parseDOM(raw, "item", attrs={"name": "default"})
+                        a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
+                        icon = ''
+                        if len(a_icon250) > 0:
+                            try: icon = a_icon250[0]
                             except: icon = ''
-                        elif len(a_icon45) > 0:
+                        if icon == '' and len(a_icon45) > 0:
                             try: icon = a_icon45[0]
                             except: icon = ''
                         if icon == '': icon = self.path_icons_tv
