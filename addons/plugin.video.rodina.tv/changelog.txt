@@ -48,5 +48,7 @@ new way of favorites handling
 high res icons
 [B]2.3.3[/B]
 high res icons for archives
+[B]2.3.4[/B]
+date is top archive level
 
 
