@@ -50,5 +50,6 @@ high res icons
 high res icons for archives
 [B]2.3.4[/B]
 date is top archive level
-
+[B]2.3.5[/B]
+bug fix
 
