@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.3.4
+# Rev. 2.3.5
 
-_REVISION_ = '2.3.4'
+_REVISION_ = '2.3.5'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1135,7 +1135,7 @@ class RodinaTV():
                 a_comb = zip(a_title, a_numb, a_chan)
                 for title, numb, chan in a_comb:
                     params = '?mode=%s&cat=%s&portal=%s&sort=%s' % (nmode, numb, QT(self.portal), '_'.join(common.parseDOM(chan, "item")))
-                    if self.view_date == 'true': params += '&dt=' + self.adt
+                    if self.view_date == 'true' and self.adt != '': params += '&dt=' + self.adt
                     if self.ts != '': params += ('&ts=%s' % self.ts)
                     try: cicon = self.icons[numb]
                     except: cicon = self.cicon
@@ -1147,7 +1147,7 @@ class RodinaTV():
             a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
             for numb in a_numb:
                 params = '?mode=%s&cat=%s&portal=%s' % (nmode, numb, QT(self.portal))
-                if self.view_date == 'true': params += '&dt=' + self.adt
+                if self.view_date == 'true' and self.adt != '': params += '&dt=' + self.adt
                 if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
@@ -1408,7 +1408,7 @@ class RodinaTV():
                                 except: icon = ''
                             if icon == '': icon = self.path_icons_tv
                             if title != '' and number != '':
-                                if self.view_date == 'true':
+                                if self.view_date == 'true' and self.adt != '':
                                     nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&dt=%s' % ('aepg', self.portal, number, has_passwd, has_record, icon, self.adt)
                                 else:
                                     nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon)
