@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.6.0
+# Rev. 0.6.1
 
 
 
@@ -110,17 +110,19 @@ def DTV_guide(url = 'http://www.debilizator.tv' ):
         msktmst = time.strptime(msktmls[0][1] + ' ' + msktmls[1][1], "%Y-%d-%m %H:%M:%S")
         tzdf = round( (time.mktime(msktmst) - time.mktime(time.localtime())) / (3600))
     except:
+        dbg_log('-time.jp-net.ru failed')
         pass
 
     try:
         http = getURL(url)
     except:
+        dbg_log('-debilizator.tv failed')
         return dtv
             
     oneline = re.sub( '\n', ' ', http)
-    chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</div> *?</div>').findall(oneline)
-    if len(chndls) < 2:
-        chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</a> *?</div>').findall(oneline)
+    chndls = re.compile('<div class="halfblock"> *?<div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</div>').findall(oneline)
+#    if len(chndls) < 2:
+#        chndls = re.compile('div class="halfblock"> *?<a href="(.*?)/" title=(.*?)</div> *?</a> *?</div>').findall(oneline)
 #    print chndls
     for chndel in chndls:
 #        print chndel
@@ -133,17 +135,22 @@ def DTV_guide(url = 'http://www.debilizator.tv' ):
         thumbnail = chells[0][0].replace('/mini', '')
 #        print thumbnail
         
-        ptls = re.compile('<div class="prtime">(.*?)</div> *?<div class="prdesc" title=".*?">(.*?)</div>').findall(chndel[1])
+        ptls = re.compile('<span class="prdesc" title="(.*?)">(.*?)</span>').findall(chndel[1])
 #        print ptls
         ptlsln = len(ptls)
 
 
         i = 1
         while ptlsln - i + 1:
-            prtm = ptls[ptlsln - i][0]
-            prds = ptls[ptlsln - i][1]
-            #prxt = ptls[ptlsln - i][2]
-            prxt = ''
+            prtm = ptls[ptlsln - i][1][0:5]
+            prds = ptls[ptlsln - i][1][6:]
+            prxt = ptls[ptlsln - i][0]
+            
+            if prds == prxt: prxt = ''
+#            prxt = ''
+#            print prtm
+#            print prds
+#            print prxt
 
             prtmst = time.strptime(msktmls[0][1] + ' ' + prtm, "%Y-%d-%m %H:%M")
             
@@ -205,7 +212,6 @@ def KTV_prls(url):
       
     xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
     epg = DTV_guide()
-   
     
     dbg_log('-KTV_prls:')
     dbg_log('url = %s'%url)
@@ -277,7 +283,9 @@ def KTV_play(url, name, thumbnail, plot):
             furl += ' tcUrl=%s'%hurl
             furl += " flashVer=\'WIN 11,2,202,235\'"
             item = xbmcgui.ListItem(path = furl)
-            sPlayList.add(furl, item, i)
+            item.setProperty('mimetype', 'video/x-msvideo')
+            item.setProperty('IsPlayable', 'true')
+            sPlayList.add(furl, item, 0) #i)
             i = i + 1
             xbmc.log('furl = %s'%furl)
             
@@ -417,6 +425,8 @@ def KTV_plarch(url, name, thumbnail, plot):
               continue
 
             item = xbmcgui.ListItem(path = furl)
+            item.setProperty('mimetype', 'video/x-msvideo')
+            item.setProperty('IsPlayable', 'true')
             xbmcplugin.setResolvedUrl(pluginhandle, True, item)
             dbg_log('--playing') 
     
