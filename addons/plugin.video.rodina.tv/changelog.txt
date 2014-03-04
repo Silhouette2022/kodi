@@ -52,4 +52,7 @@ high res icons for archives
 date is top archive level
 [B]2.3.5[/B]
 bug fix
+[B]2.3.6[/B]
+added next/prev for archives
+
 

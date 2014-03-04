@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.3.5
+# Rev. 2.3.6
 
-_REVISION_ = '2.3.5'
+_REVISION_ = '2.3.6'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -607,7 +607,10 @@ class RodinaTV():
         
         self.color = { '1' : '[COLOR FFFF0000]',
                        '2' : '[COLOR FFFFFF00]',
-                       '3' : '[COLOR FF00FF00]' }
+                       '3' : '[COLOR FF00FF00]',
+                       '4' : '[COLOR FF0000FF]',
+                       '6' : '[COLOR FF00FFFF]'
+                     }
                         
         self.colname = { '1' : self.color['1'] + '<<' + self.lng['red']   + '>>[/COLOR]',
                          '2' : self.color['2'] + '<<' + self.lng['yellow']+ '>>[/COLOR]',
@@ -626,6 +629,15 @@ class RodinaTV():
         self.log('%s %s'%('Rev.', _REVISION_), 0)
         
         self.init_icons()
+        
+        self.dweek ={   0: self.lng['mon'],
+                        1: self.lng['tue'],
+                        2: self.lng['wed'],
+                        3: self.lng['thur'],
+                        4: self.lng['fri'],
+                        5: self.lng['sat'],
+                        6: self.lng['sun']
+                    }
      
     def init_icons(self):
         self.log("-init_icons:")
@@ -707,7 +719,8 @@ class RodinaTV():
                         'sat'       : self.addon.getLocalizedString(20006),
                         'sun'       : self.addon.getLocalizedString(20007),
                         'next'      : self.addon.getLocalizedString(20008),
-                        'part'      : self.addon.getLocalizedString(20009),
+                        'prev'      : self.addon.getLocalizedString(20009),
+                        'part'      : self.addon.getLocalizedString(20010),
                         'pcode'     : self.addon.getLocalizedString(11005),
 
                         ''          : '' }
@@ -1429,15 +1442,6 @@ class RodinaTV():
                     
     def m_adate(self):
         self.log("-m_adate:")
-        
-        dweek = {   0: self.lng['mon'],
-                    1: self.lng['tue'],
-                    2: self.lng['wed'],
-                    3: self.lng['thur'],
-                    4: self.lng['fri'],
-                    5: self.lng['sat'],
-                    6: self.lng['sun']
-                }
 
         ct_date = [] 
         dts = time.localtime()
@@ -1445,7 +1449,7 @@ class RodinaTV():
 #        for dt in range(dnow+(24*60*60), dnow - (14*24*60*60), -(24*60*60)):
         for dt in range(dnow, dnow - (14*24*60*60), -(24*60*60)):
             lt = time.localtime(dt)
-            title = time.strftime("%x ", lt) + dweek[lt.tm_wday]
+            title = time.strftime("%x ", lt) + self.dweek[lt.tm_wday]
             if self.view_date == 'true':
                 ct_date.append(('?mode=%s&portal=%s&icon=%s&dt=%s' % 
                 ('arch', self.portal, self.cicon, dt), self.cicon, True, {'title': title}, []))
@@ -1458,7 +1462,8 @@ class RodinaTV():
     def m_aepg(self):
         self.log("-m_aepg:")
 
-        ct_chan = []    
+        ct_chan = []
+
         d_epg = self.epg2dict(self.cached_get('atv'))
         lepg = d_epg[self.numb]
         for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
@@ -1467,13 +1472,26 @@ class RodinaTV():
             plot = '[COLOR FF999999]%s[/COLOR]' % (edescr)
             if rec != '1':
                 title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
-            else: 
-                uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('shift', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart)
+#            else: 
+#                uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('shift', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart)
 #                popup.append(('RodinaTV Shift to Start', 'RunPlugin(%s)'%uri2,))
             
 
             ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
 
+        if self.view_date == 'true':
+
+            ntime = int(self.adt) - (24*60*60)
+            lt = time.localtime(ntime)
+            title = time.strftime("%x ", lt) + self.dweek[lt.tm_wday]
+            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
+                ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, ntime), self.cicon, True, {'title': self.color['6'] + self.lng['prev'] + title + '[/COLOR]'}, []))  
+                      
+            ntime = int(self.adt) + (24*60*60)
+            lt = time.localtime(ntime)
+            title = time.strftime("%x ", lt) + self.dweek[lt.tm_wday]
+            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
+                ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, ntime), self.cicon, True, {'title': self.color['6'] + self.lng['next'] + title + '[/COLOR]'}, []))
         self.list_items(ct_chan, False)   
         
     def m_setall(self):
