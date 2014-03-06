@@ -54,5 +54,7 @@ date is top archive level
 bug fix
 [B]2.3.6[/B]
 added next/prev for archives
+[B]2.3.7[/B]
+bug fix
 
 
