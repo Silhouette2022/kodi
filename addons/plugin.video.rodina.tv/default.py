@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.3.6
+# Rev. 2.3.7
 
-_REVISION_ = '2.3.6'
+_REVISION_ = '2.3.7'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1465,7 +1465,10 @@ class RodinaTV():
         ct_chan = []
 
         d_epg = self.epg2dict(self.cached_get('atv'))
-        lepg = d_epg[self.numb]
+        try:
+            lepg = d_epg[self.numb]
+        except:
+            return
         for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
             popup = []
             title = '%s-%s %s' % (ebgn, eend, ename)
