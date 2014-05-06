@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="plugin.video.24doc.ru" name="[COLOR FFE13723]24Doc.ru[/COLOR]" version="0.2.1" provider-name="Silhouette">
+<addon id="plugin.video.24doc.ru" name="[COLOR FFE13723]24Doc.ru[/COLOR]" version="0.2.2" provider-name="Silhouette">
   <requires>
-    <import addon="xbmc.python" version="1.0"/>
+    <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
   </requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
@@ -23,8 +23,8 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.8" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
+<addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.9" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>IMB+ RECORDS - HOME OF UKRAINIAN AND RUSSIAN ONLINE TV</summary>
@@ -33,8 +33,8 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.3.0" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
+<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.3.1" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>Online TV from inetcom.tv</summary>
@@ -43,8 +43,8 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kaban.tva" name="[COLOR FFE55BB0]Kaban.TVA[/COLOR]" version="0.6.1" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
+<addon id="plugin.video.kaban.tva" name="[COLOR FFE55BB0]Kaban.TVA[/COLOR]" version="0.6.2" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>Archives from http://kaban.tv/</summary>
@@ -63,9 +63,9 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.ru[/COLOR]" version="0.3.2" provider-name="Silhouette">
+<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.ru[/COLOR]" version="0.3.3" provider-name="Silhouette">
   <requires>
-    <import addon="xbmc.python" version="1.0"/>
+    <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
   </requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
@@ -76,7 +76,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.lapti.tv" name="[COLOR FFcfb074]Lapti.TV[/COLOR]" version="0.3.0" provider-name="Silhouette">
+<addon id="plugin.video.lapti.tv" name="[COLOR FFcfb074]Lapti.TV[/COLOR]" version="0.3.1" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="2.1.0"/></requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
@@ -86,9 +86,9 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.6.0" provider-name="Silhouette">
+<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.6.1" provider-name="Silhouette">
   <requires>
-    <import addon="xbmc.python" version="1.0"/>
+    <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
   </requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
