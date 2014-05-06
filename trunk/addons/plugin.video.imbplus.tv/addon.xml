@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.8" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
+<addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.9" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
     <summary>IMB+ RECORDS - HOME OF UKRAINIAN AND RUSSIAN ONLINE TV</summary>
