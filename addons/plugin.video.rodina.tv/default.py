@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.3.7
+# Writer (c) 2014, otaranda@hotmail.com
+# Rev. 2.4.0
 
-_REVISION_ = '2.3.7'
+_REVISION_ = '2.4.0'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -593,7 +593,8 @@ class RodinaTV():
         self.pwd = self.addon.getSetting('pwd')
         self.tsd = self.addon.getSetting('tsd')
         self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
-        self.ss = self.addon.getSetting('ss')
+        self.dc = '121' if self.addon.getSetting('dc') == 'us' else '123'
+
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
         self.serial = self.addon.getSetting('serial')
@@ -1094,8 +1095,8 @@ class RodinaTV():
     def set_settings(self, ts='0'):
         self.log("-set_settings:")
         
-        key = 'bitrate|tshift'
-        value = '%s|%s' % (self.br, ts)
+        key = 'bitrate|tshift|dc'
+        value = '%s|%s|%s' % (self.br, ts, self.dc)
         req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_settings', key, value)
         resp = self.getUrlPage( req)
 #        if resp != None:
