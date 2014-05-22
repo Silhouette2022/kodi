@@ -58,5 +58,8 @@ added next/prev for archives
 bug fix
 [B]2.4.0[/B]
 added us streaming server
+[B]2.4.1[/B]
+Language bug fix
+
 
 
