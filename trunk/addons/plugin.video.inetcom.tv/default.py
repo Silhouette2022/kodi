@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.3.0
+# Rev. 0.3.2
 
 
 
 import urllib,urllib2,re,sys,os,time
 import xbmcplugin,xbmcgui,xbmcaddon
-import json
+import json,gzip,StringIO
 
 pluginhandle = int(sys.argv[1])
 __addon__       = xbmcaddon.Addon(id='plugin.video.inetcom.tv') 
@@ -53,7 +53,12 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
         response = urllib2.urlopen(req, data)
     else:
         response = urllib2.urlopen(req)
-    link=response.read()
+    
+    if (response.info().has_key('Content-Encoding') and response.info()['Content-Encoding'] == 'gzip'):    
+        gzip_filehandle=gzip.GzipFile(fileobj=StringIO.StringIO(response.read()))
+        link = gzip_filehandle.read()
+    else:
+        link=response.read()
     if save_cookie:
         setcookie = response.info().get('Set-Cookie', None)
         #print "Set-Cookie: %s" % repr(setcookie)
@@ -64,8 +69,9 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
             except:
               pass
             link = link + '<cookie>' + setcookie + '</cookie>'
-    
+            
     response.close()
+    
     return link
 
 
