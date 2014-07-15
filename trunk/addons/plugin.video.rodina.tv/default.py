@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.4.0
+# Rev. 2.5.0
 
-_REVISION_ = '2.4.0'
+_REVISION_ = '2.5.0'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -592,7 +592,12 @@ class RodinaTV():
         self.uid = self.addon.getSetting('uid')
         self.pwd = self.addon.getSetting('pwd')
         self.tsd = self.addon.getSetting('tsd')
-        self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
+#        self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
+        br = self.addon.getSetting('br')
+        if br == 'high': self.br = '141'
+        elif br == 'hls': self.br = '140'
+        else: self.br = '148'
+        
         self.dc = '121' if self.addon.getSetting('dc') == 'us' else '123'
 
         self.view_mode = self.addon.getSetting('view_mode')
@@ -1295,6 +1300,9 @@ class RodinaTV():
         else:
             key = "lid"
             value = self.lid
+        if self.br == '140':
+            key += "|type"
+            value += '|vod'
         if self.start != '':
             key += "|start"
             if seek == 0: 
@@ -1313,7 +1321,8 @@ class RodinaTV():
             
             self.addon.setSetting('start', start)
             value += '|' + start
-            self.addon.setSetting('arch_on', 'true')
+            if self.br != '140':
+                self.addon.setSetting('arch_on', 'true')
 
 
         
