@@ -5,7 +5,7 @@
 		<setting id="pwd" type="text" label="11004" option="hidden" default="" />
 		<setting id="separator" type="lsep" label=""/>
 		<setting id="tsd" type="labelenum" values="0|1|2|3|4|8|9|10|11" label="11007" default="0" />
-		<setting id="br" type="labelenum" values="low|high" label="11006" default="high" />
+		<setting id="br" type="labelenum" values="low|high|hls" label="11006" default="high" />
 		<setting id="dc" type="labelenum" values="de|us" label="11008" default="de" />
 	</category>
 	<category label="11001">

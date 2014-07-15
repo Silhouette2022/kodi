@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.2.1
+# Rev. 1.2.2
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
 from pyxbmct.addonwindow import *
-
 
 __addon__ = xbmcaddon.Addon()
 __addonversion__ = __addon__.getAddonInfo('version')
@@ -94,13 +93,13 @@ class RodinaPlayer(xbmc.Player):
             seek = pystep.value - 50.0
             del pystep
             
-            if seek == None or seek == 0:
-                self.pause()
-            else:
+            if seek != None and seek != 0:
                 seek = int(seek * 60)
                 params = 'mode=seek&time=%s&seek=%s' % (int(float(stime)), seek)
                 script = 'special://home/addons/%s/default.py' % 'plugin.video.rodina.tv'
                 xbmc.executebuiltin('XBMC.RunScript(%s, %d, %s)' % (script, 99, params))
+                
+            self.pause()
       
 ACTION_PREVIOUS_MENU = 10
 ACTION_SELECT_ITEM = 7
