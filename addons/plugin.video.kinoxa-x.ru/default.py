@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.3.2
+# Rev. 0.4.0
 
 
 import urllib,urllib2,re,sys
@@ -29,7 +29,8 @@ dbg = 0
 pluginhandle = int(sys.argv[1])
 
 start_pg = "http://www.kinoxa-x.ru"
-page_pg = start_pg + "/load/0-"
+#page_pg = start_pg + "/load/0-"
+page_pg = start_pg + "/page/"
 fdpg_pg = ";t=0;md=;p="
 find_pg = start_pg + "/search/?q="
 
@@ -70,9 +71,9 @@ def KNX_list(url, page, type):
     dbg_log('- type:'+  type + '\n')
         
     if type == 'ctlg':
-        n_url = url + '-' + page + '-2'
+        n_url = url + 'page/' + page + '/'
     else:
-        n_url = url + page
+        n_url = url + page + '/'
         
     dbg_log('- n_url:'+  n_url + '\n')
     
@@ -90,32 +91,20 @@ def KNX_list(url, page, type):
             uri = sys.argv[0] + ctMode
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')    
+
+        
+    entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
+    msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"}) 
     
 
-    if type == 'find' or type == 'unis':
-        entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
-        msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"})
-        unis_res = []
-    else:
-        entry_id = re.compile("entryID[0-9]")
-        entrys = BeautifulSoup(http).findAll('div',{"id":entry_id})
-
     for eid in entrys:
-        
-        if type == 'find' or type == 'unis':
-            films = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))
-            plots = re.compile('style=".*?">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))
-        else:
-            films = re.compile('<a href="(.*?)"><h[0-9] style=".*?">(.*?)</h[0-9]></a>').findall(str(eid))
-            plots = re.compile('<span class="kr-opis-rol">(.*?)</noindex>').findall(re.sub('[\n\r\t]', ' ',str(eid)))
-            imgs = re.compile('<img src="(.*?)"').findall(str(eid))
 
-        for href, title in films:
-            title = re.sub('<.*?>', '',title)
-            try: img = imgs[0]
-            except: img = ''
-            try: plot = re.sub('<.*?>', '',plots[0])
-            except: plot = title
+            href = re.compile('<a href="(.*?)"').findall(str(eid))[0]
+            plot = re.compile('<span class="nazvanie">(.*?)<!--/noindex-->').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
+            img = start_pg + re.compile('<img src="(.*?)"').findall(str(msgs[i]))[0]
+            title = re.compile('title="(.*?)"').findall(str(msgs[i]))[0]
+
+            dbg_log('-HREF %s'%href)
             dbg_log('-TITLE %s'%title)
             dbg_log('-IMG %s'%img)
             dbg_log('-PLOT %s'%plot)
@@ -218,14 +207,18 @@ def KNX_play(url):
     
     http = get_url(url)
     iframes = re.compile('<iframe src="(.*?)"').findall(http)
+    
     print iframes
-    if len(iframes) > 1:
-        http = get_url(iframes[1])
-    elif len(iframes):
+    
+    if len(iframes) > 0:
         http = get_url(iframes[0])
+#    elif len(iframes):
+#        http = get_url(iframes[0])
     else:
         return
         
+    print http
+    
     flvs = re.compile('src="http(.*?)"').findall(http)
     hrefs = re.compile('<a href="(.*?)">').findall(http)
     print flvs
@@ -245,43 +238,45 @@ def KNX_ctlg(url):
     dbg_log('-KNX_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
                
-    catalog  = [( "/load/sortirovka_po_godam/filmy_2013_goda/68", '2013 год'),
-                ( "/load/sortirovka_po_godam/filmy_2012_goda/65", '2012 год'),
-                ( "/load/sortirovka_po_godam/filmy_2011_goda/51", '2011 год'),
-                ( "/load/sortirovka_po_godam/filmy_2010_goda/52", '2010 год'),
-                ( "/load/sortirovka_po_godam/filmy_2009_goda/53", '2009 год'),
-                ( "/load/kategorii/filmy_v_3d/67", 'Фильмы в 3D'),
-                ( "/load/kategorii/komedii/30", 'Комедии'),
-                ( "/load/kategorii/boeviki/31", 'Боевики'),
-                ( "/load/kategorii/dramy/32", 'Драмы'),
-                ( "/load/kategorii/uzhasy/33", 'Ужасы'),
-                ( "/load/kategorii/fantastika/34", 'Фантастика'),
-                ( "/load/kategorii/trillery/35", 'Триллеры'),
-                ( "/load/kategorii/detektivy/36", 'Детективы'),
-                ( "/load/kategorii/dokumentalnye/37", 'Документальные'),
-                ( "/load/kategorii/multfilmy/38", 'Мультфильмы'),
-                ( "/load/kategorii/mistika/39", 'Мистика'),
-                ( "/load/kategorii/sovetskie_filmy/69", 'Советские фильмы'),
-                ( "/load/kategorii/semejnye/40", 'Семейные'),
-                ( "/load/kategorii/sportivnye/41", 'Спортивные'),
-                ( "/load/kategorii/melodramy/42", 'Мелодрамы'),
-                ( "/load/kategorii/russkie_serialy/43", 'Русские сериалы'),
-                ( "/load/kategorii/zarubezhnye_serialy/64", 'Зарубежные сериалы'),
-                ( "/load/kategorii/trejlery/44", 'Трейлеры'),
-                ( "/load/kategorii/fehntezi/46", 'Фэнтези'),
-                ( "/load/kategorii/prikljuchenija/47", 'Приключения'),
-                ( "/load/kategorii/istoricheskie/48", 'Исторические'),
-                ( "/load/kategorii/vestern/49", 'Вестерн'),
-                ( "/load/kategorii/animeh/56", 'Аниме'),
-                ( "/load/kategorii/kriminal/60", 'Криминал'),
-                ( "/load/kategorii/voennye/61", 'Военные'),
-                ( "/load/kategorii/goblinskij_perevod/55", 'Гоблинский перевод'),
-                ( "/load/kategorii/poznaem_mir/57", 'Познаем мир'),
-                ( "/load/kategorii/biografija/58", 'Биография'),
-                ( "/load/kategorii/xxx/59", 'XXX'),
-                ( "/load/kategorii/jumoristicheskie_peredachi/62", 'Юмористические передачи'),
-                ( "/load/kategorii/teleshou/63", 'Передачи'),
-                ( "/load/kategorii/filmy_v_vysokom_kachestve_hd/54", 'В высоком качестве HD')]
+    catalog  = [( "/filmy_2014_goda/", '2014 год'),
+                ( "/filmy_2013_goda/", '2013 год'),
+                ( "/filmy_2012_goda/", '2012 год'),
+                ( "/filmy_2011_goda/", '2011 год'),
+                ( "/filmy_2010_goda/", '2010 год'),
+                ( "/filmy_2009_goda/", '2009 год'),
+                ( "/filmy_v_3d/", 'Фильмы в 3D'),
+                ( "/komedii/", 'Комедии'),
+                ( "/boeviki/", 'Боевики'),
+                ( "/dramy/", 'Драмы'),
+                ( "/uzhasy/", 'Ужасы'),
+                ( "/fantastika/", 'Фантастика'),
+                ( "/trillery/", 'Триллеры'),
+                ( "/detektivy/", 'Детективы'),
+                ( "/dokumentalnye/", 'Документальные'),
+                ( "/multfilmy/", 'Мультфильмы'),
+                ( "/mistika/", 'Мистика'),
+                ( "/sovetskie_filmy/", 'Советские фильмы'),
+                ( "/semejnye/", 'Семейные'),
+                ( "/sportivnye/", 'Спортивные'),
+                ( "/melodramy/", 'Мелодрамы'),
+                ( "/russkie_serialy/", 'Русские сериалы'),
+                ( "/zarubezhnye_serialy/", 'Зарубежные сериалы'),
+                ( "/trejlery/", 'Трейлеры'),
+                ( "/fehntezi/", 'Фэнтези'),
+                ( "/prikljuchenija/", 'Приключения'),
+                ( "/istoricheskie/", 'Исторические'),
+                ( "/vestern/", 'Вестерн'),
+                ( "/animeh/", 'Аниме'),
+                ( "/kriminal/", 'Криминал'),
+                ( "/voennye/", 'Военные'),
+                ( "/goblinskij_perevod/", 'Гоблинский перевод'),
+                ( "/poznaem_mir/", 'Познаем мир'),
+                ( "/biografija/", 'Биография'),
+                ( "/xxx/", 'XXX'),
+                ( "/jumoristicheskie_peredachi/", 'Юмористические передачи'),
+                ( "/teleshou/", 'Передачи'),
+                ( "/filmy_v_vysokom_kachestve_hd/", 'В высоком качестве HD'),
+                ( "/novinki_kino/", 'Новинки кино')]
                
                
     for ctLink, ctTitle  in catalog:
