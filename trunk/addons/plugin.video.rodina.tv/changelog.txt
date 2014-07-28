@@ -1,3 +1,5 @@
+[B]2.5.1[/B]
+Fixed DE stream server code
 [B]2.5.0[/B]
 Added hls video stream
 [B]2.4.1[/B]
