@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.5.0
+# Rev. 2.5.1
 
-_REVISION_ = '2.5.0'
+_REVISION_ = '2.5.1'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -598,7 +598,7 @@ class RodinaTV():
         elif br == 'hls': self.br = '140'
         else: self.br = '148'
         
-        self.dc = '121' if self.addon.getSetting('dc') == 'us' else '123'
+        self.dc = '121' if self.addon.getSetting('dc') == 'us' else '125'
 
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
