@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.5.1
+# Rev. 2.5.2
 
-_REVISION_ = '2.5.1'
+_REVISION_ = '2.5.2'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -862,7 +862,7 @@ class RodinaTV():
         cache = ''
         skipt = False
         if type == 'tv':
-            cquery = '?query=%s&value=%s&key=icon' % ('get_channels', '250_250_1')
+            cquery = '?query=%s&value=%s&key=icon' % ('get_channels', '300_300_0')
             fn = self.cache_chan
             tt = time.time()
         elif type == 'etv':
@@ -1238,10 +1238,14 @@ class RodinaTV():
                         except: number = ''
                         a_icon45 = common.parseDOM(raw, "item", attrs={"name": "default"})
                         a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
+                        a_icon300 = common.parseDOM(raw, "item", attrs={"name": "300_300_0"})
                         icon = ''
-                        if len(a_icon250) > 0:
-                            try: icon = a_icon250[0]
+                        if len(a_icon300) > 0:
+                            try: icon = a_icon300[0]
                             except: icon = ''
+                        if icon == '' and len(a_icon250) > 0:
+                            try: icon = a_icon250[0]
+                            except: icon = ''                            
                         if icon == '' and len(a_icon45) > 0:
                             try: icon = a_icon45[0]
                             except: icon = ''
@@ -1422,10 +1426,14 @@ class RodinaTV():
                             except: number = ''
                             a_icon45 = common.parseDOM(raw, "item", attrs={"name": "default"})
                             a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
+                            a_icon300 = common.parseDOM(raw, "item", attrs={"name": "300_300_0"})
                             icon = ''
-                            if len(a_icon250) > 0:
-                                try: icon = a_icon250[0]
+                            if len(a_icon300) > 0:
+                                try: icon = a_icon300[0]
                                 except: icon = ''
+                            if icon == '' and len(a_icon250) > 0:
+                                try: icon = a_icon250[0]
+                                except: icon = ''                                
                             if icon == '' and len(a_icon45) > 0:
                                 try: icon = a_icon45[0]
                                 except: icon = ''

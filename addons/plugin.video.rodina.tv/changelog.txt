@@ -1,3 +1,5 @@
+[B]2.5.2[/B]
+New TV channel icons
 [B]2.5.1[/B]
 Fixed DE stream server code
 [B]2.5.0[/B]
