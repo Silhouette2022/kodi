@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.5.2
+# Rev. 2.5.3
 
-_REVISION_ = '2.5.2'
+_REVISION_ = '2.5.3'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -2025,10 +2025,14 @@ class RodinaTV():
                     try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                     except: number = ''
                     a_icon45 = common.parseDOM(raw, "item", attrs={"name": "icon_45_45"})
-                    a_icon100 = common.parseDOM(raw, "item", attrs={"name": "icon_100_100"})
-                    if len(a_icon100) > 0:
-                        try: icon = a_icon100[0]
+                    a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
+                    a_icon300 = common.parseDOM(raw, "item", attrs={"name": "300_300_0"})                    
+                    if len(a_icon300) > 0:
+                        try: icon = a_icon300[0]
                         except: icon = ''
+                    elif len(a_icon250) > 0:
+                        try: icon = a_icon250[0]
+                        except: icon = ''                        
                     elif len(a_icon45) > 0:
                         try: icon = a_icon45[0]
                         except: icon = ''
