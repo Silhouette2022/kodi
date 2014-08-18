@@ -23,7 +23,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.filin.tv" name="[B][COLOR CFFFFFFF]Filin.tv[/COLOR][/B]" version="1.2.9" provider-name="mrstealth">
+<addon id="plugin.video.filin.tv_" name="[B][COLOR CFFFFFFF]Filin.tv[/COLOR][/B]" version="1.2.9" provider-name="mrstealth">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
         <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -40,7 +40,7 @@
     </extension>
 </addon>
 
-<addon id="plugin.video.filmodrom.net" name="Filmodrom.net (UnifiedSearch)" version="1.0.5" provider-name="MrStealth">
+<addon id="plugin.video.filmodrom.net_" name="Filmodrom.net (UnifiedSearch)" version="1.0.5" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -86,7 +86,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kino-v-online.ru" name="Kino-v-online.tv (UnifiedSearch)" version="1.0.7" provider-name="MrStealth">
+<addon id="plugin.video.kino-v-online.ru_" name="Kino-v-online.tv (UnifiedSearch)" version="1.0.7" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -112,7 +112,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinoprosmotr.net" name="Kinoprosmotr.net (UnifiedSearch)" version="1.1.3" provider-name="MrStealth">
+<addon id="plugin.video.kinoprosmotr.net_" name="Kinoprosmotr.net (UnifiedSearch)" version="1.1.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -127,7 +127,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinosolo.ru" name="Kinosolo.ru (UnifiedSearch)" version="1.1.4" provider-name="MrStealth">
+<addon id="plugin.video.kinosolo.ru_" name="Kinosolo.ru (UnifiedSearch)" version="1.1.4" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -166,7 +166,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.mrstealth.fepcom.net" name="Fepcom.net (UnifiedSearch)" version="1.0.3" provider-name="MrStealth">
+<addon id="plugin.video.mrstealth.fepcom.net_" name="Fepcom.net (UnifiedSearch)" version="1.0.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -194,7 +194,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.online-life.ru" name="Online-life.ru (UnifiedSearch)" version="2.1.3" provider-name="MrStealth">
+<addon id="plugin.video.online-life.ru_" name="Online-life.ru (UnifiedSearch)" version="2.1.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.favorites" version="1.0.4"/>
@@ -234,7 +234,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.uakino.net" name="Uakino.net (UnifiedSearch)" version="2.0.9" provider-name="MrStealth">
+<addon id="plugin.video.uakino.net_" name="Uakino.net (UnifiedSearch)" version="2.0.9" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -278,6 +278,41 @@
 		<disclaimer>add-ons for home usage in XBMC</disclaimer>
 		<platform>all</platform>
 	</extension>
+</addon>
+
+<addon id='script.module.favorites' version='1.0.4' name='Favorites for xbmc plugins' provider-name='MrStealth'>
+  <requires>
+    <import addon='xbmc.python' version='2.1.0'/>
+  </requires>
+  <extension point='xbmc.service' library="default.py" />
+  <extension point='xbmc.addon.metadata'>
+    <platform>all</platform>
+    <summary lang='en'>Favorites for xbmc plugins.</summary>
+  </extension>
+  <extension point='xbmc.python.module' library='lib' />
+</addon>
+
+<addon id='script.module.translit' version='1.0.3' name='Translit for xbmc plugins' provider-name='MrStealth'>
+  <requires>
+    <import addon='xbmc.python' version='2.1.0'/>
+  </requires>
+  <extension point='xbmc.service' library="default.py" />
+  <extension point='xbmc.addon.metadata'>
+    <platform>all</platform>
+    <summary lang='en'>Translit for xbmc plugins.</summary>
+  </extension>
+  <extension point='xbmc.python.module' library='lib' />
+</addon>
+
+<addon id='script.module.xbmc.helpers' version='2.0.1' name='XbmcHelpers based on Parsedom module' provider-name='MrStealth'>
+  <requires>
+    <import addon='xbmc.python' version='2.1.0'/>
+  </requires>
+  <extension point='xbmc.addon.metadata'>
+    <platform>all</platform>
+    <summary lang='en'>XbmcHelpers based on Parsedom module.</summary>
+  </extension>
+  <extension point='xbmc.python.module' library='lib' />
 </addon>
 
 <addon id="script.service.rodina.tv"
