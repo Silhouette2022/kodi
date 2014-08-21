@@ -17,22 +17,6 @@
     </extension>
 </addon>
 
-<addon id="plugin.video.filmodrom.net" name="Filmodrom.net (UnifiedSearch)" version="1.0.5.1" provider-name="MrStealth">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.module.xbmc.helpers" version="2.0.1"/>
-    <import addon="script.module.translit" version="1.0.3"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" provides="video" library="default.py">
-    <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Filmodrom.net</summary>
-    <description>For personal use only</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
 <addon id="plugin.video.imbplus.tv" name="[COLOR FF6699FF]IMB Plus TV[/COLOR]" version="0.5.10" provider-name="Silhouette">
   <requires><import addon="xbmc.python" version="2.1.0"/></requires>
   <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
@@ -157,22 +141,6 @@
   <extension point="xbmc.addon.metadata">
     <summary>new-kino.net - фильмы, мультфильмы, сериалы</summary>
     <description>new-kino.net - фильмы, мультфильмы, сериалы - круглосуточно на нашем сайте, смотрите, наслаждайтесь и отдыхайте</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.online-life.ru" name="Online-life.ru (UnifiedSearch)" version="2.1.3.1" provider-name="MrStealth">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.module.favorites" version="1.0.4"/>
-    <import addon="script.module.xbmc.helpers" version="2.0.1"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" provides="video" library="default.py">
-    <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Online-life.ru</summary>
-    <description>For personal use only</description>
     <platform>all</platform>
   </extension>
 </addon>
