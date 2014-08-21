@@ -1,0 +1,74 @@
+Index: addons/plugin.video.inetcom.tv/default.py
+===================================================================
+--- addons/plugin.video.inetcom.tv/default.py	(revision 113)
++++ addons/plugin.video.inetcom.tv/default.py	(working copy)
+@@ -1,7 +1,7 @@
+ # -*- coding: utf-8 -*-
+ #!/usr/bin/python
+ # Writer (c) 2012, Silhouette, E-mail: 
+-# Rev. 0.2.5
++# Rev. 0.2.6
+ 
+ 
+ 
+@@ -199,8 +199,10 @@
+           for ent in jdata[it]:
+               item = xbmcgui.ListItem(ent[u'startTime'] + '-' + ent[u'title'], iconImage=thumbnail, thumbnailImage=thumbnail)
+               uri = sys.argv[0] + '?mode=arpl'
+-              uri += '&id='+urllib.quote_plus(id) + '&name='+urllib.quote_plus(name)
++              uri += '&url='+urllib.quote_plus(INC_url + '/channel/schedule/sch_id/' + ent[u'id'] + '/date/' + pdate)                                                
++              uri += '&id='+urllib.quote_plus(ent[u'id']) + '&name='+urllib.quote_plus(name)
+               uri += '&pdate='+urllib.quote_plus(pdate) + '&ptime='+urllib.quote_plus(ent[u'startTime'])
++              uri += '&cook=' + urllib.quote_plus(mycookie)
+               item.setInfo( type='video', infoLabels={'title': name, 'plot': name})
+               item.setProperty('IsPlayable', 'true')              
+               xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+@@ -208,15 +210,20 @@
+     xbmcplugin.endOfDirectory(pluginhandle)
+ 
+ 
+-def INC_arpl(url, id, name, pdate, ptime):
++def INC_arpl(url, id, name, pdate, ptime, mycookie):
+     dbg_log('-INC_arpl')
+-    vlink = 'http://194.187.205.237' + '/video/' + id + '/' + pdate + '/' + ptime + '_' + name +'.mkv'
+-    dbg_log(vlink)
+-    item = xbmcgui.ListItem(path =  vlink)
+-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+-        
+-        
+-
++    
++    response = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)    
++    response = re.sub('[\r\n]', ' ', response)
++    
++    play_links = re.compile("lnks\s*=\s*\[\'(http://inetcom.tv/lookRecord/[a-zA-Z0-9]+)\'];").findall(response)
++    if len(play_links):
++        for link in play_links:
++            dbg_log('archive stream link: ' + str(link))
++            
++            item = xbmcgui.ListItem(path =  link)
++            xbmcplugin.setResolvedUrl(pluginhandle, True, item)            
++            break
+    
+ def get_params():
+     param=[]
+@@ -295,7 +302,7 @@
+ elif mode == 'chls': INC_chls(cook)
+ elif mode == 'dtls': INC_dtls(url, name, thumbnail, cook)
+ elif mode == 'prls': INC_prls(url, id, name, pdate, thumbnail, cook)
+-elif mode == 'arpl': INC_arpl(url, id, name, pdate, ptime)
++elif mode == 'arpl': INC_arpl(url, id, name, pdate, ptime, cook)
+ elif mode == None: INC_start()
+ 
+ dbg_log('CLOSE:')
+Index: addons/plugin.video.inetcom.tv/addon.xml
+===================================================================
+--- addons/plugin.video.inetcom.tv/addon.xml	(revision 113)
++++ addons/plugin.video.inetcom.tv/addon.xml	(working copy)
+@@ -1,5 +1,5 @@
+ <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+-<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.2.5" provider-name="Silhouette">
++<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.2.6" provider-name="Silhouette">
+   <requires><import addon="xbmc.python" version="1.0"/></requires>
+   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+   <extension point="xbmc.addon.metadata">
