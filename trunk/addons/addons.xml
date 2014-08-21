@@ -1,29 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addons>
-<addon id="plugin.video.24doc.ru" name="[COLOR FFE13723]24Doc.ru[/COLOR]" version="0.2.2" provider-name="Silhouette">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.module.beautifulsoup" version="3.0.8"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>ЛУЧШАЯ МИРОВАЯ АКТУАЛЬНАЯ ДОКУМЕНТАЛИСТИКА</summary>
-    <description>ЛУЧШАЯ МИРОВАЯ АКТУАЛЬНАЯ ДОКУМЕНТАЛИСТИКА. «24ДОК» — телеканал для аудитории, которой не безразлично то, что происходит в современном обществе. В фокусе внимания – самые актуальные и резонансные события в России и мире, герои и антигерои нашего времени. В эфире телеканала - лучшие документальные фильмы последнего десятилетия, отмеченные наградами российских и крупнейших международных фестивалей.</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.debilizator.tva" name="[COLOR FFC85F1C]Debilizator.TVA[/COLOR]" version="0.7.5" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
-  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Live TV and Archives from http://debilizator.tv/</summary>
-    <description>Live TV and Archives from http://debilizator.tv/</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.filin.tv_" name="[B][COLOR CFFFFFFF]Filin.tv[/COLOR][/B]" version="1.2.9" provider-name="mrstealth">
+<addon id="plugin.video.filin.tv" name="[B][COLOR CFFFFFFF]Filin.tv[/COLOR][/B]" version="1.2.9" provider-name="mrstealth">
     <requires>
         <import addon="xbmc.python" version="2.1.0"/>
         <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -40,7 +17,7 @@
     </extension>
 </addon>
 
-<addon id="plugin.video.filmodrom.net_" name="Filmodrom.net (UnifiedSearch)" version="1.0.5" provider-name="MrStealth">
+<addon id="plugin.video.filmodrom.net" name="Filmodrom.net (UnifiedSearch)" version="1.0.5" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -86,7 +63,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kino-v-online.ru_" name="Kino-v-online.tv (UnifiedSearch)" version="1.0.7" provider-name="MrStealth">
+<addon id="plugin.video.kino-v-online.ru" name="Kino-v-online.tv (UnifiedSearch)" version="1.0.7" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -102,17 +79,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinochi.org" name="[COLOR FFFD0100]KINOCHI.ORG[/COLOR]" version="0.3.1" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
-  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>KINOCHI.ORG - Проект бесплатного онлайн видео</summary>
-    <description>КИНОЧИ - сайт, позволяющий в реальном времени просмотривать качественный видеоконтент пользуясь удобным функционалом и навигацией, настраивать обновления ваших любимых жанров и сериалов используя систему профилей</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.kinoprosmotr.net_" name="Kinoprosmotr.net (UnifiedSearch)" version="1.1.3" provider-name="MrStealth">
+<addon id="plugin.video.kinoprosmotr.net" name="Kinoprosmotr.net (UnifiedSearch)" version="1.1.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -127,7 +94,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinosolo.ru_" name="Kinosolo.ru (UnifiedSearch)" version="1.1.4" provider-name="MrStealth">
+<addon id="plugin.video.kinosolo.ru" name="Kinosolo.ru (UnifiedSearch)" version="1.1.4" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -166,7 +133,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.mrstealth.fepcom.net_" name="Fepcom.net (UnifiedSearch)" version="1.0.3" provider-name="MrStealth">
+<addon id="plugin.video.mrstealth.fepcom.net" name="Fepcom.net (UnifiedSearch)" version="1.0.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
@@ -194,7 +161,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.online-life.ru_" name="Online-life.ru (UnifiedSearch)" version="2.1.3" provider-name="MrStealth">
+<addon id="plugin.video.online-life.ru" name="Online-life.ru (UnifiedSearch)" version="2.1.3" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.favorites" version="1.0.4"/>
@@ -224,17 +191,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.sonet.by" name="Sonet.by" version="0.4.4" provider-name="Silhouette">
-  <requires><import addon="xbmc.python" version="1.0"/></requires>
-  <extension point="xbmc.python.pluginsource" provides="video" library="default.py"><provides>video</provides></extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>!!!BROKEN!!!-SONET.BY</summary>
-    <description>!!!BROKEN!!!-Movies from SONET.BY</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.uakino.net_" name="Uakino.net (UnifiedSearch)" version="2.0.9" provider-name="MrStealth">
+<addon id="plugin.video.uakino.net" name="Uakino.net (UnifiedSearch)" version="2.0.9" provider-name="MrStealth">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.xbmc.helpers" version="2.0.1"/>
