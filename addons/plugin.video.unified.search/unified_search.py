@@ -25,7 +25,12 @@ class UnifiedSearch():
         self.language = self.addon.getLocalizedString
 
         self.addons_dir = os.path.dirname(self.path)
-        self.addon_db = os.path.join(os.path.dirname(os.path.dirname(self.path)), 'userdata/Database/Addons15.db')
+#        self.addon_db = os.path.join(os.path.dirname(os.path.dirname(self.path)), 'userdata/Database/Addons16.db')
+        self.addon_db = xbmc.translatePath('special://database/Addons')
+        
+        if os.path.exists(self.addon_db + '17.db'): self.addon_db += '17.db'
+        if os.path.exists(self.addon_db + '16.db'): self.addon_db += '16.db'
+        if os.path.exists(self.addon_db + '15.db'): self.addon_db += '15.db'
 
         self.supported_addons = self.get_supported_addons()
 
