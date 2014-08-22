@@ -6,7 +6,7 @@
 
 import os
 import sqlite3 as sqlite
-import xbmcaddon
+import xbmc,xbmcaddon
 
 __addon__ = xbmcaddon.Addon(id='plugin.video.unified.search')
 addon_path = __addon__.getAddonInfo('path')
@@ -14,12 +14,13 @@ addon_path = __addon__.getAddonInfo('path')
 
 class ResultDB:
     def __init__(self):
-        self.filename = os.path.join(addon_path, 'resources/databases', 'results.db')
+        self.path = xbmc.translatePath(__addon__.getAddonInfo('path')).decode('utf-8')
+        self.filename = xbmc.translatePath(self.path + '/resources/databases/results.db')
         self.connect()
 
     def connect(self):
         # Try to avoid => OperationalError: database is locked
-        self.db = sqlite.connect(self.filename, timeout=1000, check_same_thread = False)
+        self.db = sqlite.connect(self.filename)
         self.db.text_factory = str
         self.cursor = self.db.cursor()
 

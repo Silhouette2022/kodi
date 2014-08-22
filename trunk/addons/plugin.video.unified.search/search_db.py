@@ -6,7 +6,7 @@
 
 import os
 import sqlite3 as sqlite
-import xbmcaddon
+import xbmc,xbmcaddon
 
 __addon__ = xbmcaddon.Addon(id='plugin.video.unified.search')
 addon_path = __addon__.getAddonInfo('path')
@@ -14,7 +14,8 @@ addon_path = __addon__.getAddonInfo('path')
 
 class SearchDB:
     def __init__(self):
-        self.filename = os.path.join(addon_path, 'resources/databases', 'searches.db')
+        self.path = xbmc.translatePath(__addon__.getAddonInfo('path')).decode('utf-8')
+        self.filename = xbmc.translatePath(self.path + '/resources/databases/searches.db')
         self.connect()
 
     def connect(self):
