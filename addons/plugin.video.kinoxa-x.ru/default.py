@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.4.0
+# Rev. 0.4.1
 
 
 import urllib,urllib2,re,sys
@@ -80,8 +80,13 @@ def KNX_list(url, page, type):
     if type != 'unis':
         xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
     
-    http = get_url(n_url)
+    try:
+        http = get_url(n_url)
+    except:
+        return
+    
     i = 0
+    
     
     if type == '':
         ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
@@ -92,17 +97,20 @@ def KNX_list(url, page, type):
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
             dbg_log('- uri:'+  uri + '\n')    
 
+
         
     entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
     msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"}) 
-    
 
     for eid in entrys:
 
-            href = re.compile('<a href="(.*?)"').findall(str(eid))[0]
-            plot = re.compile('<span class="nazvanie">(.*?)<!--/noindex-->').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
+            href = re.compile('<a href="(.*?)">').findall(str(eid))[0]
+            plot = re.compile('<span class="nazvanie">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
+            plot = plot.replace('</span>','').replace('</a>','')
+            plot = re.sub('<a href=".*?">','',plot)
             img = start_pg + re.compile('<img src="(.*?)"').findall(str(msgs[i]))[0]
-            title = re.compile('title="(.*?)"').findall(str(msgs[i]))[0]
+            title = re.compile('<div class="title-short">(.*?)</div>').findall(str(eid))[0]
+
 
             dbg_log('-HREF %s'%href)
             dbg_log('-TITLE %s'%title)
@@ -206,9 +214,10 @@ def KNX_play(url):
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
-    iframes = re.compile('<iframe src="(.*?)"').findall(http)
+#    print http
+    iframes = re.compile('<iframe itemprop="video" src="(.*?)"').findall(http)
     
-    print iframes
+#    print iframes
     
     if len(iframes) > 0:
         http = get_url(iframes[0])
@@ -217,12 +226,12 @@ def KNX_play(url):
     else:
         return
         
-    print http
+#    print http
     
     flvs = re.compile('src="http(.*?)"').findall(http)
     hrefs = re.compile('<a href="(.*?)">').findall(http)
-    print flvs
-    print hrefs
+#    print flvs
+#    print hrefs
     
     if len(flvs) > 1:
         item = xbmcgui.ListItem(path = "http" + flvs[1])
