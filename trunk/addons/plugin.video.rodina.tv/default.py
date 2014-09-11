@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.5.3
+# Rev. 2.5.4
 
-_REVISION_ = '2.5.3'
+_REVISION_ = '2.5.4'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1228,6 +1228,7 @@ class RodinaTV():
                                 uri2 = sys.argv[0] + '?mode=favset&numb=%s&portal=%s' % (number, QT(self.portal))
                                 popup.append((self.lng['add2f'], 'RunPlugin(%s)'%uri2,))
                             except: pass
+
                         
                     if cadd == True:
                         try: has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
@@ -1490,7 +1491,8 @@ class RodinaTV():
         for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
             popup = []
             title = '%s-%s %s' % (ebgn, eend, ename)
-            plot = '[COLOR FF999999]%s[/COLOR]' % (edescr)
+            plot = '%s  [COLOR FF999999]%s[/COLOR]' % (ename, edescr)
+
             if rec != '1':
                 title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
 #            else: 
