@@ -30,7 +30,9 @@
     <string id="22018">WHITE</string>
     <string id="23001">RodinaTV Add to Favorites</string>
     <string id="23002">RodinaTV Delete from Favorites</string>
-    <string id="23003">Delete from Favorites ?</string>    
+    <string id="23003">Delete from Favorites ?</string>
+    <string id="23004">RodinaTV Archive TV</string>
+    <string id="23005">RodinaTV Live TV</string>
 	<string id="10000">English</string>
 	<string id="11000">General settings</string> 
 	<string id="11001">View settings</string> 
@@ -51,7 +53,7 @@
 	<string id="20005">Friday</string>
 	<string id="20006">Saturday</string>
 	<string id="20007">Sunday</string>
-	<string id="20008">-NEXT-></string>
-	<string id="20009">-PREV-^</string>
+	<string id="20008">--NEXT-&gt; </string>
+	<string id="20009">&lt;-PREV-- </string>
 	<string id="20010">Part</string>
 </strings>
