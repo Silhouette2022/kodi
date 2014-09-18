@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.5.4
+# Rev. 2.6.0
 
-_REVISION_ = '2.5.4'
+_REVISION_ = '2.6.0'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -541,6 +541,7 @@ class RodinaTV():
         self.language = self.addon.getLocalizedString
 
         self.handle = int(sys.argv[1])
+        if self.handle == -1: self.handle = 99
         self.params = sys.argv[2]
         self.mode = ''
 
@@ -717,6 +718,8 @@ class RodinaTV():
                         'add2f'     : self.addon.getLocalizedString(23001),
                         'del2f'     : self.addon.getLocalizedString(23002),
                         'delfav'    : self.addon.getLocalizedString(23003),
+                        'go2arch'   : self.addon.getLocalizedString(23004),
+                        'go2live'   : self.addon.getLocalizedString(23005),
                         'mon'       : self.addon.getLocalizedString(20001),
                         'tue'       : self.addon.getLocalizedString(20002),
                         'wed'       : self.addon.getLocalizedString(20003),
@@ -1125,7 +1128,7 @@ class RodinaTV():
 #        self.get_tstatus()
 #        self.get_client()
 #        self.get_settings()
-        print self.view_date
+#        print self.view_date
         if self.view_date == 'true': amode = 'adate'
         else: amode = 'arch'
         ct_main = [('?mode=%s&portal=%s&icon=%s' % ('cat', QT(self.portal), self.icons['i_tv'],),   self.icons['i_tv'],   True, {'title': self.lng['livetv']}, []),
@@ -1228,7 +1231,6 @@ class RodinaTV():
                                 uri2 = sys.argv[0] + '?mode=favset&numb=%s&portal=%s' % (number, QT(self.portal))
                                 popup.append((self.lng['add2f'], 'RunPlugin(%s)'%uri2,))
                             except: pass
-
                         
                     if cadd == True:
                         try: has_passwd = common.parseDOM(raw, "item", attrs={"name": "has_passwd"})[0]
@@ -1251,6 +1253,17 @@ class RodinaTV():
                             try: icon = a_icon45[0]
                             except: icon = ''
                         if icon == '': icon = self.path_icons_tv
+                        
+                        try: has_record = common.parseDOM(raw, "item", attrs={"name": "has_record"})[0]
+                        except: has_record = ''
+                        if has_record == '1':
+                            dts = time.localtime()
+                            dnow = int(time.mktime((dts.tm_year, dts.tm_mon, dts.tm_mday, 0, 0, 0, 0, 0, 0)))
+
+                            uri2 = sys.argv[0] + '?mode=aepg&numb=%s&portal=%s&pwd=%s&rec=%s&icon=%s&dt=%s' % (number, QT(self.portal), has_passwd, has_record, QT(icon), dnow)
+                            if self.cat != '': uri2 += '&cat=' + self.cat
+                            if self.sort != '': uri2 += '&sort=' + self.sort
+                            popup.append((self.lng['go2arch'], 'XBMC.Container.Update(%s)'%uri2,))
 
                         plot = ''
                         title2nd = ''
@@ -1441,11 +1454,17 @@ class RodinaTV():
                             if icon == '': icon = self.path_icons_tv
                             if title != '' and number != '':
                                 if self.view_date == 'true' and self.adt != '':
-                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&dt=%s' % ('aepg', self.portal, number, has_passwd, has_record, icon, self.adt)
+                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s&dt=%s' % ('aepg', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort, self.adt)
                                 else:
-                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon)
+                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s' % ('adate', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort)
                                 d_chan[number] = (nUrl, icon, True, {'title': title}, popup)
-#                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
+#                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % 
+#                                    ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
+                                
+                                uri2 = sys.argv[0] + '?mode=tv&cat=%s&portal=%s' % (self.cat, QT(self.portal))
+                                if self.sort != '': uri2 += '&sort=' + self.sort
+#                                uri2 = sys.argv[0] + '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (self.portal, number, has_passwd, icon)
+                                popup.append((self.lng['go2live'], 'XBMC.Container.Update(%s)'%uri2,))
 
             if self.sort == '':
                 chList = d_chan.values()
@@ -1456,6 +1475,7 @@ class RodinaTV():
                 for num in a_nums:
                     try: ct_chan.append(d_chan[num])
                     except: pass
+
             self.list_items(ct_chan, True)   
             
                     
@@ -1470,11 +1490,12 @@ class RodinaTV():
             lt = time.localtime(dt)
             title = time.strftime("%x ", lt) + self.dweek[lt.tm_wday]
             if self.view_date == 'true':
-                ct_date.append(('?mode=%s&portal=%s&icon=%s&dt=%s' % 
-                ('arch', self.portal, self.cicon, dt), self.cicon, True, {'title': title}, []))
+                uri = '?mode=%s&portal=%s&icon=%s&dt=%s' % ('arch', self.portal, self.cicon, dt)
             else:
-                ct_date.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
-                ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, dt), self.cicon, True, {'title': title}, []))
+                uri = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&cat=%s&dt=%s' % ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, self.cat, dt)
+
+            if self.sort != '' : uri += '&sort=' + self.sort
+            ct_date.append((uri, self.cicon, True, {'title': title}, []))
             
         self.list_items(ct_date, True)
 
@@ -1488,19 +1509,31 @@ class RodinaTV():
             lepg = d_epg[self.numb]
         except:
             return
+         
+        frun = 0
         for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
             popup = []
             title = '%s-%s %s' % (ebgn, eend, ename)
             plot = '%s  [COLOR FF999999]%s[/COLOR]' % (ename, edescr)
 
-            if rec != '1':
-                title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
-#            else: 
-#                uri2 = sys.argv[0] + '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('shift', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart)
-#                popup.append(('RodinaTV Shift to Start', 'RunPlugin(%s)'%uri2,))
+#            uri2 = sys.argv[0] + '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (self.portal, self.numb, self.has_pwd, self.cicon)
+            uri2 = sys.argv[0] + '?mode=tv&cat=%s&portal=%s&sort=%s' % (self.cat, QT(self.portal), self.sort)
+            popup.append((self.lng['go2live'], 'XBMC.Container.Update(%s)'%uri2,))
             
+            if rec != '1':
+                if frun == 0: 
+                    frun = 1
+                    title = self.color['3'] + '%s[/COLOR]' % (title)
+                else:
+                    title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
 
-            ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
+
+            if frun == 1:
+                frun = 2
+                uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon)
+                ct_chan.append((uri2, self.cicon, False, {'title': title, 'plot':plot}, popup))
+            else:
+                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
 
         if self.view_date == 'true':
 
@@ -1515,6 +1548,11 @@ class RodinaTV():
             title = time.strftime("%x ", lt) + self.dweek[lt.tm_wday]
             ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&dt=%s' % 
                 ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, ntime), self.cicon, True, {'title': self.color['6'] + self.lng['next'] + title + '[/COLOR]'}, []))
+                
+        uri2 = '?mode=tv&cat=%s&portal=%s&sort=%s' % (self.cat, QT(self.portal), self.sort)
+        ct_chan.append((uri2, self.cicon, True, {'title': self.color['3'] + '--' + self.lng['livetv'] + '-- [/COLOR]'}, []))
+
+                
         self.list_items(ct_chan, False)   
         
     def m_setall(self):
@@ -2080,8 +2118,6 @@ class RodinaTV():
         self.list_items(ct_cat, True)
 
 
-      
-
-        
+       
 rodina = RodinaTV()
 rodina.main()        
