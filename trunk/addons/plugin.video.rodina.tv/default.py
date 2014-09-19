@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.6.0
+# Rev. 2.6.1
 
-_REVISION_ = '2.6.0'
+_REVISION_ = '2.6.1'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1056,7 +1056,7 @@ class RodinaTV():
             item.setProperty('fanart_image', self.fanart)
             
             if len(ctPopup) > 0:
-                item.addContextMenuItems(ctPopup)
+                item.addContextMenuItems(ctPopup,replaceItems=True)
             
             xbmcplugin.addDirectoryItem(self.handle, sys.argv[0] + ctUrl, item, ctFolder) 
             self.log("ctTitle: %s"  % ctTitle, 2) 
@@ -1461,7 +1461,8 @@ class RodinaTV():
 #                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % 
 #                                    ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
                                 
-                                uri2 = sys.argv[0] + '?mode=tv&cat=%s&portal=%s' % (self.cat, QT(self.portal))
+                                uri2 = sys.argv[0] + '?mode=tv&portal=%s' % ( QT(self.portal))
+                                if self.cat != '': uri2 += '&cat=' + self.cat
                                 if self.sort != '': uri2 += '&sort=' + self.sort
 #                                uri2 = sys.argv[0] + '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (self.portal, number, has_passwd, icon)
                                 popup.append((self.lng['go2live'], 'XBMC.Container.Update(%s)'%uri2,))
@@ -1517,7 +1518,9 @@ class RodinaTV():
             plot = '%s  [COLOR FF999999]%s[/COLOR]' % (ename, edescr)
 
 #            uri2 = sys.argv[0] + '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (self.portal, self.numb, self.has_pwd, self.cicon)
-            uri2 = sys.argv[0] + '?mode=tv&cat=%s&portal=%s&sort=%s' % (self.cat, QT(self.portal), self.sort)
+            uri2 = sys.argv[0] + '?mode=tv&portal=%s' % (QT(self.portal))
+            if self.cat != '': uri2 += '&cat=' + self.cat
+            if self.sort != '': uri2 += '&sort=' + self.sort
             popup.append((self.lng['go2live'], 'XBMC.Container.Update(%s)'%uri2,))
             
             if rec != '1':
