@@ -1,4 +1,6 @@
 [B]2.6.0[/B]
+Bug fix
+[B]2.6.0[/B]
 Shortcuts to live and archive
 [B]2.5.4[/B]
 Plot got extra info
