@@ -82,7 +82,7 @@ def INC_start():
     http = get_url(INC_urlw + '/index.php', save_cookie = True)
     mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
     http = get_url(INC_urlw + INC_auth, 
-                  data = "LoginForm%5Busername%5D=" + urllib.quote_plus(usr_log) + "&LoginForm%5Bpassword%5D=" + urllib.quote_plus(usr_pwd),
+                  data = "ICTV_models_iptv_new_User%5Busername%5D=" + urllib.quote_plus(usr_log) + "&ICTV_models_iptv_new_User%5Bpassword%5D=" + urllib.quote_plus(usr_pwd),
                   cookie = mycookie, save_cookie = True, referrer = INC_urlw + '/index.php', accept='json')
     try:
       mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
@@ -117,7 +117,7 @@ def INC_live(url, mycookie):
 #    print guest
       
     oneline = re.sub('[\r\n]', ' ', http)
-    pr_ls = re.compile('<tr > +?<td class="col01"><a href="(.+?)"><img src="(.+?)"  alt="(.+?)" /></a></td>').findall(oneline)
+    pr_ls = re.compile('<td class="col01">\s*<a href="(.+?)">\s*<img src="(.+?)"\s+alt="(.+?)"\s*>\s*</a>').findall(oneline)
 
     if len(pr_ls):
         for href,logo,descr in pr_ls:
