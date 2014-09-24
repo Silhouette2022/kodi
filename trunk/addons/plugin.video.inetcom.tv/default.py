@@ -117,7 +117,7 @@ def INC_live(url, mycookie):
 #    print guest
       
     oneline = re.sub('[\r\n]', ' ', http)
-    pr_ls = re.compile('<td class="col01">\s*<a href="(.+?)">\s*<img src="(.+?)"\s+alt="(.+?)"\s*>\s*</a>').findall(oneline)
+    pr_ls = re.compile('<tr>\s*<td class="col01">\s*<a href="(.+?)">\s*<img src="(.+?)"\s+alt="(.+?)"\s*>\s*</a>').findall(oneline)
 
     if len(pr_ls):
         for href,logo,descr in pr_ls:
@@ -152,7 +152,7 @@ def INC_chls(mycookie):
 #    mycookie = re.search('<cookie>(.+?)</cookie>', http).group(1)
 #    dbg_log(mycookie)
     oneline = re.sub('[\r\n]', ' ', http)
-    pr_ls = re.compile('<tr > +?<td class="col01"><a href="(.+?)"><img src="(.+?)"  alt="(.+?)" /></a></td>').findall(oneline)
+    pr_ls = re.compile('<tr>\s*?<td class="col01">\s*?<a href="(.+?)">\s*<img\s+src="(.+?)"\s+alt="(.+?)"\s*>').findall(oneline)
     #print pr_ls
     if len(pr_ls):
         for href,logo,name in pr_ls:
@@ -171,7 +171,7 @@ def INC_chls(mycookie):
 def INC_dtls(url, name, thumbnail, mycookie):
     dbg_log('-INC_dtls')
     response = get_url(url, cookie = mycookie, referrer = INC_url + INC_ch)
-    id_ls = re.compile("currentChId=(.+?);").findall(response)
+    id_ls = re.compile("currentChId\s*?=\s*?(\S+?);").findall(response)
     if len(id_ls) == 0:
         id_ls = re.compile("var current_channel = (.+?);").findall(response)
     if len(id_ls):
