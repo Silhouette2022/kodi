@@ -1,4 +1,6 @@
-[B]2.6.0[/B]
+[B]2.7.0[/B]
+New stream servers
+[B]2.6.1[/B]
 Bug fix
 [B]2.6.0[/B]
 Shortcuts to live and archive
