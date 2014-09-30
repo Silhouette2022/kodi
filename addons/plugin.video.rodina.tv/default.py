@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.6.1
+# Rev. 2.7.0
 
-_REVISION_ = '2.6.1'
+_REVISION_ = '2.7.0'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -594,13 +594,20 @@ class RodinaTV():
         self.pwd = self.addon.getSetting('pwd')
         self.tsd = self.addon.getSetting('tsd')
 #        self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
-        br = self.addon.getSetting('br')
-        if br == 'high': self.br = '141'
-        elif br == 'hls': self.br = '140'
-        else: self.br = '148'
-        
-        self.dc = '121' if self.addon.getSetting('dc') == 'us' else '125'
 
+        self.br_lib = {'high' : '141',
+                       'low'   : '148',
+                       'hls'   : '140'
+                      }
+        self.br = self.br_lib[self.addon.getSetting('br')]
+        
+        self.dc_lib = {'USA East'   : '121',
+                       'USA West'   : '123',
+                       'Europe'     : '125',
+                       'Middle East': '126'
+                      }
+        self.dc = self.dc_lib[self.addon.getSetting('dc')]
+        
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
         self.serial = self.addon.getSetting('serial')
