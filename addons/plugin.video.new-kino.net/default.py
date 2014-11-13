@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.6.0
+# Rev. 0.7.0
 
 
 import urllib,urllib2,re,sys
@@ -107,7 +107,7 @@ def NKN_start(url, page, cook):
 
                 href = hrefs[i][0]
                 dbg_log('-HREF %s'%href)
-                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" /></a><!--TEnd--></div>(.*?)</div>').findall(str(sa))
+                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" /><!--dle_image_end-->(.*?)</div>').findall(str(sa))
                 for logo, alt, title, plot in infos:
                   img = start_pg + logo
                   dbg_log('-TITLE %s'%title)
@@ -151,14 +151,20 @@ def NKN_view(url, img, name, cook):
     dbg_log('- name:'+  name + '\n')
         
     http = get_url(url, cookie = cook)
-    news_id = re.compile("news-id-[0-9]")
-    news = BeautifulSoup(http).findAll('div',{"id":news_id})
+#    news_id = re.compile("news-id-[0-9]")
+#    news = BeautifulSoup(http).findAll('div',{"id":news_id})
 
-    for sa in news:    
+#    for sa in news:    
         #print str(sa)
-        flvars = re.compile('<param name="flashvars" value="(.*?)"').findall(str(sa))
+#        flvars = re.compile('<param name="flashvars" value="(.*?)"').findall(str(sa))
         #print urllib.unquote_plus(flvars[0])
-        files = re.compile('file=(.*?)"').findall(str(sa))
+#        files = re.compile('file=(.*?)"').findall(str(sa))
+
+    frames = re.compile('<iframe type(.*?)</iframe>').findall(http)
+    
+    if len(frames) > 0:
+        
+        files = re.compile('src="(.*?)"').findall(frames[0])
 
         i = 1
         for file in files:
@@ -178,14 +184,146 @@ def NKN_view(url, img, name, cook):
         xbmcplugin.endOfDirectory(pluginhandle)
 
 
+def Decode2(param):
+        try:
+            hk = ("0123456789WGXMHRUZID=NQVBLihbzaclmepsJxdftioYkngryTwuvihv7ec41D6GpBtXx3QJRiN5WwMf=ihngU08IuldVHosTmZz9kYL2bayE").split('ih')
+            hash_key = hk[0]+'\n'+hk[1]
 
+            #-- define variables
+            loc_3 = [0,0,0,0]
+            loc_4 = [0,0,0]
+            loc_2 = ''
+
+            #-- define hash parameters for decoding
+            dec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+            hash1 = hash_key.split('\n')[0]
+            hash2 = hash_key.split('\n')[1]
+
+            #-- decode
+            for i in range(0, len(hash1)):
+                re1 = hash1[i]
+                re2 = hash2[i]
+
+                param = param.replace(re1, '___')
+                param = param.replace(re2, re1)
+                param = param.replace('___', re2)
+
+            i = 0
+            while i < len(param):
+                j = 0
+                while j < 4 and i+j < len(param):
+                    loc_3[j] = dec.find(param[i+j])
+                    j = j + 1
+
+                loc_4[0] = (loc_3[0] << 2) + ((loc_3[1] & 48) >> 4);
+                loc_4[1] = ((loc_3[1] & 15) << 4) + ((loc_3[2] & 60) >> 2);
+                loc_4[2] = ((loc_3[2] & 3) << 6) + loc_3[3];
+
+                j = 0
+                while j < 3:
+                    if loc_3[j + 1] == 64 or loc_4[j] == 0:
+                        break
+
+                    loc_2 += unichr(loc_4[j])
+
+                    j = j + 1
+                i = i + 4;
+        except:
+            loc_2 = ''
+
+        return loc_2
+
+def DecodeUppodText2(sData):
+  hash = "0123456789WGXMHRUZID=NQVBLihbzaclmepsJxdftioYkngryTwuvihv7ec41D6GpBtXx3QJRiN5WwMf=ihngU08IuldVHosTmZz9kYL2bayE"
+
+#  Проверяем, может не нужно раскодировать (json или ссылка)
+#  if ((Pos("{", sData)>0) || (LeftCopy(sData, 4)=="http")) return HmsUtf8Decode(sData);
+
+  sData = DecodeUppod_tr(sData, "r", "A")
+  
+  hash = hash.replace('ih', '\n')
+  if sData[-1] == '!' :
+    sData = sData[:len(sData)-1]
+    tab_a = hash.split('\n')[3]
+    tab_b = hash.split('\n')[2]
+  else:
+    tab_a = hash.split('\n')[1]
+    tab_b = hash.split('\n')[0]
+
+  sData = sData.replace("\n", "")
+  
+  for i in range(1, len(tab_a)):
+    char1 = tab_b[i]
+    char2 = tab_a[i]
+    sData = sData.replace(char1, "___")
+    sData = sData.replace(char2, char1)
+    sData = sData.replace("___", char2)
+
+  sData = DecodeUppod_Base64(sData)
+  sData = sData.replace("hthp:", "http:")
+  return sData
+
+def DecodeUppod_tr(sData, ch1, ch2):
+  s = ""
+  if (sData[len(sData)-1] == ch1) and (sData[3] == ch2):
+    nLen = len(sData);
+    for i in range(nLen, 1, -1): s += sData[i]
+    loc3 = Int(Int(s[nLen-1:nLen])/2)
+    s = s[3, nLen-2]
+    i = loc3
+    if loc3 < len(s):
+      while (i < len(s)):
+        s = s[:i] + s[i+2:]
+        i+= loc3
+    sData = s + "!"
+
+  return sData
+  
+  
+def DecodeUppod_Base64(param):
+    #-- define variables
+    loc_3 = [0,0,0,0]
+    loc_4 = [0,0,0]
+    loc_2 = ''
+    #-- define hash parameters for decoding
+    dec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
+    i = 0
+    while i < len(param):
+        j = 0
+        while j < 4 and i+j < len(param):
+            loc_3[j] = dec.find(param[i+j])
+            j = j + 1
+
+        loc_4[0] = (loc_3[0] << 2) + ((loc_3[1] & 48) >> 4);
+        loc_4[1] = ((loc_3[1] & 15) << 4) + ((loc_3[2] & 60) >> 2);
+        loc_4[2] = ((loc_3[2] & 3) << 6) + loc_3[3];
+
+        j = 0
+        while j < 3:
+            if loc_3[j + 1] == 64: break
+            loc_2 += unichr(loc_4[j])
+            j = j + 1
+        i = i + 4
+
+    return loc_2        
 
 def NKN_play(url, cook):     
     dbg_log('-NKN_play:'+ '\n')
-    dbg_log('- url:'+  url + '\n')
+    dbg_log('- url:'+  url.replace('&amp;', '&') + '\n')
+    url = url.replace('&amp;', '&')
     
-    item = xbmcgui.ListItem(path = url)
-    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    http = get_url(url, cookie = cook)
+    print urllib.unquote_plus(http)
+    if 'kinolot.com/get.php' in url:
+        files = re.compile('file=(.*?)&').findall(http)
+        if len(files):
+            print 'file'
+            print files[0]
+            furl = Decode2(Decode2(urllib.unquote_plus(files[0])))
+            dbg_log('- furl:'+  furl + '\n')
+            item = xbmcgui.ListItem(path = furl)
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+         
 
 def NKN_ctlg(url, cook):
     dbg_log('-NKN_ctlg:' + '\n')
