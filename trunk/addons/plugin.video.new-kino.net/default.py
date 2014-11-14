@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.7.0
+# Rev. 0.7.1
 
 
 import urllib,urllib2,re,sys
@@ -176,6 +176,7 @@ def NKN_view(url, img, name, cook):
 
             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
             uri = sys.argv[0] + '?mode=play' \
+            + '&name=' + urllib.quote_plus(name) \
             + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
             item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
@@ -307,22 +308,84 @@ def DecodeUppod_Base64(param):
 
     return loc_2        
 
-def NKN_play(url, cook):     
+def VK(html):
+
+    soup = BeautifulSoup(html, fromEncoding="windows-1251")
+    video = []
+
+    for rec in soup.findAll('script', {'type':'text/javascript'}):
+        if 'video_host' in rec.text:
+            
+            vars = re.compile('var vars = {(.+?)"}').findall(html)
+#            if 0:
+            if len(vars):
+                var = re.compile('"(.+?)":(.+?),').findall(vars[0] + '"')
+                for r in var:
+                    if r[0] == 'url240': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
+                    elif r[0] == 'url360': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
+                    elif r[0] == 'url480': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
+                    elif r[0] == 'url720': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
+                    
+                video.sort()
+                video.reverse()
+
+            else:
+                var = re.compile('var (.+?) = \'(.+?)\';').findall(html)
+                for r in var:
+                    if r[0] == 'video_host':
+                        video_host = r[1]#.replace('userapi', 'vk')
+                    if r[0] == 'video_uid':
+                        video_uid = r[1]
+                    if r[0] == 'video_vtag':
+                        video_vtag = r[1]
+
+                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '720'))
+                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '480'))
+                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '360'))
+                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '240'))
+
+    return video
+    
+
+
+def NKN_play(url, cook, name):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url.replace('&amp;', '&') + '\n')
     url = url.replace('&amp;', '&')
-    
+    furls = []
     http = get_url(url, cookie = cook)
-    print urllib.unquote_plus(http)
+#    print urllib.unquote_plus(http)
     if 'kinolot.com/get.php' in url:
         files = re.compile('file=(.*?)&').findall(http)
         if len(files):
-            print 'file'
-            print files[0]
-            furl = Decode2(Decode2(urllib.unquote_plus(files[0])))
-            dbg_log('- furl:'+  furl + '\n')
-            item = xbmcgui.ListItem(path = furl)
-            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+#            print 'file'
+#            print files[0]
+            furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
+    elif 'vk.com' in url:
+        print 'vk.com'
+        furls = VK(http)
+    elif 'vkontakte.ru' in url:
+        print 'vkontakte.ru'
+        furls = VK(http)
+        
+    if len(furls) == 1:
+        dbg_log('- furl:'+  furls[0] + '\n')
+        item = xbmcgui.ListItem(path = furls[0])
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    elif len(furls):
+        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+        sPlayer     = xbmc.Player()
+        sPlayList.clear()
+        runRes = False
+        for furl in furls:
+            item = xbmcgui.ListItem(name, path = furl)
+            item.setProperty('mimetype', 'video/x-msvideo')
+            item.setProperty('IsPlayable', 'true')
+            sPlayList.add(furl, item) #, 0) 
+            if not runRes: 
+                xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+                runRes = True
+        sPlayer.play(sPlayList)
          
 
 def NKN_ctlg(url, cook):
@@ -449,7 +512,7 @@ if url=='':
 if mode == '': NKN_start(url, page, cook)
 elif mode == 'ctlg': NKN_ctlg(url, cook)
 elif mode == 'view': NKN_view(url, imag, name, cook)
-elif mode == 'play': NKN_play(url, cook)
+elif mode == 'play': NKN_play(url, cook, name)
 elif mode == 'find': NKN_find(cook)
 elif mode == 'show': NKN_view(url, imag, "Play Video", cook)
 elif mode == 'search': 
