@@ -195,7 +195,7 @@
 
 <addon id="script.service.rodina.tv"
        name="RodinaTV Service Script"
-       version="1.2.2"
+       version="1.2.3"
        provider-name="Rodina TV">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
