@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.6.1
+# Rev. 0.6.3
 
 
 
@@ -285,7 +285,7 @@ def KTV_play(url, name, thumbnail, plot):
             item = xbmcgui.ListItem(path = furl)
             item.setProperty('mimetype', 'video/x-msvideo')
             item.setProperty('IsPlayable', 'true')
-            sPlayList.add(furl, item, 0) #i)
+            sPlayList.add(furl, item, i)
             i = i + 1
             xbmc.log('furl = %s'%furl)
             
