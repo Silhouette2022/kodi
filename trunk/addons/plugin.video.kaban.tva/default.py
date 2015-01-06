@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.6.3
+# Rev. 0.6.4
 
 
 
@@ -244,6 +244,7 @@ def KTV_prls(url):
             item = xbmcgui.ListItem(name, iconImage=logo, thumbnailImage=logo)
             uri = sys.argv[0] + '?mode=PLAY'
             uri += '&url='+urllib.quote_plus(url + href)
+            uri += '&name='+name
             item.setInfo( type='video', infoLabels={'title': name, 'plot': descr})
             item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
@@ -285,6 +286,7 @@ def KTV_play(url, name, thumbnail, plot):
             item = xbmcgui.ListItem(path = furl)
             item.setProperty('mimetype', 'video/x-msvideo')
             item.setProperty('IsPlayable', 'true')
+            item.setInfo( type='video', infoLabels={'title': name})
             sPlayList.add(furl, item, i)
             i = i + 1
             xbmc.log('furl = %s'%furl)
@@ -498,4 +500,3 @@ elif mode == 'GDLS': KTV_guide(url, thumbnail, cdate)
 elif mode == None: KTV_start()
 
 dbg_log('CLOSE:')
-
