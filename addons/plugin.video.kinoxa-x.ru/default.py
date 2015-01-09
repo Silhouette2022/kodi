@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.4.1
+# Rev. 0.5.0
 
 
 import urllib,urllib2,re,sys
@@ -24,15 +24,20 @@ except: use_translit = 'false'
 
 
 
-dbg = 0
+dbg = 1
 
 pluginhandle = int(sys.argv[1])
 
 start_pg = "http://www.kinoxa-x.ru"
 #page_pg = start_pg + "/load/0-"
 page_pg = start_pg + "/page/"
-fdpg_pg = ";t=0;md=;p="
-find_pg = start_pg + "/search/?q="
+# fdpg_pg = ";t=0;md=;p="
+# find_pg = start_pg + "/search/?q="
+find_pg = start_pg + "/index.php?do=search"
+find_dt = "do=search&subaction=search&search_start="
+find_str = "&full_search=0&result_from=25&story="
+# do=search&subaction=search&search_start=3&full_search=0&result_from=25&story=mama
+# do=search&subaction=search&story=test&sfSbm=&a=2
 
 def gettranslit(msg):
     if use_translit == 'true': 
@@ -64,26 +69,35 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     response.close()
     return link
 
-def KNX_list(url, page, type):
+def KNX_list(url, page, type, fdata):
     dbg_log('-KNX_list:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     dbg_log('- type:'+  type + '\n')
-        
+    dbg_log('- fdata:'+  fdata + '\n')
+    
     if type == 'ctlg':
         n_url = url + 'page/' + page + '/'
+        pdata = ''
+    elif fdata != '':
+        n_url = url
+        pdata = find_dt + page + find_str + fdata
     else:
         n_url = url + page + '/'
+        pdata = ''
+
+                
         
     dbg_log('- n_url:'+  n_url + '\n')
+    dbg_log('- pdata:'+  pdata + '\n')
     
     if type != 'unis':
         xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
     
-    try:
-        http = get_url(n_url)
-    except:
-        return
+#     try:
+    http = get_url(n_url, data=pdata)
+#     except:
+#         return
     
     i = 0
     
@@ -104,12 +118,25 @@ def KNX_list(url, page, type):
 
     for eid in entrys:
 
+#             print eid
+#             print msgs[i]
+
             href = re.compile('<a href="(.*?)">').findall(str(eid))[0]
-            plot = re.compile('<span class="nazvanie">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
-            plot = plot.replace('</span>','').replace('</a>','')
-            plot = re.sub('<a href=".*?">','',plot)
-            img = start_pg + re.compile('<img src="(.*?)"').findall(str(msgs[i]))[0]
-            title = re.compile('<div class="title-short">(.*?)</div>').findall(str(eid))[0]
+            try:
+                plot = re.compile('<span class="nazvanie">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
+                plot = plot.replace('</span>','').replace('</a>','')
+                plot = re.sub('<a href=".*?">','',plot)
+            except:
+                plot = ''
+            try:
+                img = start_pg + re.compile('<img.*?src="(.*?)"').findall(str(msgs[i]))[0]
+            except:
+                img = ''
+            try:
+                title = re.compile('<div class="title-short">(.*?)</div>').findall(str(eid))[0]
+            except:
+                title = re.compile('<a href=".*?">(.*?)</a>').findall(str(eid))[0]
+                
 
 
             dbg_log('-HREF %s'%href)
@@ -137,12 +164,12 @@ def KNX_list(url, page, type):
     else:
       if i :
           item = xbmcgui.ListItem('<NEXT PAGE>')
-          uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type
+          uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata)
           xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
           dbg_log('- uri:'+  uri + '\n')
           if type != 'find':
               item = xbmcgui.ListItem('<NEXT PAGE +5>')
-              uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type
+              uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata)
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
               dbg_log('- uri:'+  uri + '\n')        
      
@@ -247,13 +274,13 @@ def KNX_ctlg(url):
     dbg_log('-KNX_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
                
-    catalog  = [( "/filmy_2014_goda/", '2014 год'),
+    catalog  = [( "/filmy_2015_goda/", '2015 год'),
+                ( "/filmy_2014_goda/", '2014 год'),
                 ( "/filmy_2013_goda/", '2013 год'),
                 ( "/filmy_2012_goda/", '2012 год'),
                 ( "/filmy_2011_goda/", '2011 год'),
                 ( "/filmy_2010_goda/", '2010 год'),
                 ( "/filmy_2009_goda/", '2009 год'),
-                ( "/filmy_v_3d/", 'Фильмы в 3D'),
                 ( "/komedii/", 'Комедии'),
                 ( "/boeviki/", 'Боевики'),
                 ( "/dramy/", 'Драмы'),
@@ -268,13 +295,15 @@ def KNX_ctlg(url):
                 ( "/semejnye/", 'Семейные'),
                 ( "/sportivnye/", 'Спортивные'),
                 ( "/melodramy/", 'Мелодрамы'),
+                ( "/russkie_melodramy/", 'Русские Мелодрамы'),
+                ( "/russkie_filmy/", 'Русские фильмы'),
                 ( "/russkie_serialy/", 'Русские сериалы'),
                 ( "/zarubezhnye_serialy/", 'Зарубежные сериалы'),
                 ( "/trejlery/", 'Трейлеры'),
                 ( "/fehntezi/", 'Фэнтези'),
                 ( "/prikljuchenija/", 'Приключения'),
                 ( "/istoricheskie/", 'Исторические'),
-                ( "/vestern/", 'Вестерн'),
+                ( "/vestern/", 'Вестерн'),#         stxt = uni2enc(gettranslit(kbd.getText()))
                 ( "/animeh/", 'Аниме'),
                 ( "/kriminal/", 'Криминал'),
                 ( "/voennye/", 'Военные'),
@@ -313,9 +342,11 @@ def KNX_find():
     kbd.doModal()
     if kbd.isConfirmed():
         stxt = uni2enc(gettranslit(kbd.getText()))
-        furl = find_pg + stxt + fdpg_pg
+#         stxt = kbd.getText()
+#         furl = find_pg + stxt + fdpg_pg
+        furl = find_pg
         dbg_log('- furl:'+  furl + '\n')
-        KNX_list(furl, '1', 'find')
+        KNX_list(furl, '1', 'find', stxt)
 
 def lsChan():
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -342,8 +373,9 @@ params=get_params()
 
 
 type = ''
-mode=''
-url=''
+mode = ''
+url = ''
+find = ''
 
 try:
     mode=params['mode']
@@ -361,6 +393,10 @@ try:
     type=urllib.unquote_plus(params['type'])
     dbg_log('-TYPE:'+ type + '\n')
 except: pass
+try: 
+    find=urllib.unquote_plus(params['find'])
+    dbg_log('-FIND:'+ find + '\n')
+except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
@@ -368,14 +404,14 @@ unified = params['unified'] if 'unified' in params else None
 if url=='':
     url = page_pg
 
-if mode == '': KNX_list(url, page, type)
+if mode == '': KNX_list(url, page, type, find)
 elif mode == 'ctlg': KNX_ctlg(url)
 elif mode == 'play': KNX_play(url)
 elif mode == 'find': KNX_find()
 elif mode == 'show': KNX_show(url)
 elif mode == 'search': 
-    url = find_pg + uni2enc(gettranslit(keyword)) + fdpg_pg
-    KNX_list(url, '1', 'unis')
+    url = find_pg
+    KNX_list(url, '1', 'unis', uni2enc(gettranslit(keyword)))
     
 #elif mode == 'list': KNX_list(url, page)
 
