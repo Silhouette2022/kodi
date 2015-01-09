@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.5.0
+# Rev. 0.5.1
 
 
 import urllib,urllib2,re,sys
@@ -35,7 +35,8 @@ page_pg = start_pg + "/page/"
 # find_pg = start_pg + "/search/?q="
 find_pg = start_pg + "/index.php?do=search"
 find_dt = "do=search&subaction=search&search_start="
-find_str = "&full_search=0&result_from=25&story="
+# find_str = "&full_search=0&result_from=25&story="
+find_str = "&full_search=0&story="
 # do=search&subaction=search&search_start=3&full_search=0&result_from=25&story=mama
 # do=search&subaction=search&story=test&sfSbm=&a=2
 
@@ -159,6 +160,7 @@ def KNX_list(url, page, type, fdata):
               except: pass
 
     if type == 'unis':
+      print unis_res
       try: UnifiedSearch().collect(unis_res)
       except:  pass
     else:
