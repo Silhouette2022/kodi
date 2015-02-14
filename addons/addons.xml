@@ -112,38 +112,6 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.uakino.net" name="Uakino.net (UnifiedSearch)" version="2.0.9.1" provider-name="MrStealth">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.module.xbmc.helpers" version="2.0.1"/>
-    <import addon="script.module.translit" version="1.0.3"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" provides="video" library="default.py">
-    <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Новинки кино, мультфильмы, сериалы</summary>
-    <description>For personal use only</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.unified.search" name="Unified search" version="1.1.1.2" provider-name="MrStealth">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.module.xbmc.helpers" version="2.0.1"/>
-    <import addon="script.module.translit" version="1.0.3"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource" provides="video" library="default.py">
-    <provides>video</provides>
-  </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Unified search</summary>
-    <description>This addon can find any videos in your plugin collection, which supports unified search (For personal use only)</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
 <addon id="repository.silhouette" name="Silhouette XBMC Add-ons" version="1.0.2" provider-name="Silhouette">
 	<extension point="xbmc.addon.repository" name="Silhouette XBMC Add-ons">
 		<info compressed="false">http://silhouette-xbmc-repo.googlecode.com/svn/trunk/addons/addons.xml</info>
@@ -156,41 +124,6 @@
 		<disclaimer>add-ons for home usage in XBMC</disclaimer>
 		<platform>all</platform>
 	</extension>
-</addon>
-
-<addon id='script.module.favorites' version='1.0.4.1' name='Favorites for xbmc plugins' provider-name='MrStealth'>
-  <requires>
-    <import addon='xbmc.python' version='2.1.0'/>
-  </requires>
-  <extension point='xbmc.service' library="default.py" />
-  <extension point='xbmc.addon.metadata'>
-    <platform>all</platform>
-    <summary lang='en'>Favorites for xbmc plugins.</summary>
-  </extension>
-  <extension point='xbmc.python.module' library='lib' />
-</addon>
-
-<addon id='script.module.translit' version='1.0.3.1' name='Translit for xbmc plugins' provider-name='MrStealth'>
-  <requires>
-    <import addon='xbmc.python' version='2.1.0'/>
-  </requires>
-  <extension point='xbmc.service' library="default.py" />
-  <extension point='xbmc.addon.metadata'>
-    <platform>all</platform>
-    <summary lang='en'>Translit for xbmc plugins.</summary>
-  </extension>
-  <extension point='xbmc.python.module' library='lib' />
-</addon>
-
-<addon id='script.module.xbmc.helpers' version='2.0.1.1' name='XbmcHelpers based on Parsedom module' provider-name='MrStealth'>
-  <requires>
-    <import addon='xbmc.python' version='2.1.0'/>
-  </requires>
-  <extension point='xbmc.addon.metadata'>
-    <platform>all</platform>
-    <summary lang='en'>XbmcHelpers based on Parsedom module.</summary>
-  </extension>
-  <extension point='xbmc.python.module' library='lib' />
 </addon>
 
 <addon id="script.service.rodina.tv"
