@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.7.2
+# Rev. 2.7.3
 
-_REVISION_ = '2.7.1'
+_REVISION_ = '2.7.3'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -1885,7 +1885,7 @@ class RodinaTV():
                                  'rating': rate_imdb, 
                                  'plot': desc}, [] ))
                                  
-					i += 1
+                    i += 1
                         
             self.list_items(ct_films, False, True) 
 
