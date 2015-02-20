@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.7.1
+# Rev. 2.7.2
 
 _REVISION_ = '2.7.1'
 
@@ -1874,7 +1874,6 @@ class RodinaTV():
                         else: qn = ''
                         if i > 0: 
                             name = '%s%s (%s %s)' % (qn, title, self.lng['part'], str(i))
-                            i += 1
                         else: name = '%s%s' % (qn, title)
                         
                         ct_films.append(('?mode=%s&portal=%s&lid=%s' % ('tvplay', self.portal, lid), icon, False,
@@ -1885,6 +1884,8 @@ class RodinaTV():
                                  'year': prod_date, 
                                  'rating': rate_imdb, 
                                  'plot': desc}, [] ))
+                                 
+					i += 1
                         
             self.list_items(ct_films, False, True) 
 

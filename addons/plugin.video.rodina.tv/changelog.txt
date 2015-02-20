@@ -1,3 +1,5 @@
+[B]2.7.2[/B]
+MOvie's quality/part sequence fix
 [B]2.7.1[/B]
 update fix
 [B]2.7.0[/B]
