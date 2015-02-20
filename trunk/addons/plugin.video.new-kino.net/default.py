@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.7.1
+# Rev. 0.7.2
 
 
 import urllib,urllib2,re,sys
@@ -66,8 +66,8 @@ def NKN_start(url, page, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     dbg_log('- cook:'+  cook + '\n')    
-    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
-              ('<ПОИСК>', '?mode=find')]
+    ext_ls = [('<???????>', '?mode=ctlg'),
+              ('<?????>', '?mode=find')]
     unis_res = []
     unis_en = False
     
@@ -107,16 +107,20 @@ def NKN_start(url, page, cook):
 
                 href = hrefs[i][0]
                 dbg_log('-HREF %s'%href)
-                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" /><!--dle_image_end-->(.*?)</div>').findall(str(sa))
-                for logo, alt, title, plot in infos:
+#                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />(</a><!--TEnd--></div>|<!--dle_image_end-->)(.*?)<').findall(str(sa))
+                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />').findall(str(sa))
+                print infos
+#                 for logo, alt, title, plot in infos:
+                for logo, alt, title in infos:
                   img = start_pg + logo
                   dbg_log('-TITLE %s'%title)
                   dbg_log('-IMG %s'%img)
-                  dbg_log('-PLOT %s'%plot)
+#                   dbg_log('-PLOT %s'%plot)
                   
                   if unis_en == False:
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-                    item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
+#                     item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
+                    item.setInfo( type='video', infoLabels={'title': title})
                     uri = sys.argv[0] + '?mode=view' \
                     + '&url=' + urllib.quote_plus(href) + '&img=' + urllib.quote_plus(img) \
                      + '&name=' + urllib.quote_plus(title)+ '&cook=' + urllib.quote_plus(cook)
@@ -160,27 +164,36 @@ def NKN_view(url, img, name, cook):
         #print urllib.unquote_plus(flvars[0])
 #        files = re.compile('file=(.*?)"').findall(str(sa))
 
-    frames = re.compile('<iframe type(.*?)</iframe>').findall(http)
-    
+    frames = re.compile('<iframe (.*?)</iframe>').findall(http)
     if len(frames) > 0:
         
-        files = re.compile('src="(.*?)"').findall(frames[0])
+#         files = re.compile('src="(.*?)"').findall(frames[0])
+        
+#         print files
 
         i = 1
-        for file in files:
-            if len(files) > 1:
-                title = str(i) + ' - ' + name
-            else:
-                title = name
-            i += 1
+#         for file in files:
 
-            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-            uri = sys.argv[0] + '?mode=play' \
-            + '&name=' + urllib.quote_plus(name) \
-            + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
-            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
-            dbg_log('- uri:'+  uri + '\n')
+        for frame in frames:
+            files = re.compile('src="(.*?)"').findall(frame)
+            for file in files:
+                if 'facebook' not in file:
+                    if len(frames) > 1:
+                        title = str(i) + ' - ' + name
+                    else:
+                        title = name
+                    i += 1
+                    
+                    if 'http' not in file:
+                        file = 'http:' + file 
+        
+                    item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+                    uri = sys.argv[0] + '?mode=play' \
+                    + '&name=' + urllib.quote_plus(name) \
+                    + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
+                    item.setProperty('IsPlayable', 'true')
+                    xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
+                    dbg_log('- uri:'+  uri + '\n')
 
         xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -237,7 +250,7 @@ def Decode2(param):
 def DecodeUppodText2(sData):
   hash = "0123456789WGXMHRUZID=NQVBLihbzaclmepsJxdftioYkngryTwuvihv7ec41D6GpBtXx3QJRiN5WwMf=ihngU08IuldVHosTmZz9kYL2bayE"
 
-#  Проверяем, может не нужно раскодировать (json или ссылка)
+#  ?????????, ????? ?? ????? ????????????? (json ??? ??????)
 #  if ((Pos("{", sData)>0) || (LeftCopy(sData, 4)=="http")) return HmsUtf8Decode(sData);
 
   sData = DecodeUppod_tr(sData, "r", "A")
@@ -392,27 +405,27 @@ def NKN_ctlg(url, cook):
     dbg_log('-NKN_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
 
-    catalog = [("komedii/", "Комедии"),
-               ("boeviki/", "Боевики"),
-               ("trillery/", "Триллеры"),
-               ("detektivnye/", "Детективные"),
-               ("voennye/", "Военные"),
-               ("otechestvennye/", "Отечественные"),
-               ("istoricheskie/", "Исторические"),
-               ("semejjnye/", "Семейные"),
-               ("prikljuchencheskie/", "Приключенческие"),
-               ("animacionnye/", "Анимационные"),
-               ("dokumentalnye/", "Документальные"),
-               ("serialy/", "Сериалы"),
-               ("fantasticheskie/", "Фантастические"),
-               ("misticheskie/", "Мистические"),
-               ("uzhasy/", "Ужасы"),
-               ("fjentezi/", "Фэнтези"),
-               ("dramy/", "Драмы"),
-               ("melodramy/", "Мелодрамы"),
-               ("kriminalnye/", "Криминальные"),
-               ("jumor/", "Юмор"),
-               ("oskar/", "Премия Оскар")]
+    catalog = [("komedii/", "???????"),
+               ("boeviki/", "???????"),
+               ("trillery/", "????????"),
+               ("detektivnye/", "???????????"),
+               ("voennye/", "???????"),
+               ("otechestvennye/", "?????????????"),
+               ("istoricheskie/", "????????????"),
+               ("semejjnye/", "????????"),
+               ("prikljuchencheskie/", "???????????????"),
+               ("animacionnye/", "????????????"),
+               ("dokumentalnye/", "??????????????"),
+               ("serialy/", "???????"),
+               ("fantasticheskie/", "??????????????"),
+               ("misticheskie/", "???????????"),
+               ("uzhasy/", "?????"),
+               ("fjentezi/", "???????"),
+               ("dramy/", "?????"),
+               ("melodramy/", "?????????"),
+               ("kriminalnye/", "????????????"),
+               ("jumor/", "????"),
+               ("oskar/", "?????? ?????")]
                
     for ctLink, ctTitle  in catalog:
         item = xbmcgui.ListItem(ctTitle)
@@ -436,7 +449,7 @@ def NKN_find(cook):
     dbg_log('- cook:'+  cook + '\n')      
     
     kbd = xbmc.Keyboard()
-    kbd.setHeading('ПОИСК')
+    kbd.setHeading('?????')
     kbd.doModal()
     if kbd.isConfirmed():
         stxt = uni2cp(kbd.getText())
