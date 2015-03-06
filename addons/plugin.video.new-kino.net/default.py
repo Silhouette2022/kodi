@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.7.3
+# Rev. 0.7.4
 
 
 import urllib,urllib2,re,sys
@@ -66,8 +66,8 @@ def NKN_start(url, page, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     dbg_log('- cook:'+  cook + '\n')    
-    ext_ls = [('<???????>', '?mode=ctlg'),
-              ('<?????>', '?mode=find')]
+    ext_ls = [('<КАТАЛОГ>', '?mode=ctlg'),
+              ('<ПОИСК>', '?mode=find')]
     unis_res = []
     unis_en = False
     
@@ -250,7 +250,7 @@ def Decode2(param):
 def DecodeUppodText2(sData):
   hash = "0123456789WGXMHRUZID=NQVBLihbzaclmepsJxdftioYkngryTwuvihv7ec41D6GpBtXx3QJRiN5WwMf=ihngU08IuldVHosTmZz9kYL2bayE"
 
-#  ?????????, ????? ?? ????? ????????????? (json ??? ??????)
+#  Проверяем, может не нужно раскодировать (json или ссылка)
 #  if ((Pos("{", sData)>0) || (LeftCopy(sData, 4)=="http")) return HmsUtf8Decode(sData);
 
   sData = DecodeUppod_tr(sData, "r", "A")
@@ -405,27 +405,27 @@ def NKN_ctlg(url, cook):
     dbg_log('-NKN_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
 
-    catalog = [("komedii/", "???????"),
-               ("boeviki/", "???????"),
-               ("trillery/", "????????"),
-               ("detektivnye/", "???????????"),
-               ("voennye/", "???????"),
-               ("otechestvennye/", "?????????????"),
-               ("istoricheskie/", "????????????"),
-               ("semejjnye/", "????????"),
-               ("prikljuchencheskie/", "???????????????"),
-               ("animacionnye/", "????????????"),
-               ("dokumentalnye/", "??????????????"),
-               ("serialy/", "???????"),
-               ("fantasticheskie/", "??????????????"),
-               ("misticheskie/", "???????????"),
-               ("uzhasy/", "?????"),
-               ("fjentezi/", "???????"),
-               ("dramy/", "?????"),
-               ("melodramy/", "?????????"),
-               ("kriminalnye/", "????????????"),
-               ("jumor/", "????"),
-               ("oskar/", "?????? ?????")]
+    catalog = [("komedii/", "Комедии"),
+               ("boeviki/", "Боевики"),
+               ("trillery/", "Триллеры"),
+               ("detektivnye/", "Детективные"),
+               ("voennye/", "Военные"),
+               ("otechestvennye/", "Отечественные"),
+               ("istoricheskie/", "Исторические"),
+               ("semejjnye/", "Семейные"),
+               ("prikljuchencheskie/", "Приключенческие"),
+               ("animacionnye/", "Анимационные"),
+               ("dokumentalnye/", "Документальные"),
+               ("serialy/", "Сериалы"),
+               ("fantasticheskie/", "Фантастические"),
+               ("misticheskie/", "Мистические"),
+               ("uzhasy/", "Ужасы"),
+               ("fjentezi/", "Фэнтези"),
+               ("dramy/", "Драмы"),
+               ("melodramy/", "Мелодрамы"),
+               ("kriminalnye/", "Криминальные"),
+               ("jumor/", "Юмор"),
+               ("oskar/", "Премия Оскар")]
                
     for ctLink, ctTitle  in catalog:
         item = xbmcgui.ListItem(ctTitle)
@@ -449,7 +449,7 @@ def NKN_find(cook):
     dbg_log('- cook:'+  cook + '\n')      
     
     kbd = xbmc.Keyboard()
-    kbd.setHeading('?????')
+    kbd.setHeading('ПОИСК')
     kbd.doModal()
     if kbd.isConfirmed():
         stxt = uni2cp(kbd.getText())
