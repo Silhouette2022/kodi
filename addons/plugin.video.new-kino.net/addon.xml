@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.7.2" provider-name="Silhouette">
+<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.7.3" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.7.2
+# Rev. 0.7.3
 
 
 import urllib,urllib2,re,sys
