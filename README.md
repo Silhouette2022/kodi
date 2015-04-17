@@ -1,1 +1,1 @@
-Kodi folder
+Addons folder

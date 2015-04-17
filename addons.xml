@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addons>
+<addon id="plugin.video.inetcom.tv" name="[COLOR FF86BA0D]Inetcom.tv[/COLOR]" version="0.3.4" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Online TV from inetcom.tv</summary>
+    <description>Online TV from inetcom.tv</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.jevons.sx" name="Футбольные обзоры (jevons.sx)" version="0.1.0" provider-name="Silhouette">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.beautifulsoup" version="3.0.8"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Футбольные обзоры from Jevons.sx</summary>
+    <description>Футбольные обзоры from Jevons.sx</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.kaban.tva" name="[COLOR FFE55BB0]Kaban.TVA[/COLOR]" version="0.6.4" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Archives from http://kaban.tv/</summary>
+    <description>Archives from http://kaban.tv/</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.ru[/COLOR]" version="0.5.2" provider-name="Silhouette">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.beautifulsoup" version="3.0.8"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>KINOXA-X.RU у нас Вы можите смотреть кино онлайн</summary>
+    <description>Добро пожаловать в лучший онлайн кинотеатр KINOXA-X.RU у нас Вы можите смотреть кино онлайн. Выберите фильм любого жанра и наслаждайтесь просмотром</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.lapti.tv" name="[COLOR FFcfb074]Lapti.TV[/COLOR]" version="0.3.1" provider-name="Silhouette">
+  <requires><import addon="xbmc.python" version="2.1.0"/></requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Live TV and Archives from lapti.tv</summary>
+    <description>Live TV and Archives from lapti.tv</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.7.4" provider-name="Silhouette">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.beautifulsoup" version="3.0.8"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>new-kino.net - фильмы, мультфильмы, сериалы</summary>
+    <description>new-kino.net - фильмы, мультфильмы, сериалы - круглосуточно на нашем сайте, смотрите, наслаждайтесь и отдыхайте</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="plugin.video.rodina.tv" name="[COLOR FF23a0e3]Rodina.TV[/COLOR]" version="2.7.3" provider-name="Rodina TV">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.service.rodina.tv" version="1.0.1"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>Rodina.TV – Новости, кино, музыка, спортивные трансляции, кинозал, архив программ за 2 недели.</summary>
+    <description>Rodina.TV – это качественное русскоязычное и интернациональное интернет телевидение в любой точке земного шара. Спортивные трансляции, кино, новости, музыка.
+Сервис ТВ онлайн позволяет смотреть эфирные русскоязычные и другие каналы, пользоваться онлайн кинозалом со множеством новинок и киноклассикой. В вашем распоряжении архив программ за  2 недели, а также функция тайм-шифт.</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
+<addon id="repository.silhouette" name="Silhouette XBMC Add-ons" version="2.0.1" provider-name="Silhouette">
+	<extension point="xbmc.addon.repository" name="Silhouette XBMC Add-ons">
+		<info compressed="false">https://github.com/silhouette2022/kodi/raw/master/addons/addons.xml</info>
+		<checksum>https://github.com/silhouette2022/kodi/raw/master/addons/addons.xml.md5</checksum>
+		<datadir zip="false">https://github.com/silhouette2022/kodi/raw/master/addons/</datadir>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary>Install Add-ons from Silhouette Add-on Repository</summary>
+		<description>Plug-ins for Kodi</description>
+		<disclaimer>add-ons for home usage in Kodi</disclaimer>
+		<platform>all</platform>
+	</extension>
+</addon>
+
+<addon id="script.service.rodina.tv"
+       name="RodinaTV Service Script"
+       version="1.2.3"
+       provider-name="Rodina TV">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+  </requires>
+  <extension point="xbmc.addon.metadata">
+    <summary>RodinaTV Service Script</summary>
+    <description>RodinaTV Service Script</description>
+    <platform>all</platform>
+  </extension>
+  <extension point='xbmc.service' library='rodina.py'>
+  </extension>
+</addon>
+</addons>
