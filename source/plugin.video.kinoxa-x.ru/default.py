@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.5.2
+# Rev. 0.5.3
 
 
 import urllib,urllib2,re,sys
@@ -244,12 +244,12 @@ def KNX_play(url):
     
     http = get_url(url)
 #    print http
-    iframes = re.compile('<iframe itemprop="video" src="(.*?)"').findall(http)
+    iframes = re.compile('<iframe (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
     
-#    print iframes
+    print iframes[0][1]
     
-    if len(iframes) > 0:
-        http = get_url(iframes[0])
+    if len(iframes[0][1]) > 0:
+        http = get_url(iframes[0][1])
 #    elif len(iframes):
 #        http = get_url(iframes[0])
     else:

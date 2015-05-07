@@ -33,7 +33,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.ru[/COLOR]" version="0.5.2" provider-name="Silhouette">
+<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.ru[/COLOR]" version="0.5.3" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
@@ -83,7 +83,6 @@
   </extension>
 </addon>
 
-on="1.0" encoding="UTF-8" standalone="yes"?>
 <addon id="repository.silhouette" name="Silhouette XBMC Add-ons" version="2.0.4" provider-name="Silhouette">
 	<extension point="xbmc.addon.repository" name="Silhouette XBMC Add-ons">
 		<info compressed="false">https://raw.githubusercontent.com/silhouette2022/kodi/master/addons.xml</info>
