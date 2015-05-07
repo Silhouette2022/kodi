@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.5.3
+# Rev. 0.5.4
 
 
 import urllib,urllib2,re,sys
@@ -121,13 +121,17 @@ def KNX_list(url, page, type, fdata):
     for eid in entrys:
 
 #             print eid
-#             print msgs[i]
+#            print msgs[i]
 
             href = re.compile('<a href="(.*?)">').findall(str(eid))[0]
+            plots = BeautifulSoup(str(msgs[i])).findAll('div',{"class":"block-text"})
+#            print plots            
             try:
-                plot = re.compile('<span class="nazvanie">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
-                plot = plot.replace('</span>','').replace('</a>','')
-                plot = re.sub('<a href=".*?">','',plot)
+                
+
+                plot = re.compile('<div class="block-text"><!--(.*?)-->(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0][1]
+#                plot = plot.replace('</span>','').replace('</a>','')
+#                plot = re.sub('<a href=".*?">','',plot)
             except:
                 plot = ''
             try:
@@ -246,7 +250,7 @@ def KNX_play(url):
 #    print http
     iframes = re.compile('<iframe (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
     
-    print iframes[0][1]
+#    print iframes[0][1]
     
     if len(iframes[0][1]) > 0:
         http = get_url(iframes[0][1])
