@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.6.4
+# Rev. 0.7.0
 
 
 
@@ -261,10 +261,14 @@ def KTV_play(url, name, thumbnail, plot):
     except:
         response    = getURL(url)
 
+        
+    print response
+    
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
+    print ef_ls
     if len(ef_ls):
         url_ls = re.compile('rtmp:(.+?).stream').findall(Decode(ef_ls[0]))
-
+        print url_ls
         lurl = []
         for ur in url_ls:
             hurl = 'rtmp:' + ur + '.stream'
@@ -404,33 +408,49 @@ def KTV_guide(furl, thumbnail, cdate):
                 i += 1
 
     xbmcplugin.endOfDirectory(pluginhandle)    
-    
+
 def KTV_plarch(url, name, thumbnail, plot):
 
     http = getURL(url)
 
     fl_ls = re.compile('"file":"(.+?)"').findall(http)
-    #print fl_ls
-    
+#    print fl_ls
+#    print Decode(fl_ls[0])
     if len(fl_ls):
-        url_ls = re.compile('http:(.+?).flv').findall(Decode(fl_ls[0]))
-        if len(url_ls):
-            i = 0
-        for ur in url_ls:
-            furl = 'http:' + url_ls[i] + '.flv'
-            xbmc.log('furl = %s'%furl)
-            try:            
-              http = urllib2.urlopen(furl, None, 10)
-            except:
-              i += 1
-              dbg_log('--not playing')
-              continue
+        furl = Decode(fl_ls[0])
+        item = xbmcgui.ListItem(path = furl)
+        item.setProperty('mimetype', 'video/x-msvideo')
+        item.setProperty('IsPlayable', 'true')
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        dbg_log('--furl=%s'%furl)
+                
+#def KTV_plarch2(url, name, thumbnail, plot):
 
-            item = xbmcgui.ListItem(path = furl)
-            item.setProperty('mimetype', 'video/x-msvideo')
-            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-            dbg_log('--playing') 
+#    http = getURL(url)
+#    print http
+#    fl_ls = re.compile('"file":"(.+?)"').findall(http)
+#    print fl_ls
+#    print Decode(fl_ls[0])
+#    if len(fl_ls):
+#        url_ls = re.compile('http:(.+?).flv').findall(Decode(fl_ls[0]))
+#        print url_ls
+#        if len(url_ls):
+#            i = 0
+#        for ur in url_ls:
+#            furl = 'http:' + url_ls[i] + '.flv'
+#            xbmc.log('furl = %s'%furl)
+#            try:            
+#              http = urllib2.urlopen(furl, None, 10)
+#            except:
+#              i += 1
+#              dbg_log('--not playing')
+#              continue
+
+#            item = xbmcgui.ListItem(path = furl)
+#            item.setProperty('mimetype', 'video/x-msvideo')
+#            item.setProperty('IsPlayable', 'true')
+#            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+#            dbg_log('--playing') 
     
 def get_params():
     param=[]
