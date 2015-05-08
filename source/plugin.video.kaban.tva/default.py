@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.7.0
+# Rev. 0.7.1
 
 
 
@@ -169,14 +169,25 @@ def DTV_guide(url = 'http://www.debilizator.tv' ):
         
     return dtv
     
-def getURL(url):
-    dbg_log('getURL = %s'%url)
+
+def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None):
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
     req.add_header('Accept-Language', 'ru,en;q=0.9')
-    response = urllib2.urlopen(req)
+    if cookie: req.add_header('Cookie', cookie)
+    if referrer: req.add_header('Referer', referrer)
+    if data: 
+        response = urllib2.urlopen(req, data,timeout=30)
+    else:
+        response = urllib2.urlopen(req,timeout=30)
     link=response.read()
+    if save_cookie:
+        setcookie = response.info().get('Set-Cookie', None)
+        if setcookie:
+            setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+            link = link + '<cookie>' + setcookie + '</cookie>'
+    
     response.close()
     return link
 
@@ -249,29 +260,21 @@ def KTV_prls(url):
             item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
 
-    xbmcplugin.endOfDirectory(pluginhandle)    
+    xbmcplugin.endOfDirectory(pluginhandle)
     
 def KTV_play(url, name, thumbnail, plot):
     dbg_log('-KTV_play:')
     dbg_log('url = %s'%url)
     plnk = re.sub('-online','',url)
-    
-    try:
-        response    = getURL(plnk + '/player.jsx')
-    except:
-        response    = getURL(url)
-
-        
-    print response
-    
+    dbg_log('plnk = %s'%plnk)
+    response    = getURL(plnk + '/player.jsx', referrer=url)
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
-    print ef_ls
     if len(ef_ls):
-        url_ls = re.compile('rtmp:(.+?).stream').findall(Decode(ef_ls[0]))
+        url_ls = Decode(ef_ls[0]).split('or')
         print url_ls
         lurl = []
         for ur in url_ls:
-            hurl = 'rtmp:' + ur + '.stream'
+            hurl = ur.strip()
             lurl.append(hurl)
             dbg_log('hrl = %s'%hurl)
             
@@ -282,22 +285,57 @@ def KTV_play(url, name, thumbnail, plot):
         furl = ''
         i = 0
         for hurl in lurl:
-            furl = hurl
-            furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
-            furl += ' pageUrl=%s'%KTV_url
-            furl += ' tcUrl=%s'%hurl
-            furl += " flashVer=\'WIN 11,2,202,235\'"
-            item = xbmcgui.ListItem(path = furl)
+            item = xbmcgui.ListItem(path = hurl)
             item.setProperty('mimetype', 'video/x-msvideo')
             item.setProperty('IsPlayable', 'true')
             item.setInfo( type='video', infoLabels={'title': name})
-            sPlayList.add(furl, item, i)
+            sPlayList.add(hurl, item, i)
             i = i + 1
-            xbmc.log('furl = %s'%furl)
+            xbmc.log('hurl = %s'%hurl)
             
         if len(lurl) > 0:
             dbg_log('--playing') 
-            sPlayer.play(sPlayList)
+            sPlayer.play(sPlayList)    
+    
+#def KTV_play2(url, name, thumbnail, plot):
+#    dbg_log('-KTV_play:')
+#    dbg_log('url = %s'%url)
+#    plnk = re.sub('-online','',url)
+#    dbg_log('plnk = %s'%plnk)
+#    response    = getURL(plnk + '/player.jsx', referrer=url)
+#    ef_ls = re.compile('"file":"(.+?)"').findall(response)
+#    if len(ef_ls):
+#        url_ls = re.compile('rtmp:(.+?).stream').findall(Decode(ef_ls[0]))
+#        print url_ls
+#        lurl = []
+#        for ur in url_ls:
+#            hurl = 'rtmp:' + ur + '.stream'
+#            lurl.append(hurl)
+#            dbg_log('hrl = %s'%hurl)
+            
+#        sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+#        sPlayer     = xbmc.Player()
+#        sPlayList.clear()
+
+#        furl = ''
+#        i = 0
+#        for hurl in lurl:
+#            furl = hurl
+#            furl += ' swfUrl=%s'%(KTV_url + '/uppod.swf')
+#            furl += ' pageUrl=%s'%KTV_url
+#            furl += ' tcUrl=%s'%hurl
+#            furl += " flashVer=\'WIN 11,2,202,235\'"
+#            item = xbmcgui.ListItem(path = furl)
+#            item.setProperty('mimetype', 'video/x-msvideo')
+#            item.setProperty('IsPlayable', 'true')
+#            item.setInfo( type='video', infoLabels={'title': name})
+#            sPlayList.add(furl, item, i)
+#            i = i + 1
+#            xbmc.log('furl = %s'%furl)
+            
+#        if len(lurl) > 0:
+#            dbg_log('--playing') 
+#            sPlayer.play(sPlayList)
 
         
 def KTV_chls(url):
