@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: SIlhouette2012@gmail.com
-# Rev. 0.7.1
+# Rev. 0.7.2
 
 
 
@@ -270,8 +270,8 @@ def KTV_play(url, name, thumbnail, plot):
     response    = getURL(plnk + '/player.jsx', referrer=url)
     ef_ls = re.compile('"file":"(.+?)"').findall(response)
     if len(ef_ls):
-        url_ls = Decode(ef_ls[0]).split('or')
-        print url_ls
+        url_ls = Decode(ef_ls[0]).replace(' or ',' ').replace(' and ',' ').split()
+#        print url_ls
         lurl = []
         for ur in url_ls:
             hurl = ur.strip()
@@ -285,12 +285,20 @@ def KTV_play(url, name, thumbnail, plot):
         furl = ''
         i = 0
         for hurl in lurl:
+        
+#            try:            
+#              http = urllib2.urlopen(hurl, None, 10)
+#            except:
+#              i += 1
+#              dbg_log('--not playing: %s', hurl)
+#              continue
+        
             item = xbmcgui.ListItem(path = hurl)
             item.setProperty('mimetype', 'video/x-msvideo')
             item.setProperty('IsPlayable', 'true')
             item.setInfo( type='video', infoLabels={'title': name})
-            sPlayList.add(hurl, item, i)
-            i = i + 1
+            sPlayList.add(hurl, item, 0)
+            i += 1
             xbmc.log('hurl = %s'%hurl)
             
         if len(lurl) > 0:
