@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.1.0
+# Rev. 0.1.1
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json, cookielib
-#import html5lib
 from BeautifulSoup import BeautifulSoup
 
 
@@ -20,10 +19,33 @@ dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
-start_pg = "http://www.jevons.sx"
+start_pg = "http://www.jevons.ru"
 page_pg = start_pg + "/reviews/"
+mail_pg = "http://my.mail.ru/mail/jevons/video/"
+vk_start = "http://vk.com"
+vk_pg = vk_start + "/videos270805795"
 
-   
+def reportUsage(addonid,action):
+    host = 'xbmc-doplnky.googlecode.com'
+    tc = 'UA-3971432-4'
+    try:
+        utmain.main({'id':addonid,'host':host,'tc':tc,'action':action})
+    except:
+        pass  
+         
+def resolve(self,url):
+	result = xbmcprovider.XBMCMultiResolverContentProvider.resolve(self,url)
+	if result:
+		# ping befun.cz GA account
+		host = 'befun.cz'
+		tc = 'UA-35173050-1'
+		try:
+			utmain.main({'id':__scriptid__,'host':host,'tc':tc,'action':url})
+		except:
+			print 'Error sending ping to GA'
+			traceback.print_exc()
+	return result
+                
 
 def dbg_log(line):
     if dbg: print line
@@ -48,6 +70,51 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     
     response.close()
     return link
+
+def JVS_top():
+    dbg_log('-JVS_top:' + '\n')
+
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('< WEB >'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
+     
+    xbmcplugin.endOfDirectory(pluginhandle)
+
+def JVS_vk(url):
+    dbg_log('-JVS_vk:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    
+    http = get_url(url)
+    
+    thumb = BeautifulSoup(http).findAll('div',{"class":"video_row_thumb"})
+    info = BeautifulSoup(http).findAll('div',{"class":"video_row_info"}) 
+    
+    drt = {}
+    dri = []
+    for t in thumb: 
+      try:
+        drt[t.a['href']] = re.compile("background-image: url\(\'(.*?)\'\);").findall(t.div['style'])[0]
+      except:
+        drt[t.a['href']] = ""
+
+    for i in info:
+        dri.append((i.a['href'], i.a.string.strip().encode('utf8')))
+        
+    print drt
+    print dri
+    for href, title in dri:
+        img = drt[href]
+        dbg_log('-HREF %s'%href)
+        dbg_log('-TITLE %s'%title)
+        dbg_log('-IMG %s'%img)
+
+        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+        item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+        uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(vk_start + href) + '&name=' + urllib.quote_plus(title)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+        dbg_log('- uri:'+  uri + '\n')
+
+    xbmcplugin.endOfDirectory(pluginhandle) 
 
 def JVS_list(url, page):
     dbg_log('-JVS_list:' + '\n')
@@ -268,7 +335,11 @@ page = params['page'] if 'page' in params else '1'
 name = urllib.unquote_plus(params['name']) if 'name' in params else ''
 url  = urllib.unquote_plus(params['url']) if 'url' in params else page_pg
 
-if mode == '': JVS_list(page_pg, page)
+#if mode == '': JVS_top()
+if mode == '': JVS_list(url, page)
+elif mode == 'list': JVS_list(url, page)
+elif mode == 'mail': JVS_mail(url)
+elif mode == 'vk': JVS_vk(url)
 elif mode == 'play': JVS_play(url, name)
 elif mode == 'show': JVS_show(url, name)
 
