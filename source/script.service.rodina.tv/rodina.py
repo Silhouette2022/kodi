@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.2.4
+# Rev. 1.2.5
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
@@ -39,8 +39,8 @@ class RodinaPlayer(xbmc.Player):
     def __init__(self):
         self.arch_play = 'false'
         self.lng = {'title' : __addon_lng__(30900)}
-            
-        xbmcaddon.Addon(_RODINA_ID_).setSetting('arch_on', 'false')
+        try: xbmcaddon.Addon(_RODINA_ID_).setSetting('arch_on', 'false')
+        except: pass
 
         
 #    def onPlayBackStarted(self):
