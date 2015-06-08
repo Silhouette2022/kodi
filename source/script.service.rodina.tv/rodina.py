@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 1.2.3
+# Rev. 1.2.4
 
 import os, sys
 import xbmc, xbmcaddon, xbmcgui
@@ -90,7 +90,10 @@ class RodinaPlayer(xbmc.Player):
             
             pystep = MyPyStep(self.lng['title'])
             pystep .doModal()
-            seek = pystep.hvalue + pystep.value - 50.0
+            if pystep.hvalue != None and pystep.value != None:
+                seek = pystep.hvalue + pystep.value - 50.0
+            else:
+                seek = None
             del pystep
             
             if seek != None and seek != 0:
