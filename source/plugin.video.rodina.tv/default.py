@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 2.7.3
+# Rev. 2.7.5
 
-_REVISION_ = '2.7.3'
+_REVISION_ = '2.7.5'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -988,6 +988,8 @@ class RodinaTV():
     def epg2dict(self, sepg):
         self.log("-epg2dict:")
         depg = {}
+        if self.timeserver == '':
+            self.timeserver = common.parseDOM(sepg, "entity", ret="timeserver")[0]
         a_raw = common.parseDOM(sepg, "row")
         for raw in a_raw:
             try: numb = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
@@ -1003,6 +1005,7 @@ class RodinaTV():
                     a_has_desc = common.parseDOM(progs, "item", attrs={"name": "has_desc"})
                     a_desc = common.parseDOM(progs, "item", attrs={"name": "desc"})
                     a_has_rec = common.parseDOM(progs, "item", attrs={"name": "has_record"})
+                    a_crutstart = common.parseDOM(progs, "item", attrs={"name": "curr_ut_start"})
  
                     j = 0
                     for i in range(len(a_title)):
@@ -1013,7 +1016,7 @@ class RodinaTV():
                         
                         ststart = time.strftime("%H:%M",time.localtime(float(a_utstart[i])))
                         ststop = time.strftime("%H:%M",time.localtime(float(a_utstop[i])))
-                        l_progs.append([ststart, ststop, a_title[i], desc, a_pid[i], a_has_rec[i], a_utstart[i]])
+                        l_progs.append([ststart, ststop, a_title[i], desc, a_pid[i], a_has_rec[i], a_utstart[i], a_crutstart[i]])
                     
                     depg[numb] = l_progs
 
@@ -1287,7 +1290,7 @@ class RodinaTV():
                             try:
                                 lepg = d_epg[number]
                                 title2nd = ''
-                                for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
+                                for ebgn, eend, ename, edescr, pid, rec, utstart, cutstart in lepg:
                                     if self.view_epg == 'true' and title2nd == '':
                                         title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
@@ -1527,8 +1530,7 @@ class RodinaTV():
         except:
             return
          
-        frun = 0
-        for ebgn, eend, ename, edescr, pid, rec, utstart in lepg:
+        for ebgn, eend, ename, edescr, pid, rec, utstart, cutstart in lepg:
             popup = []
             title = '%s-%s %s' % (ebgn, eend, ename)
             plot = '%s  [COLOR FF999999]%s[/COLOR]' % (ename, edescr)
@@ -1538,21 +1540,22 @@ class RodinaTV():
             if self.cat != '': uri2 += '&cat=' + self.cat
             if self.sort != '': uri2 += '&sort=' + self.sort
             popup.append((self.lng['go2live'], 'XBMC.Container.Update(%s)'%uri2,))
-            
-            if rec != '1':
-                if frun == 0: 
-                    frun = 1
-                    title = self.color['3'] + '%s[/COLOR]' % (title)
-                else:
-                    title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
 
+#           Mark Live            
+#            title = self.color['3'] + '%s[/COLOR]' % (title)
 
-            if frun == 1:
-                frun = 2
-                uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon)
-                ct_chan.append((uri2, self.cicon, False, {'title': title, 'plot':plot}, popup))
+            if rec != '0' or ((self.br != '140') and (self.timeserver != '') and ((float(cutstart) + 305) > float(self.timeserver))):
+                pass
             else:
-                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % ('tvplay', self.portal, self.numb, self.has_pwd, self.cicon, rec, utstart), self.cicon, False, {'title': title, 'plot':plot}, popup))
+                title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
+            print 'PRG TEST - %s, %s, %s, %s, %s, %d, %d'%(self.br, rec, title, self.timeserver, cutstart, float(self.timeserver), float(cutstart))
+
+#           Go Live
+#            uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon)
+
+            uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon, rec, utstart)
+
+            ct_chan.append((uri2, self.cicon, False, {'title': title, 'plot':plot}, popup))
 
         if self.view_date == 'true':
 
