@@ -563,8 +563,8 @@ class RodinaTV():
         self.offset = ''
         self.word = ''
                         
-        self.timeserver = ''
-        
+        self.strtsrv = ''
+        self.timeserver = 0
         self.numb = ''
         self.ts = '' 
         self.cicon = '' 
@@ -576,6 +576,7 @@ class RodinaTV():
         self.place = ''
         self.stime = ''
         self.sval = ''
+        self.duration = 0
        
         self.path = xbmc.translatePath(self.addon.getAddonInfo('path')).decode('utf-8')
         self.path_resources = xbmc.translatePath(self.path + '/resources')
@@ -632,6 +633,7 @@ class RodinaTV():
                        '2' : '[COLOR FFFFFF00]',
                        '3' : '[COLOR FF00FF00]',
                        '4' : '[COLOR FF0000FF]',
+                       '5' : '[COLOR FFFF00FF]',
                        '6' : '[COLOR FF00FFFF]'
                      }
                         
@@ -774,7 +776,8 @@ class RodinaTV():
         self.start = params['start'] if 'start' in params else ''
         self.place = params['place'] if 'place' in params else ''
         self.stime = params['time'] if 'time' in params else ''
-        self.sval = params['seek'] if 'seek' in params else ''    
+        self.sval = params['seek'] if 'seek' in params else ''
+        self.duration = float(params['dur']) if 'dur' in params else 0
     
     def main(self):
         self.log("Addon: %s"  % self.id)
@@ -945,13 +948,23 @@ class RodinaTV():
                 cache = resp
                 
         return cache
+        
+    def setTimeserver(self, contt):
+        try:
+            sval = common.parseDOM(contt, "entity", ret="timeserver")[0]
+            fval = float(sval)
+            if fval > self.timeserver: 
+                self.timeserver = fval
+                self.ts = sval
+                self.log("-Timeserver: %s"%self.ts, 2)
+        except: self.log("-Timeserver: ERROR")    
 
     def getPage(self, cdict):
         self.log("-getPage:")
         resp = common.fetchPage(cdict)
         if resp["status"] == 200:
             status = common.parseDOM(resp["content"], "entity", ret="status")[0]
-            self.timeserver = common.parseDOM(resp["content"], "entity", ret="timeserver")[0]
+            self.setTimeserver(resp["content"])
             if status == "success":
                 self.get_auth = False
 #                print resp["content"]
@@ -988,8 +1001,7 @@ class RodinaTV():
     def epg2dict(self, sepg):
         self.log("-epg2dict:")
         depg = {}
-        if self.timeserver == '':
-            self.timeserver = common.parseDOM(sepg, "entity", ret="timeserver")[0]
+        self.setTimeserver(sepg)
         a_raw = common.parseDOM(sepg, "row")
         for raw in a_raw:
             try: numb = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
@@ -1031,8 +1043,7 @@ class RodinaTV():
         
         resp = self.getPage({"link": self.auth})
         if resp != None:
-        
-            tmserv = common.parseDOM(resp, "entity", ret="timeserver")[0]
+            self.setTimeserver(resp)                   
             rand = common.parseDOM(resp, "item", attrs={"name": "rand"})[0]
             sid  = common.parseDOM(resp, "item", attrs={"name": "sid"})[0]
         
@@ -1077,6 +1088,7 @@ class RodinaTV():
             if len(ctPopup) > 0:
                 item.addContextMenuItems(ctPopup,replaceItems=True)
             
+            if self.ts != '': ctUrl += ('&ts=%s' % self.ts)
             xbmcplugin.addDirectoryItem(self.handle, sys.argv[0] + ctUrl, item, ctFolder) 
             self.log("ctTitle: %s"  % ctTitle, 2) 
             self.log("ctUrl: %s"  % ctUrl, 2) 
@@ -1119,11 +1131,11 @@ class RodinaTV():
 #        if resp != None:
 #            if self.debug: print resp
 
-    def set_settings(self, ts='0'):
+    def set_settings(self, tsd='0'):
         self.log("-set_settings:")
         
         key = 'bitrate|tshift|dc'
-        value = '%s|%s|%s' % (self.br, ts, self.dc)
+        value = '%s|%s|%s' % (self.br, tsd, self.dc)
         req = self.portal + '?query=%s&key="%s"&value="%s"' % ('set_settings', key, value)
         resp = self.getUrlPage( req)
 #        if resp != None:
@@ -1177,7 +1189,7 @@ class RodinaTV():
                 for title, numb, chan in a_comb:
                     params = '?mode=%s&cat=%s&portal=%s&sort=%s' % (nmode, numb, QT(self.portal), '_'.join(common.parseDOM(chan, "item")))
                     if self.view_date == 'true' and self.adt != '': params += '&dt=' + self.adt
-                    if self.ts != '': params += ('&ts=%s' % self.ts)
+#                    if self.ts != '': params += ('&ts=%s' % self.ts)
                     try: cicon = self.icons[numb]
                     except: cicon = self.cicon
                     ct_cat.append((params, cicon, True, {'title': title}, []))
@@ -1189,7 +1201,7 @@ class RodinaTV():
             for numb in a_numb:
                 params = '?mode=%s&cat=%s&portal=%s' % (nmode, numb, QT(self.portal))
                 if self.view_date == 'true' and self.adt != '': params += '&dt=' + self.adt
-                if self.ts != '': params += ('&ts=%s' % self.ts)
+#                if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
                 try: title = self.colname[numb]
@@ -1205,10 +1217,7 @@ class RodinaTV():
         d_chan = {} 
         resp = self.cached_get('tv')
         if resp != None:
-            if self.ts != '':
-                d_epg = self.epg2dict(self.cached_get('dtv'))
-            else:
-                d_epg = self.epg2dict(self.cached_get('etv'))
+            d_epg = self.epg2dict(self.cached_get('etv'))
             a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
             
             a_fav = []
@@ -1457,6 +1466,8 @@ class RodinaTV():
                             except: title = ''
                             try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                             except: number = ''
+                            try: dur = common.parseDOM(raw, "item", attrs={"name": "rec_duration"})[0]
+                            except: dur = ''                            
                             a_icon45 = common.parseDOM(raw, "item", attrs={"name": "default"})
                             a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
                             a_icon300 = common.parseDOM(raw, "item", attrs={"name": "300_300_0"})
@@ -1473,9 +1484,9 @@ class RodinaTV():
                             if icon == '': icon = self.path_icons_tv
                             if title != '' and number != '':
                                 if self.view_date == 'true' and self.adt != '':
-                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s&dt=%s' % ('aepg', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort, self.adt)
+                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s&dt=%s&dur=%s' % ('aepg', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort, self.adt, dur)
                                 else:
-                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s' % ('adate', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort)
+                                    nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s&cat=%s&sort=%s&dur=%s' % ('adate', self.portal, number, has_passwd, has_record, icon, self.cat, self.sort, dur)
                                 d_chan[number] = (nUrl, icon, True, {'title': title}, popup)
 #                                ct_chan.append(('?mode=%s&portal=%s&numb=%s&pwd=%s&rec=%s&icon=%s' % 
 #                                    ('adate', self.portal, number, has_passwd, has_record, icon), icon, True, {'title': title}, popup))
@@ -1512,7 +1523,7 @@ class RodinaTV():
             if self.view_date == 'true':
                 uri = '?mode=%s&portal=%s&icon=%s&dt=%s' % ('arch', self.portal, self.cicon, dt)
             else:
-                uri = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&cat=%s&dt=%s' % ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, self.cat, dt)
+                uri = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s&cat=%s&dt=%s&dur=%d' % ('aepg', self.portal, self.numb, self.has_pwd, self.cicon, self.cat, dt, self.duration)
 
             if self.sort != '' : uri += '&sort=' + self.sort
             ct_date.append((uri, self.cicon, True, {'title': title}, []))
@@ -1543,18 +1554,21 @@ class RodinaTV():
 
 #           Mark Live            
 #            title = self.color['3'] + '%s[/COLOR]' % (title)
-
-            if rec != '0' or ((self.br != '140') and (self.timeserver != '') and ((float(cutstart) + 305) > float(self.timeserver))):
-                pass
-            else:
-                title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
-            print 'PRG TEST - %s, %s, %s, %s, %s, %d, %d'%(self.br, rec, title, self.timeserver, cutstart, float(self.timeserver), float(cutstart))
+            
+            
+#            print "TEST - %s, %d, %d, %d, %d"%(rec, self.timeserver, self.duration, float(cutstart), self.timeserver - float(cutstart))
+            if rec =='0':
+                futstart = float(cutstart)
+                if (self.br != '140') and (self.timeserver - futstart > 330) and (self.timeserver - futstart < self.duration) :
+                    title = self.color['6'] + '%s[/COLOR]' % (title)
+                    rec = '6'
+                else:                
+                    title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
 
 #           Go Live
 #            uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon)
 
             uri2 = '?mode=tvplay&portal=%s&numb=%s&pwd=%s&icon=%s&rec=%s&start=%s' % (QT(self.portal), self.numb, self.has_pwd, self.cicon, rec, utstart)
-
             ct_chan.append((uri2, self.cicon, False, {'title': title, 'plot':plot}, popup))
 
         if self.view_date == 'true':
@@ -1924,7 +1938,7 @@ class RodinaTV():
             a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
             for numb in a_numb:
                 params = '?mode=%s&cat=%s&portal=%s' % (nmode, numb, QT(self.portal))
-                if self.ts != '': params += ('&ts=%s' % self.ts)
+#                if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
                 try: title = self.colname[numb]
@@ -2131,7 +2145,7 @@ class RodinaTV():
             a_numb = common.parseDOM(resp, "item", attrs={"name": "number"})
             for numb in a_numb:
                 params = '?mode=%s&cat=%s&portal=%s' % ('favupd', numb, QT(self.portal))
-                if self.ts != '': params += ('&ts=%s' % self.ts)
+#                if self.ts != '': params += ('&ts=%s' % self.ts)
                 try: cicon = self.icons['f' + numb]
                 except: cicon = self.cicon
                 try: title = self.colname[numb]
