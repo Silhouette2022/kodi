@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.1.1
+# Rev. 0.1.2
 
 
 import urllib,urllib2,re,sys
@@ -178,13 +178,39 @@ def get_VK(url):
                 oid = s.split('=',1)[1]
             if s.split('=',1)[0] == 'hd':
                 hd = s.split('=',1)[1]
-        url = host+'u'+uid+'/videos/'+vtag+'.240.mp4'
+            if s.split('=',1)[0] == 'url240':
+                url240 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url360':
+                url360 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url480':
+                url480 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url720':
+                url720 = s.split('=',1)[1]
+
+#        url = host+'u'+uid+'/videos/'+vtag+'.240.mp4'
+#        if int(hd)==3:
+#            url = host+'u'+uid+'/videos/'+vtag+'.720.mp4'
+#        if int(hd)==2:
+#            url = host+'u'+uid+'/videos/'+vtag+'.480.mp4'
+#        if int(hd)==1:
+#            url = host+'u'+uid+'/videos/'+vtag+'.360.mp4'
+        url = url240
+        qual = '240'
         if int(hd)==3:
-            url = host+'u'+uid+'/videos/'+vtag+'.720.mp4'
+            url = url720
+            ual = '720'
         if int(hd)==2:
-            url = host+'u'+uid+'/videos/'+vtag+'.480.mp4'
+            url = url480
+            ual = '480'
         if int(hd)==1:
-            url = host+'u'+uid+'/videos/'+vtag+'.360.mp4'
+            url = url360
+            ual = '360'
+    
+    try:
+        uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
+        html = get_url(uri)
+    except: pass
+
     if not touch(url):
         try:
             if int(hd)==3:
@@ -196,6 +222,7 @@ def get_VK(url):
         except:
             print 'Vk parser failed'
             return None
+
     return url
 
 def touch(url):
