@@ -1,12 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.7.4
+# Rev. 0.8.0
 
 
-import urllib,urllib2,re,sys
+import urllib, urllib2, os, re, sys, json, cookielib
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
+import urllib, urllib2, os, re, sys, json, cookielib
 
 
 try:
@@ -24,6 +25,8 @@ try:
 except: use_translit = 'false'
 
 dbg = 0
+
+supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru'}
 
 pluginhandle = int(sys.argv[1])
 
@@ -109,7 +112,7 @@ def NKN_start(url, page, cook):
                 dbg_log('-HREF %s'%href)
 #                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />(</a><!--TEnd--></div>|<!--dle_image_end-->)(.*?)<').findall(str(sa))
                 infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />').findall(str(sa))
-                print infos
+#                print infos
 #                 for logo, alt, title, plot in infos:
                 for logo, alt, title in infos:
                   img = start_pg + logo
@@ -147,6 +150,21 @@ def NKN_start(url, page, cook):
  
       xbmcplugin.endOfDirectory(pluginhandle) 
 
+def getSite(s):
+
+    try: full = re.compile('//(.*?)/').findall(s)[0]
+    except: 
+        try: full = re.compile('(.*?)/').findall(s)[0]
+        except:
+            try: full = re.compile('//(.*?)').findall(s)[0]
+            except: full = s
+    parts = full.split('.')
+    psz = len(parts)
+    if psz > 1:
+        site = '%s.%s'%(parts[psz - 2], parts[psz - 1])
+    else: site = full
+    
+    return site
 
 def NKN_view(url, img, name, cook):     
     dbg_log('-NKN_view:'+ '\n')
@@ -173,23 +191,37 @@ def NKN_view(url, img, name, cook):
 
         i = 1
 #         for file in files:
-
+        
+        wdic = { '' : 0}
         for frame in frames:
             files = re.compile('src="(.*?)"').findall(frame)
+
             for file in files:
                 if 'facebook' not in file:
-                    if len(frames) > 1:
-                        title = str(i) + ' - ' + name
+
+                    try: 
+                        web = getSite(file)
+                    except: 
+                        web = ''
+
+                    if web in wdic: 
+                        t = wdic[web] + 1
+                        wdic[web] = t
+                    else: wdic[web] = 1
+                    if web not in supported:
+                        title = '[[COLOR FFFF0000]%s-%s[/COLOR]] %s'%(str(wdic[web]),web,name)
                     else:
-                        title = name
-                    i += 1
+                        title = '[%s-%s] %s'%(str(wdic[web]),web,name)
                     
                     if 'http' not in file:
                         file = 'http:' + file 
+                        
+                    dbg_log('- file:'+  file + '\n')
         
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
                     uri = sys.argv[0] + '?mode=play' \
                     + '&name=' + urllib.quote_plus(name) \
+                    + '&web=' + urllib.quote_plus(web) \
                     + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
                     item.setProperty('IsPlayable', 'true')
                     xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
@@ -321,65 +353,144 @@ def DecodeUppod_Base64(param):
 
     return loc_2        
 
-def VK(html):
-
-    soup = BeautifulSoup(html, fromEncoding="windows-1251")
-    video = []
-
-    for rec in soup.findAll('script', {'type':'text/javascript'}):
-        if 'video_host' in rec.text:
-            
-            vars = re.compile('var vars = {(.+?)"}').findall(html)
-#            if 0:
-            if len(vars):
-                var = re.compile('"(.+?)":(.+?),').findall(vars[0] + '"')
-                for r in var:
-                    if r[0] == 'url240': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
-                    elif r[0] == 'url360': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
-                    elif r[0] == 'url480': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
-                    elif r[0] == 'url720': video.append(r[1].strip('"').split('?')[0].replace('\\/','/'))
-                    
-                video.sort()
-                video.reverse()
-
-            else:
-                var = re.compile('var (.+?) = \'(.+?)\';').findall(html)
-                for r in var:
-                    if r[0] == 'video_host':
-                        video_host = r[1]#.replace('userapi', 'vk')
-                    if r[0] == 'video_uid':
-                        video_uid = r[1]
-                    if r[0] == 'video_vtag':
-                        video_vtag = r[1]
-
-                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '720'))
-                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '480'))
-                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '360'))
-                video.append('%su%s/videos/%s.%s.mp4'%(video_host, video_uid, video_vtag, '240'))
-
-    return video
+   
+def get_VK(url):
+    html = get_url(url)
+#    url = None
+    soup = BeautifulSoup(html, fromEncoding="utf-8")
     
+    recs = soup.findAll('param', {'name':'flashvars'})
 
+    for rec in recs:
+        fv={}
+        for s in rec['value'].split('&'):
+            sdd=s.split('=',1)
+            try:
+                fv[sdd[0]]=sdd[1]
+            except:
+                fv[sdd[0]]=''
+            if s.split('=',1)[0] == 'uid':
+                uid = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'vtag':
+                vtag = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'host':
+                host = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'vid':
+                vid = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'oid':
+                oid = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'hd':
+                hd = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url240':
+                url240 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url360':
+                url360 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url480':
+                url480 = s.split('=',1)[1]
+            if s.split('=',1)[0] == 'url720':
+                url720 = s.split('=',1)[1]
 
-def NKN_play(url, cook, name):     
+        url = url240
+        qual = '240'
+        if int(hd)==3:
+            url = url720
+            ual = '720'
+        if int(hd)==2:
+            url = url480
+            ual = '480'
+        if int(hd)==1:
+            url = url360
+            ual = '360'
+    
+    try:
+        uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
+        html = get_url(uri)
+    except: pass
+
+    if not url or not touch(url):
+        try:
+            if int(hd)==3:
+                url = fv['cache720']
+            if int(hd)==2:
+                url = fv['cache480']
+            if int(hd)==1:
+                url = fv['cache360']
+        except:
+            print 'Vk parser failed'
+            return None
+
+    return url
+
+def touch(url):
+    req = urllib2.Request(url)
+    try:
+        res=urllib2.urlopen(req)
+        res.close()
+        return True
+    except:
+        return False      
+        
+def get_mailru(url):
+    try:
+        url = url.replace('/my.mail.ru/video/', '/api.video.mail.ru/videos/embed/')
+        url = url.replace('/my.mail.ru/mail/', '/api.video.mail.ru/videos/embed/mail/')
+        url = url.replace('/videoapi.my.mail.ru/', '/api.video.mail.ru/')
+        result = get_url(url)
+
+        url = re.compile('"metadataUrl" *: *"(.+?)"').findall(result)[0]
+        mycookie = get_url(url, save_cookie = True)
+        cookie = re.search('<cookie>(.+?)</cookie>', mycookie).group(1)
+        h = "|Cookie=%s" % urllib.quote(cookie)
+
+        result = get_url(url)
+        result = json.loads(result)
+        result = result['videos']
+
+        url = []
+        url += [{'quality': '1080p', 'url': i['url'] + h} for i in result if i['key'] == '1080p']
+        url += [{'quality': 'HD', 'url': i['url'] + h} for i in result if i['key'] == '720p']
+        url += [{'quality': 'SD', 'url': i['url'] + h} for i in result if not (i['key'] == '1080p' or i ['key'] == '720p')]
+
+        if url == []: return None
+        return url
+    except:
+        return None
+
+        
+
+def NKN_play(url, cook, name, web):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url.replace('&amp;', '&') + '\n')
     url = url.replace('&amp;', '&')
     furls = []
-    http = get_url(url, cookie = cook)
-#    print urllib.unquote_plus(http)
-    if 'kinolot.com/get.php' in url:
+
+    if 'kinolot.com' in web:
+        http = get_url(url, cookie = cook)
         files = re.compile('file=(.*?)&').findall(http)
         if len(files):
-#            print 'file'
-#            print files[0]
             furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
-    elif 'vk.com' in url:
-        print 'vk.com'
-        furls = VK(http)
-    elif 'vkontakte.ru' in url:
-        print 'vkontakte.ru'
-        furls = VK(http)
+    elif 'vk.com' in web:
+        furl = get_VK(url)
+        if furl != None: furls.append(furl)
+        else:  dbg_log('VK : no url returned')
+    elif 'vkontakte.ru' in web:
+        furl = get_VK(url)
+        if furl != None: furls.append(furl)
+        else:  dbg_log('VK : no url returned')
+    elif 'mail.ru' in web:
+        quals = get_mailru(url)
+        try:        
+          for d in quals: 
+            if d['quality'] == 'HD' : 
+                furls.append(d['url'])
+                break
+            if d['quality'] == '1080p' : 
+                furls.append(d['url'])
+                break
+            if d['quality'] == 'SD' : 
+                furls.append(d['url'])
+                break
+        except: pass
         
     if len(furls) == 1:
         dbg_log('- furl:'+  furls[0] + '\n')
@@ -490,6 +601,7 @@ off='0'
 gnrs=''
 imag=''
 name=''
+web = ''
 
 try:
     mode=params['mode']
@@ -515,6 +627,10 @@ try:
     cook=urllib.unquote_plus(params['cook'])
     dbg_log('-COOK:'+ cook + '\n')
 except: pass
+try: 
+    web=urllib.unquote_plus(params['web'])
+    dbg_log('-WEB:'+ web + '\n')
+except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
@@ -525,7 +641,7 @@ if url=='':
 if mode == '': NKN_start(url, page, cook)
 elif mode == 'ctlg': NKN_ctlg(url, cook)
 elif mode == 'view': NKN_view(url, imag, name, cook)
-elif mode == 'play': NKN_play(url, cook, name)
+elif mode == 'play': NKN_play(url, cook, name, web)
 elif mode == 'find': NKN_find(cook)
 elif mode == 'show': NKN_view(url, imag, "Play Video", cook)
 elif mode == 'search': 
