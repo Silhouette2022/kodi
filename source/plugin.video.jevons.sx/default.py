@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.1.2
+# Rev. 0.2.0
 
 
 import urllib,urllib2,re,sys
@@ -15,6 +15,9 @@ plugin_path = __settings__.getAddonInfo('path').replace(';', '')
 plugin_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon.png'))
 context_path = xbmc.translatePath(os.path.join(plugin_path, 'default.py'))
 
+rfpl_icon = xbmc.translatePath(os.path.join(plugin_path, 'rfpl.png'))
+jevs_icon = xbmc.translatePath(os.path.join(plugin_path, 'jevs.png'))
+
 dbg = 0
 
 pluginhandle = int(sys.argv[1])
@@ -24,6 +27,9 @@ page_pg = start_pg + "/reviews/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
 vk_pg = vk_start + "/videos270805795"
+rfpl_start = "http://rfpl.me"
+rfpl_pg = rfpl_start + "/matche/page/"
+rfpl_img = ""
 
 def reportUsage(addonid,action):
     host = 'xbmc-doplnky.googlecode.com'
@@ -74,9 +80,11 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('< WEB >'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru'), True)
+#    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
+#    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me'), True)
+
      
     xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -128,7 +136,7 @@ def JVS_list(url, page):
     entrys = re.compile(' <a title="(.*?)" href="(.*?)">').findall(http)
 
     for title, href in entrys:
-        img = plugin_icon
+        img = jevs_icon
         dbg_log('-HREF %s'%href)
         dbg_log('-TITLE %s'%title)
         dbg_log('-IMG %s'%img)
@@ -151,7 +159,47 @@ def JVS_list(url, page):
         dbg_log('- uri:'+  uri + '\n')        
      
     xbmcplugin.endOfDirectory(pluginhandle) 
+
+def JVS_rfpl(url, page):
+    dbg_log('-JVS_list:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- page:'+  page + '\n')
     
+    http = get_url(url + page + '/')
+    
+    i = 0
+
+    panels = BeautifulSoup(http).findAll('div',{"class":"panel b-a"})
+    
+    for panel in panels:
+        href = re.compile('<a href="(.*?)">').findall(str(panel))[0]
+        img  = rfpl_start + re.compile('<img src="(.*?)"').findall(str(panel))[0]
+        title = re.compile('<div style="font-size: .*?">(.*?)</div>').findall(str(panel).replace('\n','').replace('\r',''))[0].strip()
+        
+#        img = plugin_icon
+        dbg_log('-HREF %s'%href)
+        dbg_log('-TITLE %s'%title)
+        dbg_log('-IMG %s'%img)
+
+        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+        item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+        uri = sys.argv[0] + '?mode=showrfpl' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+        dbg_log('- uri:'+  uri + '\n')
+        i = i + 1
+
+    if i :
+        item = xbmcgui.ListItem('<NEXT PAGE>')
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=rfpl&url=' + urllib.quote_plus(rfpl_pg)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+        dbg_log('- uri:'+  uri + '\n')
+        item = xbmcgui.ListItem('<NEXT PAGE +5>')
+        uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&mode=rfpl&url=' + urllib.quote_plus(rfpl_pg)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+        dbg_log('- uri:'+  uri + '\n')        
+     
+    xbmcplugin.endOfDirectory(pluginhandle) 
+
 def get_VK(url):
     html = get_url(url)
     soup = BeautifulSoup(html, fromEncoding="utf-8")
@@ -270,7 +318,44 @@ def JVS_show(url, name):
     entrys = re.compile('<iframe src="(.*?)"').findall(http)
     
     for href in entrys:
-        img = plugin_icon
+        img = jevs_icon
+        dbg_log('-HREF %s'%href)
+        
+        if 'cityadspix' not in href:
+            try:
+                rsrc = re.compile('//(.*?)/').findall(href)
+                print rsrc
+                lsrc = rsrc[0].split('.')
+                print lsrc
+                lens = len(lsrc)
+                print lens
+                if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
+                else: title = name
+            except: title = name
+
+            if 'http' not in href: href = 'http:' + href 
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+            uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+            dbg_log('- uri:'+  uri + '\n')
+
+    xbmcplugin.endOfDirectory(pluginhandle) 
+
+def JVS_showrfpl(url, name):
+    nurl = url
+    dbg_log('-JVS_showrfpl:' + '\n')
+    dbg_log('- url:'+  nurl + '\n')
+    
+    http = get_url(nurl)
+
+    entrys = re.compile('<a data-players-url="(.*?)">(.*?)</a>').findall(http)
+    
+    print entrys
+    
+    for href, pname in entrys:
+        img = rfpl_icon
         dbg_log('-HREF %s'%href)
         
         try:
@@ -283,7 +368,8 @@ def JVS_show(url, name):
             if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
             else: title = name
         except: title = name
-
+        
+        title = '%s (%s)'%(title, pname)
         if 'http' not in href: href = 'http:' + href 
         item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
         item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
@@ -293,7 +379,7 @@ def JVS_show(url, name):
         dbg_log('- uri:'+  uri + '\n')
 
     xbmcplugin.endOfDirectory(pluginhandle) 
-  
+      
 def JVS_play(url, title):
     url = url.replace('&amp;', '&')
         
@@ -362,12 +448,13 @@ page = params['page'] if 'page' in params else '1'
 name = urllib.unquote_plus(params['name']) if 'name' in params else ''
 url  = urllib.unquote_plus(params['url']) if 'url' in params else page_pg
 
-#if mode == '': JVS_top()
-if mode == '': JVS_list(url, page)
+if mode == '': JVS_top()
+#if mode == '': JVS_list(url, page)
 elif mode == 'list': JVS_list(url, page)
-elif mode == 'mail': JVS_mail(url)
-elif mode == 'vk': JVS_vk(url)
+elif mode == 'rfpl': JVS_rfpl(url, page)
 elif mode == 'play': JVS_play(url, name)
 elif mode == 'show': JVS_show(url, name)
-
+elif mode == 'showrfpl': JVS_showrfpl(url, name)
+elif mode == 'mail': JVS_mail(url)
+elif mode == 'vk': JVS_vk(url)
 
