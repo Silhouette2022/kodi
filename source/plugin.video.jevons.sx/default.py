@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.2.0
+# Rev. 0.3.0
 
 
 import urllib,urllib2,re,sys
@@ -17,6 +17,7 @@ context_path = xbmc.translatePath(os.path.join(plugin_path, 'default.py'))
 
 rfpl_icon = xbmc.translatePath(os.path.join(plugin_path, 'rfpl.png'))
 jevs_icon = xbmc.translatePath(os.path.join(plugin_path, 'jevs.png'))
+pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbtv.png'))
 
 dbg = 0
 
@@ -29,7 +30,8 @@ vk_start = "http://vk.com"
 vk_pg = vk_start + "/videos270805795"
 rfpl_start = "http://rfpl.me"
 rfpl_pg = rfpl_start + "/matche/page/"
-rfpl_img = ""
+pbtv_start = "http://www.pressball.by"
+pbtv_pg = pbtv_start + "/tv/search/tag?ajax=yw0&q=222-pressbol-TV&TvVideo_page="
 
 def reportUsage(addonid,action):
     host = 'xbmc-doplnky.googlecode.com'
@@ -84,6 +86,7 @@ def JVS_top():
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by'), True)
 
      
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -108,8 +111,8 @@ def JVS_vk(url):
     for i in info:
         dri.append((i.a['href'], i.a.string.strip().encode('utf8')))
         
-    print drt
-    print dri
+#    print drt
+#    print dri
     for href, title in dri:
         img = drt[href]
         dbg_log('-HREF %s'%href)
@@ -161,11 +164,13 @@ def JVS_list(url, page):
     xbmcplugin.endOfDirectory(pluginhandle) 
 
 def JVS_rfpl(url, page):
-    dbg_log('-JVS_list:' + '\n')
+    dbg_log('-JVS_rfpl:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     
     http = get_url(url + page + '/')
+    
+    
     
     i = 0
 
@@ -199,6 +204,70 @@ def JVS_rfpl(url, page):
         dbg_log('- uri:'+  uri + '\n')        
      
     xbmcplugin.endOfDirectory(pluginhandle) 
+    
+    
+def JVS_pbtvtop():
+    dbg_log('-JVS_pbyvtop:' + '\n')
+    
+    pbtop = [   ("Прессбол-TV", "/tv/search/tag?q=222-pressbol-TV&TvVideo_page="),
+                ("Футбол", "/tv/search/tag?q=41-futbol&TvVideo_page="),
+                ("Чемпионат Беларуси", "/tv/search/tag?q=319-chempionat-belarusi&TvVideo_page="),
+                ("Опять по пятницам", "/tv/search/tag?q=264-opyat'-po-pyatnicam&TvVideo_page="),
+                ("На футболе", "/tv/streams/36&TvVideo_page="),
+                ("Судите с нами", "/tv/search/tag?q=267-sudite-s-nami&TvVideo_page=") ] 
+
+    for title, url in pbtop:
+        xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtv&url=' + urllib.quote_plus(pbtv_start + url), xbmcgui.ListItem(title), True)
+     
+    xbmcplugin.endOfDirectory(pluginhandle)
+        
+def JVS_pbtv(url, page):
+    dbg_log('-JVS_pbtv:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- page:'+  page + '\n')
+    
+    
+    http = get_url(url + page)
+    
+    i = 0
+
+    panels = BeautifulSoup(http).findAll('div',{"class":"item"})
+    
+    for panel in panels:
+#        print panel
+        psoup = BeautifulSoup(str(panel))
+        try:
+            href = re.compile("href='(.*?)'").findall(str(panel))[0]
+        except:
+            href = re.compile('href="(.*?)"').findall(str(panel))[0]
+#        href = str(psoup.a['href'])
+        try:
+            title = re.compile("alt='(.*?)'").findall(str(psoup.img))[0]
+        except:
+            title = re.compile('alt="(.*?)"').findall(str(psoup.img))[0]
+        img  = pbtv_start + str(psoup.img['src'])
+
+        if title != "":
+            dbg_log('-HREF %s'%href)
+            dbg_log('-IMG %s'%img)
+            dbg_log('-TITLE %s'%title)
+            
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+            uri = sys.argv[0] + '?mode=playpbtv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
+            dbg_log('- uri:'+  uri + '\n')
+            i = i + 1
+    
+    next = BeautifulSoup(http).findAll('li',{"class":"next"})
+
+    if next :
+        item = xbmcgui.ListItem('<NEXT PAGE>')
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=pbtv&url=' + urllib.quote_plus(rfpl_pg)
+        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
+        dbg_log('- uri:'+  uri + '\n')
+     
+    xbmcplugin.endOfDirectory(pluginhandle)     
 
 def get_VK(url):
     html = get_url(url)
@@ -324,11 +393,11 @@ def JVS_show(url, name):
         if 'cityadspix' not in href:
             try:
                 rsrc = re.compile('//(.*?)/').findall(href)
-                print rsrc
+                dbg_log(' - rsrc:' + rsrc)
                 lsrc = rsrc[0].split('.')
-                print lsrc
+                dbg_log(' - lsrc:' + lsrc)
                 lens = len(lsrc)
-                print lens
+                dbg_log(' - lens:' + lens)
                 if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
                 else: title = name
             except: title = name
@@ -352,19 +421,17 @@ def JVS_showrfpl(url, name):
 
     entrys = re.compile('<a data-players-url="(.*?)">(.*?)</a>').findall(http)
     
-    print entrys
-    
     for href, pname in entrys:
         img = rfpl_icon
         dbg_log('-HREF %s'%href)
         
         try:
             rsrc = re.compile('//(.*?)/').findall(href)
-            print rsrc
+            dbg_log(' - rsrc:' + rsrc)
             lsrc = rsrc[0].split('.')
-            print lsrc
+            dbg_log(' - lsrc:' + lsrc)
             lens = len(lsrc)
-            print lens
+            dbg_log(' - lens:' + lens)
             if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
             else: title = name
         except: title = name
@@ -414,6 +481,29 @@ def JVS_play(url, title):
         except: name = title
         item = xbmcgui.ListItem(label=name, path = uri)
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        
+def JVS_playpbtv(url, title):
+    url = url.replace('&amp;', '&')
+        
+    dbg_log('-JVS_playpbtv:'+ '\n')
+    dbg_log('- url:'+  url + '\n')
+    
+    http = get_url(url)
+    uri = pbtv_start + re.compile('file: "(.*?)"').findall(http)[0]
+    
+    dbg_log('- uri: '+  uri + '\n')
+    name = title
+    item = xbmcgui.ListItem(label=name, path = uri)
+#    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    
+    sPlayList   = xbmc.PlayList(xbmc.PLAYLIST_VIDEO) 
+    sPlayer     = xbmc.Player()
+    sPlayList.clear()
+    item.setProperty('mimetype', 'video/x-msvideo')
+    item.setProperty('IsPlayable', 'true')
+    item.setInfo( type='video', infoLabels={'title': name})
+    sPlayList.add(uri, item, 0)
+    sPlayer.play(sPlayList)
 
 def uni2enc(ustr):
     raw = ''
@@ -452,7 +542,10 @@ if mode == '': JVS_top()
 #if mode == '': JVS_list(url, page)
 elif mode == 'list': JVS_list(url, page)
 elif mode == 'rfpl': JVS_rfpl(url, page)
+elif mode == 'pbtvtop': JVS_pbtvtop()
+elif mode == 'pbtv': JVS_pbtv(url, page)
 elif mode == 'play': JVS_play(url, name)
+elif mode == 'playpbtv': JVS_playpbtv(url, name)
 elif mode == 'show': JVS_show(url, name)
 elif mode == 'showrfpl': JVS_showrfpl(url, name)
 elif mode == 'mail': JVS_mail(url)
