@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
 import urllib,urllib2,re,sys
@@ -82,11 +82,11 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by'), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me', thumbnailImage=rfpl_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by', thumbnailImage=pbtv_icon), True)
 
      
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -213,7 +213,7 @@ def JVS_pbtvtop():
                 ("Футбол", "/tv/search/tag?q=41-futbol&TvVideo_page="),
                 ("Чемпионат Беларуси", "/tv/search/tag?q=319-chempionat-belarusi&TvVideo_page="),
                 ("Опять по пятницам", "/tv/search/tag?q=264-opyat'-po-pyatnicam&TvVideo_page="),
-                ("На футболе", "/tv/streams/36&TvVideo_page="),
+                ("На футболе", "/tv/streams/36?TvVideo_page="),
                 ("Судите с нами", "/tv/search/tag?q=267-sudite-s-nami&TvVideo_page=") ] 
 
     for title, url in pbtop:
@@ -236,16 +236,21 @@ def JVS_pbtv(url, page):
     for panel in panels:
 #        print panel
         psoup = BeautifulSoup(str(panel))
+        
+        sref = str(panel).replace('\r','').replace('\n','')
+#        print sref
         try:
-            href = re.compile("href='(.*?)'").findall(str(panel))[0]
+            href = re.compile("href='(.*?)'").findall(sref)[0].strip()
         except:
-            href = re.compile('href="(.*?)"').findall(str(panel))[0]
+            href = re.compile('href="(.*?)"').findall(sref)[0].strip()
 #        href = str(psoup.a['href'])
+        salt = str(psoup.img).replace('\r','').replace('\n','')
         try:
-            title = re.compile("alt='(.*?)'").findall(str(psoup.img))[0]
+            title = re.compile("alt='(.*?)'").findall(salt)[0].strip()
         except:
-            title = re.compile('alt="(.*?)"').findall(str(psoup.img))[0]
-        img  = pbtv_start + str(psoup.img['src'])
+            title = re.compile('alt="(.*?)"').findall(salt)[0].strip()
+            
+        img  = pbtv_start + str(psoup.img['src']).replace('\r','').replace('\n','').strip()
 
         if title != "":
             dbg_log('-HREF %s'%href)
@@ -263,7 +268,7 @@ def JVS_pbtv(url, page):
 
     if next :
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=pbtv&url=' + urllib.quote_plus(rfpl_pg)
+        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=pbtv&url=' + urllib.quote_plus(url)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
      
@@ -393,11 +398,11 @@ def JVS_show(url, name):
         if 'cityadspix' not in href:
             try:
                 rsrc = re.compile('//(.*?)/').findall(href)
-                dbg_log(' - rsrc:' + rsrc)
+#                print rsrc
                 lsrc = rsrc[0].split('.')
-                dbg_log(' - lsrc:' + lsrc)
+#                print lsrc
                 lens = len(lsrc)
-                dbg_log(' - lens:' + lens)
+#                print lens
                 if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
                 else: title = name
             except: title = name
@@ -427,11 +432,11 @@ def JVS_showrfpl(url, name):
         
         try:
             rsrc = re.compile('//(.*?)/').findall(href)
-            dbg_log(' - rsrc:' + rsrc)
+#            print rsrc
             lsrc = rsrc[0].split('.')
-            dbg_log(' - lsrc:' + lsrc)
+#            print lsrc
             lens = len(lsrc)
-            dbg_log(' - lens:' + lens)
+#            print lens
             if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
             else: title = name
         except: title = name
@@ -483,8 +488,9 @@ def JVS_play(url, title):
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
         
 def JVS_playpbtv(url, title):
-    url = url.replace('&amp;', '&')
-        
+    url = urllib.unquote_plus(url.replace('&amp;', '&'))
+    if pbtv_start not in url:
+        url = pbtv_start + url
     dbg_log('-JVS_playpbtv:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     
