@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.3.1
+# Rev. 0.3.2
 
 
 import urllib,urllib2,re,sys
@@ -153,11 +153,11 @@ def JVS_list(url, page):
 
     if i :
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1)
+        uri = sys.argv[0] + '?mode=list&page=' + str(int(page) + 1)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')
         item = xbmcgui.ListItem('<NEXT PAGE +5>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 5)
+        uri = sys.argv[0] + '?mode=list&page=' + str(int(page) + 5)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:'+  uri + '\n')        
      
