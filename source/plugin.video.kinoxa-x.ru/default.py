@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.5.4
+# Rev. 0.5.5
 
 
 import urllib,urllib2,re,sys
@@ -248,7 +248,7 @@ def KNX_play(url):
     
     http = get_url(url)
 #    print http
-    iframes = re.compile('<iframe (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
+    iframes = re.compile('<iframe class="prerolllvid" (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
     
 #    print iframes[0][1]
     
