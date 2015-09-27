@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.0
+# Rev. 1.2.5
 
-import os, sys, time
+import os, sys
 import xbmc, xbmcaddon, xbmcgui
 from pyxbmct.addonwindow import *
 
@@ -17,8 +17,6 @@ __addon_lng__ = __addon__ .getLocalizedString
 _SERVICE_ID_ = 'script.service.rodina.tv'
 _RODINA_ID_ = 'plugin.video.rodina.tv'
 
-tt = 0
-
 def log(message, level = 1):
     print '[%s LOG]: %s' % (__addonname__, message.encode('utf8'))
 
@@ -31,26 +29,6 @@ class RodinaService:
 
     def _daemon(self):
         while not xbmc.abortRequested:
-            global tt
-            dt = 60 * 60 * 6
-            nt = time.time()
-#            if tt == 0: tt = nt - dt - 2
-                
-            if nt - tt >= dt:
-                try:
-                    if not xbmc.Player().isPlaying():
-
-                        log('Getting playlist')
-                        params = 'mode=playlist'
-                        script = 'special://home/addons/%s/default.py' % 'plugin.video.rodina.tv'
-                        xbmc.executebuiltin('XBMC.RunScript(%s, %d, %s)' % (script, 99, params))
-
-                        
-                        tt = nt
-                except:
-                    log('ERROR playlist/epg update')
-                    tt = 0
-
             xbmc.sleep(1000)
 
         log('abort requested')

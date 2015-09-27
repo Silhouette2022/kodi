@@ -15,10 +15,4 @@
 		<setting id="serial" type="text" label="serial" default="" visible="false" />
 		<setting id="arch_on" type="bool" label="arch_on" default="" visible="false" />
 	</category>
-	<category label="11020">
-		<setting id="rplist" type="text" label="11021" default=""/>
-		<setting id="tfolder" type="folder" label="11022" default=""/>
-		<setting id="tplist" type="text" label="11023" default=""/>
-		<setting id="tepg" type="text" label="11024" default=""/>
-	</category>	
 </settings>

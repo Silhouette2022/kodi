@@ -1,4 +1,6 @@
-[B]2.7.4[/B]
+[B]3.0.0[/B]
+playlist support
+[B]2.7.5[/B]
 added ability to watch archive 5 mins after start
 [B]2.7.4[/B]
 added hidden variable to syncronize to service script
