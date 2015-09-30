@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.0
+# Rev. 2.0.1
 
 import os, sys, time
 import xbmc, xbmcaddon, xbmcgui
@@ -34,7 +34,7 @@ class RodinaService:
             global tt
             dt = 60 * 60 * 3
             nt = time.time()
-            if tt == 0: tt = nt - dt + 20
+#             if tt == 0: tt = nt - dt + 20
             if nt - tt >= dt:
                 try:
                     if not xbmc.Player().isPlaying():

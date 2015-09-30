@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.1
-
-_REVISION_ = '3.0.1'
+# Rev. 3.0.2
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -537,6 +535,7 @@ class RodinaTV():
         self.icon = self.addon.getAddonInfo('icon')
         self.fanart = self.addon.getAddonInfo('fanart')
         self.profile = self.addon.getAddonInfo('profile')
+        self.version = self.addon.getAddonInfo('profile')
 
         self.language = self.addon.getLocalizedString
 
@@ -592,6 +591,8 @@ class RodinaTV():
         self.cache_fav = xbmc.translatePath('special://temp/' + 'rodinatvf.tmp')
         self.cache_epvr = xbmc.translatePath('special://temp/' + 'rodina_tv_epg')
         
+        try: self.plenable = self.addon.getSetting('plenable')
+        except: self.plenable = 'false'
         try: self.rplist = self.addon.getSetting('rplist')
         except: self.rplist = ''
         try: self.tplist = self.addon.getSetting('tplist')
@@ -659,12 +660,16 @@ class RodinaTV():
 #                        '7' : '[COLOR FFC0C0C0]' + self.language(22017) + '[/COLOR]',
 #                        '8' : '[COLOR FFFFFFFF]' + self.language(22018) + '[/COLOR]' }
 
-
-        self.debug = True
-        self.dbg_level = 1
+        try: self.debug = True if self.addon.getSetting('dbg') == 'true' else False
+        except: self.debug = True
+        try: 
+            self.dbg_level = int(self.addon.getSetting('dbglvl'))
+        except: self.dbg_level = 1
+#         self.debug = True
+#         self.dbg_level = 1
         common.dbg = self.debug
         
-        self.log('%s %s'%('Rev.', _REVISION_), 0)
+        self.log('%s %s'%('Rev.', self.version), 0)
         
         self.init_icons()
         
@@ -1010,7 +1015,8 @@ class RodinaTV():
         
     def getUrlPage(self, link, max=5):
         self.log("-getUrlPage:")
-        self.token = self.addon.getSetting('token')
+        if self.token == '':
+            self.token = self.addon.getSetting('token')
         resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
         cycle = 0
         while self.get_auth == True:
@@ -2186,6 +2192,9 @@ class RodinaTV():
     def repg(self):
         self.log("-repg:")
 
+        if self.plenable != 'true': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        
         chan_ls = []
 
         resp = self.cached_get('tv')
@@ -2253,13 +2262,23 @@ class RodinaTV():
     def playlist(self):
         self.log("-playlist:")
         
+        if self.plenable != 'true': return
         if self.rplist == '' or self.tplist == '' or self.tepg == '': return
         
+        xbmc.executebuiltin('XBMC.StopPVRManager')
+        xbmc.executebuiltin('XBMC.Playlist.Clear')
+        
+        xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Started playlist update', str(3 * 1000)))
+
         self.authorize()
-#         self.token = self.addon.getSetting('token')
+        if self.get_auth == True:
+            self.error('Authorization failed')
+            return
         
         self.repg()
         
+#         xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Started M3U update', str(3 * 1000)))
+
         name_dic = {}
         cat_dic = {}
         resp = self.cached_get('tv')
@@ -2324,7 +2343,6 @@ class RodinaTV():
                             numb = re.compile('list/m3u/(.*?)/').findall(lines[i])[0]
                             ls = name_dic[numb]
                             ilinks = ls[2].encode('utf8').rsplit('/',1)
-                            print ilinks
                             if len(ilinks) > 1: 
                                 iname = ilinks[1]
                                 ipath = ilinks[0] + '/'
@@ -2352,13 +2370,18 @@ class RodinaTV():
                 cf.close()
                 self.log("Updated M3U", 1)
                 
-                xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Playlists updated', str(3 * 1000)))
+                xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Playlist updated', str(3 * 1000)))
                 
             else:
                 self.showErrorMessage('RodinaTV: Playlist update failed')
+                
+        xbmc.executebuiltin('XBMC.StartPVRManager')
+        
+        
     def reload(self):
         self.log("-reload:")
 
+        xbmc.executebuiltin('XBMC.StopPVRManager')
         xbmc.executebuiltin('XBMC.Playlist.Clear')
         xbmc.sleep(1500)
         xbmc.executebuiltin('XBMC.StartPVRManager')
@@ -2367,6 +2390,9 @@ class RodinaTV():
     def autotune(self):
         self.log("-autotune:")
 
+        if self.plenable != 'true': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        
         try:
             iptv_addon = xbmcaddon.Addon(id='pvr.iptvsimple')
         except:

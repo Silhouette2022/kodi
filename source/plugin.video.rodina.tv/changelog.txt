@@ -1,3 +1,5 @@
+[B]3.0.1[/B]
+Settings translations and other tuneup for playlist support
 [B]3.0.0[/B]
 IPTV Simple Automation
 [B]3.0.0[/B]

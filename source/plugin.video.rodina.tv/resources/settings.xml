@@ -16,14 +16,19 @@
 		<setting id="arch_on" type="bool" label="arch_on" default="" visible="false" />
 	</category>
 	<category label="11020">
-		<setting id="rplist" type="text" label="11021" default=""/>
-		<setting id="tfolder" type="folder" label="11022" default=""/>
-		<setting id="tplist" type="text" label="11023" default=""/>
-		<setting id="tepg" type="text" label="11024" default=""/>
-		<setting id="tlogo" type="text" label="tlogo" default="" visible="false" />
-		<setting label="Click on messages to perform following actions" type="lsep"/>
-		<setting label="    *** Force Update of m3u/xml files ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=playlist)"/>
-		<setting label="    *** Autotune PVR IPTV Simple addon ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=autotune)"/>
-		<setting label="    *** Force IPTV Simple reload ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=reload)"/>
+		<setting id="plenable" type="bool" label="11025" default="false"/>
+		<setting id="rplist" type="text" label="11021" default="" enable="eq(-1,true)"/>
+		<setting id="tfolder" type="folder" label="11022" default="" enable="eq(-2,true)"/>
+		<setting id="tplist" type="text" label="11023" default="" enable="eq(-3,true)"/>
+		<setting id="tepg" type="text" label="11024" default="" enable="eq(-4,true)"/>
+		<setting id="tlogo" type="text" label="tlogo" default="" visible="false"  enable="eq(-5,true)"/>
+		<setting label="11026" type="lsep"/>
+		<setting label="11027" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=playlist)" enable="eq(-7,true)"/>
+		<setting label="11028" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=autotune)" enable="eq(-8,true)"/>
+		<setting label="11029" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=reload)"/>
 	</category>	
+	<category label="11030">
+		<setting id="dbg" type="bool" label="11031" default="true"/>
+		<setting id="dbglvl" type="labelenum" values="1|2|3|4|5" label="11032" default="1" enable="eq(-1,true)"/>	
+	</category>		
 </settings>
