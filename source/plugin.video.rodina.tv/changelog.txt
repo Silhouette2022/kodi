@@ -1,4 +1,6 @@
 [B]3.0.0[/B]
+IPTV Simple Automation
+[B]3.0.0[/B]
 playlist support
 [B]2.7.5[/B]
 added ability to watch archive 5 mins after start

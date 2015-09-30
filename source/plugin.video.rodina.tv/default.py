@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.0
+# Rev. 3.0.1
 
-_REVISION_ = '3.0.0'
+_REVISION_ = '3.0.1'
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -39,7 +39,7 @@ class Helpers():
         self.plugin = u"Helpers-" + self.version
         self.USERAGENT = u"Mozilla/5.0 (Windows NT 6.2; Win64; x64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1"
         self.dbg = False
-        self.dbglevel = 3
+        self.dbglevel = 1
 
         # This function raises a keyboard for user input
     def getUserInput(self, title=u"Input", default=u"", hidden=False):
@@ -854,6 +854,10 @@ class RodinaTV():
             self.repg()
         elif self.mode == 'playlist':
             self.playlist()
+        elif self.mode == 'autotune':
+            self.autotune()
+        elif self.mode == 'reload':
+            self.reload()
         else:
             self.m_main()
 
@@ -2183,7 +2187,7 @@ class RodinaTV():
         self.log("-repg:")
 
         chan_ls = []
-        self.authorize()
+
         resp = self.cached_get('tv')
         if resp != None:
             d_epg = self.epg2dict(self.cached_get('epvr'))
@@ -2220,8 +2224,8 @@ class RodinaTV():
                         
             cf.write('<?xml version="1.0" encoding="utf-8" ?>\n<tv>\n')
             for number, title, icon in chan_ls:
-#                cf.write( '    <channel id="%s">\n'%number)
-                cf.write( '    <channel id="%s">\n'%title.encode('utf8'))
+                cf.write( '    <channel id="%s">\n'%number.encode('utf8'))
+#                 cf.write( '    <channel id="%s">\n'%title.encode('utf8'))
                 cf.write( '        <display-name>%s</display-name>\n'%title.encode('utf8'))
                 cf.write( '        <icon src="%s"/>\n'%icon.encode('utf8'))
                 cf.write( '    </channel>\n')
@@ -2230,7 +2234,7 @@ class RodinaTV():
                 try:
                     lepg = d_epg[number]
                     for ebgn, eend, ename, edescr, pid, rec, utstart, utstop, cutstart in lepg:
-                        cf.write( '    <programme start="%s" stop="%s" channel="%s">\n'%(time.strftime("%Y%m%d%H%M%S %z",time.localtime(float(utstart))),time.strftime("%Y%m%d%H%M%S %z",time.localtime(float(utstop))),title.encode('utf8')))
+                        cf.write( '    <programme start="%s" stop="%s" channel="%s">\n'%(time.strftime("%Y%m%d%H%M%S %z",time.localtime(float(utstart))),time.strftime("%Y%m%d%H%M%S %z",time.localtime(float(utstop))),number.encode('utf8')))
                         cf.write( '        <title lang="ru">%s</title>\n'%ename.encode('utf8'))
                         if edescr != "":
                             cf.write( '        <desc lang="ru">%s</desc>\n'%edescr.encode('utf8'))
@@ -2240,13 +2244,19 @@ class RodinaTV():
 
             cf.write('</tv>\n')
             cf.close()
+            self.log("Updated EPG", 1)
             
+        else:
+            self.showErrorMessage('RodinaTV: EPG update failed')
         return
 
     def playlist(self):
         self.log("-playlist:")
         
         if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        
+        self.authorize()
+#         self.token = self.addon.getSetting('token')
         
         self.repg()
         
@@ -2280,9 +2290,12 @@ class RodinaTV():
                     except: title = ''
                     try: number = common.parseDOM(raw, "item", attrs={"name": "number"})[0]
                     except: number = ''
+                    try: icon = common.parseDOM(raw, "item", attrs={"name": "default"})[0]
+                    except: icon = ''
                     if number != '' and title != '':
                         name_ls.append(title)
                         name_ls.append(cat_dic[cat])
+                        name_ls.append(icon)
                         name_dic[number] = name_ls
                         self.log("number=%s,title=%s,cat=%s"%(number,title,cat_dic[cat]), 4)
                         
@@ -2295,7 +2308,7 @@ class RodinaTV():
             try: 
                 flink = re.compile('http(.*?).m3u').findall(rlink["content"])[0]
             except: 
-                self.showErrorMessage('Playlist update failed')
+                self.showErrorMessage('RodinaTV: Playlist update failed')
                 return
             
             fplist = common.fetchPage({"link": 'http' + flink + '.m3u'})
@@ -2303,17 +2316,31 @@ class RodinaTV():
             if fplist["status"] == 200:
                 lines = fplist["content"].split('\n')
                 if len(lines) != 0: cf = open(self.tplist, 'w')
+                tlogo = self.addon.getSetting('tlogo')
                 for i in xrange(len(lines)):
                     if lines[i].startswith('#EXTINF:'):
-                        i += 1
-                        try:
+                            i += 1
+#                         try:
                             numb = re.compile('list/m3u/(.*?)/').findall(lines[i])[0]
                             ls = name_dic[numb]
-#                            cf.write('#EXTINF:-1 tvg-id="%s" group-title="%s",%s\n'%(numb.encode('utf8'), ls[1].encode('utf8'), ls[0].encode('utf8')))
-                            cf.write('#EXTINF:-1 group-title="%s",%s\n'%(ls[1].encode('utf8'), ls[0].encode('utf8')))
-                        except:
-                            cf.write(lines[i-1] + '\n')  
-                            cf.write(lines[i] + '\n')
+                            ilinks = ls[2].encode('utf8').rsplit('/',1)
+                            print ilinks
+                            if len(ilinks) > 1: 
+                                iname = ilinks[1]
+                                ipath = ilinks[0] + '/'
+                                if tlogo != ipath:
+                                    tlogo = ipath
+                                    self.addon.setSetting('tlogo', tlogo)
+                                    
+                            else:
+                                iname = ls[2].encode('utf8')
+                                
+                            cf.write('#EXTINF:%s tvg-id="%s" group-title="%s" tvg-logo="%s",%s\n'%
+                                     (numb.encode('utf8'), numb.encode('utf8'), ls[1].encode('utf8'),
+                                       iname, ls[0].encode('utf8')))
+#                         except:
+#                             cf.write(lines[i-1] + '\n')  
+
                     else:
                         cf.write(lines[i] + '\n')
                     
@@ -2323,8 +2350,60 @@ class RodinaTV():
                     
                 
                 cf.close()
+                self.log("Updated M3U", 1)
                 
+                xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Playlists updated', str(3 * 1000)))
+                
+            else:
+                self.showErrorMessage('RodinaTV: Playlist update failed')
+    def reload(self):
+        self.log("-reload:")
 
-       
+        xbmc.executebuiltin('XBMC.Playlist.Clear')
+        xbmc.sleep(1500)
+        xbmc.executebuiltin('XBMC.StartPVRManager')
+        xbmc.sleep(1500)
+        
+    def autotune(self):
+        self.log("-autotune:")
+
+        try:
+            iptv_addon = xbmcaddon.Addon(id='pvr.iptvsimple')
+        except:
+            self.showErrorMessage("RodinaTV: PVR IPTV Simple isn't found")
+            return
+    
+        iptv_path = os.path.join(xbmc.translatePath('special://home').decode('utf-8'),'userdata','addon_data','pvr.iptvsimple')
+        iptv_data = '<settings>\n' \
+        + '<setting id="epgCache" value="false" />\n' \
+        + '<setting id="epgPath" value="' + self.tepg + '" />\n' \
+        + '<setting id="epgPathType" value="0" />\n' \
+        + '<setting id="epgTSOverride" value="false" />\n' \
+        + '<setting id="epgTimeShift" value="0.000000" />\n' \
+        + '<setting id="epgUrl" value=""/>\n' \
+        + '<setting id="logoBaseUrl" value="' + self.addon.getSetting('tlogo') + '"/>\n' \
+        + '<setting id="logoPath" value="" />\n' \
+        + '<setting id="logoPathType" value="1" />\n' \
+        + '<setting id="logoUrl" value="' + self.addon.getSetting('tlogo') + '"/>\n' \
+        + '<setting id="m3uCache" value="false" />\n' \
+        + '<setting id="m3uPath" value="' + self.tplist + '" />\n' \
+        + '<setting id="m3uPathType" value="0" />\n' \
+        + '<setting id="m3uUrl" value=""/>\n' \
+        + '<setting id="sep1" value="" />\n' \
+        + '<setting id="sep2" value="" />\n' \
+        + '<setting id="sep3" value="" />\n' \
+        + '<setting id="startNum" value="1" />\n' \
+        + '</settings>'
+
+        if not os.path.exists(iptv_path):
+            os.mkdir(iptv_path)
+        if os.path.exists(iptv_path):
+            setSimFile = open(os.path.join(iptv_path, 'settings.xml'),'w')
+            setSimFile.write(iptv_data)
+            setSimFile.close()
+            
+            xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'IPTV Simple updated', str(3 * 1000)))
+
+
 rodina = RodinaTV()
 rodina.main()        

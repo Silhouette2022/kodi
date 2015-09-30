@@ -32,10 +32,9 @@ class RodinaService:
     def _daemon(self):
         while not xbmc.abortRequested:
             global tt
-            dt = 60 * 60 * 6
+            dt = 60 * 60 * 3
             nt = time.time()
-#            if tt == 0: tt = nt - dt - 2
-                
+            if tt == 0: tt = nt - dt + 20
             if nt - tt >= dt:
                 try:
                     if not xbmc.Player().isPlaying():

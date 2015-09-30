@@ -20,5 +20,10 @@
 		<setting id="tfolder" type="folder" label="11022" default=""/>
 		<setting id="tplist" type="text" label="11023" default=""/>
 		<setting id="tepg" type="text" label="11024" default=""/>
+		<setting id="tlogo" type="text" label="tlogo" default="" visible="false" />
+		<setting label="Click on messages to perform following actions" type="lsep"/>
+		<setting label="    *** Force Update of m3u/xml files ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=playlist)"/>
+		<setting label="    *** Autotune PVR IPTV Simple addon ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=autotune)"/>
+		<setting label="    *** Force IPTV Simple reload ***" type="action" action="RunScript(plugin.video.rodina.tv, 99, mode=reload)"/>
 	</category>	
 </settings>
