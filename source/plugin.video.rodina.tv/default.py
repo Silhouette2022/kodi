@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.3
+# Rev. 3.0.4
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -394,7 +394,7 @@ class Helpers():
         try:
             self.log("connecting to server...", 1)
 
-            con = urllib2.urlopen(request)
+            con = urllib2.urlopen(request,timeout=30)
             ret_obj["header"] = con.info()
             ret_obj["new_url"] = con.geturl()
             if get("no-content", "false") == u"false" or get("no-content", "false") == "false":
@@ -1148,7 +1148,7 @@ class RodinaTV():
         req = self.portal + '?query=%s' % ('get_client_info')
         resp = self.getUrlPage( req)
         if resp != None:
-            if self.debug: print resp
+            if self.debug and self.dbg_level > 2: print resp
   
     def get_settings(self):
         self.log("-get_settings:")
@@ -1156,7 +1156,7 @@ class RodinaTV():
         req = self.portal + '?query=%s' % ('get_settings')
         resp = self.getUrlPage( req)
         if resp != None:
-            if self.debug: print resp
+            if self.debug and self.dbg_level > 2: print resp
                     
     def get_tstatus(self):
         self.log("-get_tstatus:")
@@ -2200,9 +2200,9 @@ class RodinaTV():
         
         chan_ls = []
 
-        resp = self.cached_get('tv', 500)
+        resp = self.cached_get('tv', 50)
         if resp != None:
-            d_epg = self.epg2dict(self.cached_get('epvr', 500))
+            d_epg = self.epg2dict(self.cached_get('epvr', 50))
             a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
             
             cf = open(self.tepg, 'w')
@@ -2261,7 +2261,7 @@ class RodinaTV():
             xbmc.sleep(500)
 
         xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % \
-        ("RodinaTV", 'Started playlist update...', str(15 * 1000), self.icon))
+        ("RodinaTV", 'Started playlist update...', str(30 * 1000), self.icon))
 
         cycle = 0
         self.authorize()
@@ -2280,7 +2280,7 @@ class RodinaTV():
 
         name_dic = {}
         cat_dic = {}
-        resp = self.cached_get('tv', 500)
+        resp = self.cached_get('tv', 50)
         if resp != None:
             a_cat = common.parseDOM(resp, "array", attrs={"name": "categories"})
             for cat in a_cat:
@@ -2370,7 +2370,7 @@ class RodinaTV():
                 self.log("Updated M3U", 1)
                 
                 xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % \
-                    ("RodinaTV", 'Playlist updated', str(3 * 1000), self.icon))
+                    ("RodinaTV", 'Playlist updated', str(5 * 1000), self.icon))
                 
             else:
                 self.showErrorMessage('RodinaTV: Playlist update failed')
@@ -2435,7 +2435,7 @@ class RodinaTV():
             setSimFile.write(iptv_data)
             setSimFile.close()
             
-            xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'IPTV Simple updated', str(3 * 1000)))
+            xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'IPTV Simple updated', str(5 * 1000)))
     
     def pvr_playlist(self):
         self.log("-prv_playlist:")

@@ -1,10 +1,11 @@
-[B]3.0.1[/B]
+[B]3.0.4[/B]
+Increased timeout for http calls
+[B]3.0.3[/B]
 Rearranged playlist scripts and delay between calls
 [B]3.0.2[/B]
 Bug fix
 [B]3.0.1[/B]
 Settings translations and other tuneup for playlist support
-[B]3.0.0[/B]
 IPTV Simple Automation
 [B]3.0.0[/B]
 playlist support
