@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.4
+# Rev. 3.0.5
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
 
-import os, re, sys, time
+import os, re, sys, time, random
 import urllib, urllib2
 import xbmc, xbmcplugin, xbmcgui, xbmcaddon
 #import uuid
@@ -16,6 +16,10 @@ import hashlib
 #import inspect
 import HTMLParser
 import json
+try:
+    import platform
+except:
+    pass
 
 #try:
 #  sys.path.append(os.path.dirname(__file__)+ '/../script.service.rodina.tv')
@@ -490,7 +494,44 @@ class Helpers():
                     s += i
             self.log(repr(s), 5)
             return s
-
+        
+#     def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+#         req = urllib2.Request(url)
+#        
+#         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
+#         req.add_header('Accept', 'text/html, */*')
+#         req.add_header('Accept-Language', 'en-US,en')
+#     
+#         if cookie: req.add_header('Cookie', cookie)
+#         if referrer: req.add_header('Referer', referrer)
+#         if data: 
+#             response = urllib2.urlopen(req, data)
+#         else:
+#             response = urllib2.urlopen(req)
+#         link=response.read()
+#         if save_cookie:
+#             setcookie = response.info().get('Set-Cookie', None)
+#             if setcookie:
+#                 setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+#                 link = link + '<cookie>' + setcookie + '</cookie>'
+#         
+#         response.close()
+    def get_url(self, url,  referer = None):
+        req = urllib2.Request(url)
+        try:
+            un = platform.uname()
+            req.add_header('User-Agent', 'Mozilla/5.0 (' + un[0] + un[2] + '; rv:' + un[4] + ' ' +un[5] + ') Gecko/20100101 Firefox/' + xbmcaddon.Addon(_ADDOD_ID_).getAddonInfo('version') )
+        except:
+            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
+#           req.add_header('User-Agent', 'Mozilla/5.0 (Windows AMD64; rv:7) Gecko/20100101 RodinaTV/3.0.5')
+#           req.add_header('User-Agent', 'Mozilla/5.0 (Linux x84_64; rv:4.0.4-202.fc21.x86_64) Gecko/20100101 RodinaTV/3.0.5')
+        if referer: req.add_header('Referer', referer)        
+#         req.add_header('Accept', 'text/html, */*')
+#         req.add_header('Accept-Language', 'en-US,en')
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        return link
 
 #    def openFile(self, filepath, options=u"r"):
 #        self.log(repr(filepath) + " - " + repr(options))
@@ -514,6 +555,11 @@ class Helpers():
             except:
                 xbmc.log(u"FALLBACK [%s] : '%s'" % (self.plugin, repr(description)), xbmc.LOGNOTICE)
 
+    def track(self, usr, page, cook):
+        try:
+            gif = self.get_url("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+        except:
+            sels.log("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
 
 common = Helpers()
 common.plugin = "Rodina TV Cmn"
@@ -535,7 +581,7 @@ class RodinaTV():
         self.icon = self.addon.getAddonInfo('icon')
         self.fanart = self.addon.getAddonInfo('fanart')
         self.profile = self.addon.getAddonInfo('profile')
-        self.version = self.addon.getAddonInfo('profile')
+        self.version = self.addon.getAddonInfo('version')
 
         self.language = self.addon.getLocalizedString
 
@@ -546,6 +592,7 @@ class RodinaTV():
 
         self.url = 'http://rodina.tv'
         self.api = 'http://api.rodina.tv'
+        self.kodi = 'http://' + self.version + '.kodi.rodina.tv/'
         self.auth = self.api + '/auth.xml'
         self.get_auth = False
 
@@ -1207,6 +1254,9 @@ class RodinaTV():
         self.cached_rst(self.cache_chan)
         self.cached_rst(self.cache_epg)
         self.cached_rst(self.cache_fav)
+        
+        common.track(self.kodi + self.uid, self.kodi + 'main', self.serial)
+
 
     def m_cat(self, nmode='tv'):
         self.log("-m_cat:")
@@ -1360,7 +1410,7 @@ class RodinaTV():
 
     def tv_play(self, seek = 0):
         self.log("-tv_play:")
-        
+
         if self.has_rec == '0': return
         
         if self.has_pwd == '1': 
@@ -2250,7 +2300,8 @@ class RodinaTV():
 
     def playlist(self):
         self.log("-playlist:")
-        
+        common.track(self.kodi + self.uid, self.kodi + 'playlist', self.serial)
+
         if self.plenable != 'true': return
         if self.rplist == '' or self.tplist == '' or self.tepg == '': return
         if self.serial == '':
@@ -2447,6 +2498,8 @@ class RodinaTV():
     
     def pvr_magic(self):
         self.log("-prv_magic:")
+        common.track(self.kodi + self.uid, self.kodi + 'magic', self.serial)
+
         if self.rplist == '' or self.tfolder == '' \
         or self.tplist == '' or self.tepg == '':
             self.showErrorMessage("RodinaTV: Fill all fields")
