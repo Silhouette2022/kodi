@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.5
+# Rev. 3.0.6
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -2300,7 +2300,6 @@ class RodinaTV():
 
     def playlist(self):
         self.log("-playlist:")
-        common.track(self.kodi + self.uid, self.kodi + 'playlist', self.serial)
 
         if self.plenable != 'true': return
         if self.rplist == '' or self.tplist == '' or self.tepg == '': return
@@ -2311,6 +2310,7 @@ class RodinaTV():
             self.addon.setSetting('serial', self.serial)
             xbmc.sleep(500)
 
+        common.track(self.kodi + self.uid, self.kodi + 'playlist', self.serial)
         xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % \
         ("RodinaTV", 'Started playlist update...', str(30 * 1000), self.icon))
 

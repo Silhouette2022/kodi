@@ -1,4 +1,6 @@
 [B]3.0.5[/B]
+Track bug fix
+[B]3.0.5[/B]
 Log version fix
 [B]3.0.4[/B]
 Increased timeout for http calls
