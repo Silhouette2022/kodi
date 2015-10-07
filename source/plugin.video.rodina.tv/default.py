@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.6
+# Rev. 3.0.7
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
 
-import os, re, sys, time, random
+import os, re, sys, time
 import urllib, urllib2
 import xbmc, xbmcplugin, xbmcgui, xbmcaddon
 #import uuid
@@ -16,10 +16,6 @@ import hashlib
 #import inspect
 import HTMLParser
 import json
-try:
-    import platform
-except:
-    pass
 
 #try:
 #  sys.path.append(os.path.dirname(__file__)+ '/../script.service.rodina.tv')
@@ -518,16 +514,8 @@ class Helpers():
 #         response.close()
     def get_url(self, url,  referer = None):
         req = urllib2.Request(url)
-        try:
-            un = platform.uname()
-            req.add_header('User-Agent', 'Mozilla/5.0 (' + un[0] + un[2] + '; rv:' + un[4] + ' ' +un[5] + ') Gecko/20100101 Firefox/' + xbmcaddon.Addon(_ADDOD_ID_).getAddonInfo('version') )
-        except:
-            req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
-#           req.add_header('User-Agent', 'Mozilla/5.0 (Windows AMD64; rv:7) Gecko/20100101 RodinaTV/3.0.5')
-#           req.add_header('User-Agent', 'Mozilla/5.0 (Linux x84_64; rv:4.0.4-202.fc21.x86_64) Gecko/20100101 RodinaTV/3.0.5')
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
         if referer: req.add_header('Referer', referer)        
-#         req.add_header('Accept', 'text/html, */*')
-#         req.add_header('Accept-Language', 'en-US,en')
         response = urllib2.urlopen(req)
         link=response.read()
         response.close()
@@ -559,7 +547,7 @@ class Helpers():
         try:
             gif = self.get_url("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
         except:
-            sels.log("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+            self.log("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
 
 common = Helpers()
 common.plugin = "Rodina TV Cmn"
@@ -968,7 +956,7 @@ class RodinaTV():
             fn = self.cache_epg
             tt = time.time()
         elif type == 'epvr':
-            cquery = '?query=%s&key="period"&value="%s"' % ('get_epg', 60*60*24)
+            cquery = '?query=%s&key="period"&value="%s"' % ('get_epg', 60*60*12)
             fn = self.cache_epvr
             tt = time.time()
         elif type == 'dtv':
@@ -2302,7 +2290,8 @@ class RodinaTV():
         self.log("-playlist:")
 
         if self.plenable != 'true': return
-        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '' or \
+            self.uid == '' or self.pwd == '': return
         if self.serial == '':
             import uuid
             self.serial = '%s' % uuid.uuid4()
