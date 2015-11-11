@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.3.5
+# Rev. 0.3.6
 
 
 import urllib,urllib2,re,sys
@@ -23,7 +23,7 @@ dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
-start_pg = "http://www.jevonsru.com"
+start_pg = "http://www.jevons1.com"
 page_pg = start_pg + "/reviews/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
@@ -82,7 +82,7 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONSru.com', thumbnailImage=jevs_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS1.com', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me', thumbnailImage=rfpl_icon), True)
