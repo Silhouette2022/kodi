@@ -1,3 +1,5 @@
+[B]3.1.0[/B]
+Added percentage
 [B]3.0.7[/B]
 Playlist EPG redused to 12 hours
 [B]3.0.6[/B]

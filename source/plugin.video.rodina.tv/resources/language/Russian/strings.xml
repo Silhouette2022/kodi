@@ -46,6 +46,7 @@
 	<string id="11010">Управлять режимом просмотра</string>
 	<string id="11011">ТВ программа во 2й линии</string>
 	<string id="11012">Начинать архив с даты</string>
+	<string id="11013">Показывать процент</string>
 	<string id="11020">Плейлист</string>
 	<string id="11021">m3u URL</string>
 	<string id="11022">Папка файлов</string>
@@ -55,6 +56,7 @@
 	<string id="11026">'Волшебный' Скрипт Автонастройки:</string>
 	<string id="11027">*** Принудительное обновление плейлиста, IPTV Simple и PVR ***</string>
 	<string id="11028">Обновить плейлист</string>
+	<string id="11029">Период обновления плейлиста (часов)</string>
 	<string id="11030">Отладка</string>	
 	<string id="11031">Разрешить отладочные записи</string>	
 	<string id="11032">Уровень отладки</string>		

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.2
+# Rev. 2.1.0
 
 import os, sys, time
 import xbmc, xbmcaddon, xbmcgui
@@ -18,6 +18,7 @@ _SERVICE_ID_ = 'script.service.rodina.tv'
 _RODINA_ID_ = 'plugin.video.rodina.tv'
 
 tt = 0
+asking = False
 
 def log(message, level = 1):
     print '[%s LOG]: %s' % (__addonname__, message.encode('utf8'))
@@ -30,16 +31,20 @@ class RodinaService:
         self._daemon()
 
     def _daemon(self):
+        global asking
         while not xbmc.abortRequested:
-            runpl = False
+            plrun = False
+            pldelta = 3
             try:
                 if xbmcaddon.Addon(_RODINA_ID_).getSetting('plenable') == 'true':
-                    runpl = True
+                    plrun = True
+                pldelta = int(xbmcaddon.Addon(_RODINA_ID_).getSetting('pldelta'))
             except: pass
             
-            if runpl:
+            if plrun and not asking:
                 global tt
-                dt = 60 * 60 * 3
+                asking = True
+                dt = 60 * 60 * pldelta
                 nt = time.time()
     #             if tt == 0: tt = nt - dt + 20
                 if nt - tt >= dt:
@@ -56,6 +61,7 @@ class RodinaService:
                     except:
                         log('ERROR playlist/epg update')
                         tt = 0
+                asking = False
 
             xbmc.sleep(1000)
 
