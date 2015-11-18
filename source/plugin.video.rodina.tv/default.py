@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.1.0
+# Rev. 3.1.1
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -671,8 +671,10 @@ class RodinaTV():
         
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
-        try: self.view_percent = self.addon.getSetting('view_percent')
-        except: self.view_percent = 'false'
+        try: self.use_percent = self.addon.getSetting('use_percent')
+        except: self.use_percent = 'false'
+        try: self.use_time = self.addon.getSetting('use_time')
+        except: self.use_time = 'true'        
         self.serial = self.addon.getSetting('serial')
         self.token = self.addon.getSetting('token')
         self.view_date = self.addon.getSetting('view_date')
@@ -1388,13 +1390,16 @@ class RodinaTV():
                                 title2nd = ''
                                 pcent = -1
                                 for ebgn, eend, ename, edescr, pid, rec, utstart, utstop, cutstart in lepg:
-                                    if self.view_percent == 'true' and pcent == -1:
-#                                        pcent1 = (self.timeserver - float(cutstart)) * 100
-#                                        pcent2 = float(utstop) - float(utstart)
-                                        pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
-                                        title += '  -  [COLOR FF008866][%d %%][/COLOR]' % pcent
+#                                    if self.view_percent == 'true' and pcent == -1:
+#                                        pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
+#                                        title += '  -  [COLOR FF008866][%d %%][/COLOR]' % pcent
                                     if self.view_epg == 'true' and title2nd == '':
-                                        title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
+                                        if self.use_percent == 'true':
+                                            pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
+                                            title2nd = '[COLOR FF00BB66][%d %%][/COLOR]' % pcent
+                                        if self.use_time == 'true':
+                                            title2nd += ' [COLOR FF0084FF]%s-%s[/COLOR]' % (ebgn, eend)
+                                        title2nd += ' %s' % ename
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
                                     
                             except: pass
