@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.1.1
+# Rev. 3.2.0
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -652,21 +652,38 @@ class RodinaTV():
                        'low'   : '148',
                        'hls'   : '140'
                       }
-        self.br = self.br_lib[self.addon.getSetting('br')]
+        try:
+            self.br = self.br_lib[self.addon.getSetting('br')]
+        except:
+            if self.addon.getSetting('br') == 'high':
+                self.br = self.br_lib['Стандарт']
+                self.addon.setSetting('br', 'Стандарт')
+            elif self.addon.getSetting('br') == 'hls':
+                self.br = self.br_lib['HLS Авто']
+                self.addon.setSetting('br', 'HLS Авто')
+            else:
+                self.br = self.br_lib['Мобильный']
+                self.addon.setSetting('br', 'Мобильный')
 
             
-        self.dc_lib = {'USA East'   : '121',
-                       'USA West'   : '123',
-                       'Europe'     : '125',
-                       'Middle East': '126'
+        self.dc_lib = {'USA East'    : '121',
+                       'USA West'    : '127',
+                       'Europe'      : '125',
+                       'Israel'      : '126',
+                       'Europe North': '128'
                       }
         try:                      
             self.dc = self.dc_lib[self.addon.getSetting('dc')]
         except:
             if self.addon.getSetting('dc') == 'us':
                 self.dc = self.dc_lib['USA East']
+                self.addon.setSetting('dc', 'USA East')
+            elif self.addon.getSetting('dc') == 'Middle East':
+                self.dc = self.dc_lib['Israel']
+                self.addon.setSetting('dc', 'Israel')
             else:
                 self.dc = self.dc_lib['Europe']
+                self.addon.setSetting('dc', 'Europe')
                 
         
         self.view_mode = self.addon.getSetting('view_mode')

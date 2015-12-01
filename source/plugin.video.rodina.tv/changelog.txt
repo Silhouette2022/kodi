@@ -1,3 +1,5 @@
+[B]3.2.0[/B]
+Updated bitrates and data centers
 [B]3.1.1[/B]
 Moved percentage to 2nd line
 [B]3.1.0[/B]
