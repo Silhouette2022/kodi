@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.2.0
+# Rev. 3.2.1
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -648,9 +648,11 @@ class RodinaTV():
 #        self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
 
 
-        self.br_lib = {'high' : '141',
-                       'low'   : '148',
-                       'hls'   : '140'
+        self.br_lib = {'Стандарт'       : '141',
+                       'Мобильный'      : '148',
+                       'HLS Авто'       : '140',
+                       'HLS Стандарт'   : '121',
+                       'HLS Мобильный'  : '122'
                       }
         try:
             self.br = self.br_lib[self.addon.getSetting('br')]
