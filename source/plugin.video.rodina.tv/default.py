@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.2.1
+# Rev. 3.3.0
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -654,19 +654,25 @@ class RodinaTV():
                        'HLS Стандарт'   : '121',
                        'HLS Мобильный'  : '122'
                       }
+        
+        self.br_xml = self.addon.getSetting('br')
+        
         try:
-            self.br = self.br_lib[self.addon.getSetting('br')]
+            self.br = self.br_lib[self.br_xml]
         except:
-            if self.addon.getSetting('br') == 'high':
+            if self.br_xml == 'high':
                 self.br = self.br_lib['Стандарт']
                 self.addon.setSetting('br', 'Стандарт')
-            elif self.addon.getSetting('br') == 'hls':
+            elif self.br_xml == 'hls':
                 self.br = self.br_lib['HLS Авто']
                 self.addon.setSetting('br', 'HLS Авто')
             else:
                 self.br = self.br_lib['Мобильный']
                 self.addon.setSetting('br', 'Мобильный')
-
+                
+            self.br_xml = self.addon.getSetting('br')
+        
+        self.hls = True if 'HLS' in self.br_xml else False
             
         self.dc_lib = {'USA East'    : '121',
                        'USA West'    : '127',
@@ -1190,8 +1196,9 @@ class RodinaTV():
             if ctFolder == False: item.setProperty('IsPlayable', 'true')
             item.setProperty('fanart_image', self.fanart)
             
-            if len(ctPopup) > 0:
-                item.addContextMenuItems(ctPopup,replaceItems=True)
+            uris = sys.argv[0] + '?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set'])
+            ctPopup.append((self.lng['sets'], 'RunPlugin(%s)'%uris,))
+            item.addContextMenuItems(ctPopup,replaceItems=True)
             
             if self.ts != '': ctUrl += ('&ts=%s' % self.ts)
             xbmcplugin.addDirectoryItem(self.handle, sys.argv[0] + ctUrl, item, ctFolder) 
@@ -1464,7 +1471,7 @@ class RodinaTV():
         else:
             key = "lid"
             value = self.lid
-        if self.br == '140':
+        if self.hls:
             key += "|type"
             value += '|vod'
         if self.start != '':
@@ -1485,7 +1492,7 @@ class RodinaTV():
             
             self.addon.setSetting('start', start)
             value += '|' + start
-            if self.br != '140':
+            if not self.hls:
                 self.addon.setSetting('arch_on', 'true')
 
 
@@ -1677,7 +1684,7 @@ class RodinaTV():
 #            print "TEST - %s, %d, %d, %d, %d"%(rec, self.timeserver, self.duration, float(cutstart), self.timeserver - float(cutstart))
             if rec =='0':
                 futstart = float(cutstart)
-                if (self.br != '140') and (self.timeserver - futstart > 330) and (self.timeserver - futstart < self.duration) :
+                if (not self.hls) and (self.timeserver - futstart > 330) and (self.timeserver - futstart < self.duration) :
                     title = self.color['6'] + '%s[/COLOR]' % (title)
                     rec = '6'
                 else:                

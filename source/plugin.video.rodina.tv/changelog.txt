@@ -1,3 +1,5 @@
+[B]3.3.0[/B]
+HLS streamfix. Settings in context menu
 [B]3.2.1[/B]
 Bitrates bug fix
 [B]3.2.0[/B]
