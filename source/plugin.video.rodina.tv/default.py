@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.3.0
+# Rev. 3.3.1
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -86,7 +86,8 @@ class Helpers():
             if (len(command) > 0):
                 splitCommand = command.split('=')
                 key = splitCommand[0]
-                value = splitCommand[1]
+                try: value = splitCommand[1]
+                except: value = ''
                 commands[key] = value
 
         self.log(repr(commands), 5)
@@ -1410,11 +1411,10 @@ class RodinaTV():
 
                         plot = ''
                         title2nd = ''
+                        t2len = 0
                         if title != '' and number != '':
                             try:
                                 lepg = d_epg[number]
-                                title2nd = ''
-                                pcent = -1
                                 for ebgn, eend, ename, edescr, pid, rec, utstart, utstop, cutstart in lepg:
 #                                    if self.view_percent == 'true' and pcent == -1:
 #                                        pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
@@ -1422,17 +1422,23 @@ class RodinaTV():
                                     if self.view_epg == 'true' and title2nd == '':
                                         if self.use_percent == 'true':
                                             pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
-                                            title2nd = '[COLOR FF00BB66][%d %%][/COLOR]' % pcent
+                                            stmp = '[%d %%]' % pcent
+                                            t2len += len(stmp) 
+                                            title2nd = '[COLOR FF00BB66]%s[/COLOR]' % stmp
                                         if self.use_time == 'true':
-                                            title2nd += ' [COLOR FF0084FF]%s-%s[/COLOR]' % (ebgn, eend)
+                                            stmp = '%s-%s' % (ebgn, eend)
+                                            t2len += (len(stmp) + 1) 
+                                            title2nd += ' [COLOR FF0084FF]%s[/COLOR]' % stmp
                                         title2nd += ' %s' % ename
+                                        t2len += (len(ename) + 1)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
                                     
                             except: pass
                             plot = plot.replace('&quot;','`').replace('&amp;',' & ')
                             title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
+                            if not t2len: t2len = len(title)
                             nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.portal, number, has_passwd, icon)
-                            d_chan[number] = (nUrl, icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}, popup)
+                            d_chan[number] = (nUrl, icon, False, {'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot':plot}, popup)
 
             
             if self.sort == '':
