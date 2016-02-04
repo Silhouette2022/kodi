@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.5.5
+# Rev. 0.6.0
 
 
-import urllib,urllib2,re,sys
+import urllib,urllib2,re,sys, json,cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 
@@ -50,15 +50,22 @@ def gettranslit(msg):
 def dbg_log(line):
     if dbg: print line
 
-def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
+    dbg_log("get_url=>%s"%url)
+    if data: dbg_log("get_data=>%s"%data)
     req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
-    req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
+#     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
+    req.add_header('Accept', '*/*')
     req.add_header('Accept-Language', 'ru,en;q=0.9')
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
+    if opts:
+        for x1, x2 in opts:
+            req.add_header(x1, x2)
+
     if data: 
-        response = urllib2.urlopen(req, data,timeout=30)
+        response = urllib2.urlopen(req, data)
     else:
         response = urllib2.urlopen(req,timeout=30)
     link=response.read()
@@ -127,11 +134,7 @@ def KNX_list(url, page, type, fdata):
             plots = BeautifulSoup(str(msgs[i])).findAll('div',{"class":"block-text"})
 #            print plots            
             try:
-                
-
-                plot = re.compile('<div class="block-text"><!--(.*?)-->(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0][1]
-#                plot = plot.replace('</span>','').replace('</a>','')
-#                plot = re.sub('<a href=".*?">','',plot)
+                plot = re.compile('<div class="block-text">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
             except:
                 plot = ''
             try:
@@ -242,6 +245,54 @@ def KNX_list2(url, page):
  
     xbmcplugin.endOfDirectory(pluginhandle) 
     
+def get_moonwalk(url):
+        
+    page = get_url(url)
+    print page
+    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    did = re.findall("d_id: (.*?),", page)[0]
+    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    akey = re.findall("access_key: '(.*?)'", page)[0]
+    csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
+    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+    opts = []
+    opts.append(('Accept-Encoding', 'gzip, deflate'))
+    opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
+    opts.append(('X-CSRF-Token', csrf))
+    opts.append(('Content-Data', bdata))
+    opts.append(('X-Requested-With', 'XMLHttpRequest'))
+    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+
+    html = get_url('http://moonwalk.cc/sessions/create_session', 
+                   data=udata, 
+                   referrer=url,
+#                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
+                   opts=opts)
+    
+    
+    page=json.loads(html)
+    url = page["manifest_m3u8"]
+    return url  
+
+def get_kinoxa(url):
+    dbg_log('-get_kinoxa:'+ '\n')
+    dbg_log('- url:'+  url + '\n')    
+    
+    link = None
+    http = get_url(url)
+    
+    flvs = re.compile('src="http(.*?)"').findall(http)
+    hrefs = re.compile('<a href="(.*?)">').findall(http)
+    
+    if len(flvs) > 1:
+        link = "http" + flvs[1]
+    elif len(flvs):
+        link = "http" + flvs[0]
+    elif len(hrefs):
+        link = hrefs[0]
+        
+    return link
+        
 def KNX_play(url):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
@@ -250,37 +301,27 @@ def KNX_play(url):
 #    print http
     iframes = re.compile('<iframe class="prerolllvid" (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
     
-#    print iframes[0][1]
+#     print iframes[0][1]
     
-    if len(iframes[0][1]) > 0:
-        http = get_url(iframes[0][1])
-#    elif len(iframes):
-#        http = get_url(iframes[0])
+    if len(iframes[0][1]) == 0: return
+
+    link = None
+    
+    if "kinoxa" in iframes[0][1]:
+        link = get_kinoxa(iframes[0][1])
     else:
-        return
-        
-#    print http
-    
-    flvs = re.compile('src="http(.*?)"').findall(http)
-    hrefs = re.compile('<a href="(.*?)">').findall(http)
-#    print flvs
-#    print hrefs
-    
-    if len(flvs) > 1:
-        item = xbmcgui.ListItem(path = "http" + flvs[1])
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-    elif len(flvs):
-        item = xbmcgui.ListItem(path = "http" + flvs[0])
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
-    elif len(hrefs):
-        item = xbmcgui.ListItem(path = hrefs[0])
+        link = get_moonwalk(iframes[0][1])
+
+    if link != None:
+        item = xbmcgui.ListItem(path = link)
         xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 
 def KNX_ctlg(url):
     dbg_log('-KNX_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
                
-    catalog  = [( "/filmy_2015_goda/", '2015 год'),
+    catalog  = [( "/filmy_2016_goda/", '2016 год'),
+                ( "/filmy_2015_goda/", '2015 год'),
                 ( "/filmy_2014_goda/", '2014 год'),
                 ( "/filmy_2013_goda/", '2013 год'),
                 ( "/filmy_2012_goda/", '2012 год'),

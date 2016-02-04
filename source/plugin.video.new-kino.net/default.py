@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.9.0
+# Rev. 0.9.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -84,7 +84,8 @@ def NKN_start(url, page, cook):
     if cook == "unis":
         cook = ""
         unis_en = True
-        
+    else:
+        xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows    
               
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
@@ -119,18 +120,21 @@ def NKN_start(url, page, cook):
                 dbg_log('-HREF %s'%href)
 #                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />(</a><!--TEnd--></div>|<!--dle_image_end-->)(.*?)<').findall(str(sa))
                 infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />').findall(str(sa))
+                plots = re.compile('</div>(.*?)</div>').findall(str(sa))
 #                print infos
+#                 print str(sa)
 #                 for logo, alt, title, plot in infos:
                 for logo, alt, title in infos:
                   img = start_pg + logo
                   dbg_log('-TITLE %s'%title)
                   dbg_log('-IMG %s'%img)
-#                   dbg_log('-PLOT %s'%plot)
+                  try: dbg_log('-PLOT %s'%plots[0])
+                  except: dbg_log('-PLOT ')
                   
                   if unis_en == False:
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-#                     item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-                    item.setInfo( type='video', infoLabels={'title': title})
+                    try: item.setInfo( type='video', infoLabels={'title': title, 'plot': plots[0]})
+                    except: item.setInfo( type='video', infoLabels={'title': title})
                     uri = sys.argv[0] + '?mode=view' \
                     + '&url=' + urllib.quote_plus(href) + '&img=' + urllib.quote_plus(img) \
                      + '&name=' + urllib.quote_plus(title)+ '&cook=' + urllib.quote_plus(cook)
@@ -180,25 +184,13 @@ def NKN_view(url, img, name, cook):
     dbg_log('- name:'+  name + '\n')
         
     http = get_url(url, cookie = cook)
-#    news_id = re.compile("news-id-[0-9]")
-#    news = BeautifulSoup(http).findAll('div',{"id":news_id})
-
-#    for sa in news:    
-        #print str(sa)
-#        flvars = re.compile('<param name="flashvars" value="(.*?)"').findall(str(sa))
-        #print urllib.unquote_plus(flvars[0])
-#        files = re.compile('file=(.*?)"').findall(str(sa))
 
     frames = re.compile('<iframe (.*?)</iframe>').findall(http)
     if len(frames) > 0:
         
-#         files = re.compile('src="(.*?)"').findall(frames[0])
-        
-#         print files
 
         i = 1
-#         for file in files:
-        
+       
         wdic = { '' : 0}
         for frame in frames:
             files = re.compile('src="(.*?)"').findall(frame)
@@ -481,7 +473,7 @@ def get_moonwalk(url):
     opts.append(('X-CSRF-Token', csrf))
     opts.append(('Content-Data', bdata))
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
-    udata = 'partner=219&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
 
     html = get_url('http://moonwalk.cc/sessions/create_session', 
                    data=udata, 
