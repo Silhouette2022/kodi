@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.9.1
+# Rev. 0.9.2
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -85,7 +85,7 @@ def NKN_start(url, page, cook):
         cook = ""
         unis_en = True
     else:
-        xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows    
+        xbmcplugin.setContent(int(sys.argv[1]), 'movies')#movies episodes tvshows    
               
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
@@ -108,6 +108,9 @@ def NKN_start(url, page, cook):
 
     http = re.sub('<br />', '', horg)
     hrefs = re.compile('<a href="(.*?)(#|">|" >)(.*?)</a></h4>').findall(http)
+#     print http
+    extras = re.compile('<h2><a href="(.*?)">(.*?)</a></h2>').findall(http)
+    print extras
 
     if len(hrefs):
         news_id = re.compile("news-id-[0-9]")
@@ -115,7 +118,7 @@ def NKN_start(url, page, cook):
         
         if (len(hrefs) == len(news)):
             for sa in news:
-
+#                 print str(sa)
                 href = hrefs[i][0]
                 dbg_log('-HREF %s'%href)
 #                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />(</a><!--TEnd--></div>|<!--dle_image_end-->)(.*?)<').findall(str(sa))
@@ -127,6 +130,11 @@ def NKN_start(url, page, cook):
                 for logo, alt, title in infos:
                   img = start_pg + logo
                   dbg_log('-TITLE %s'%title)
+                  try:
+                      if title == '': 
+                          title = extras[i][1].decode('cp1251').encode('utf-8').strip()
+                          dbg_log('-EXTRAS %s'%title)
+                  except: pass
                   dbg_log('-IMG %s'%img)
                   try: dbg_log('-PLOT %s'%plots[0])
                   except: dbg_log('-PLOT ')
@@ -135,15 +143,18 @@ def NKN_start(url, page, cook):
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
                     try: item.setInfo( type='video', infoLabels={'title': title, 'plot': plots[0]})
                     except: item.setInfo( type='video', infoLabels={'title': title})
+                    item.setArt({'thumb': img, 'poster': img})
+#                     item.setArt({'thumb': img, 'poster': img, 'fanart': img})
                     uri = sys.argv[0] + '?mode=view' \
                     + '&url=' + urllib.quote_plus(href) + '&img=' + urllib.quote_plus(img) \
                      + '&name=' + urllib.quote_plus(title)+ '&cook=' + urllib.quote_plus(cook)
                     xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                     dbg_log('- uri:'+  uri + '\n')
-                    i = i + 1
                   else:
                     try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.new-kino.net'})
                     except: pass
+                    
+                  i = i + 1
     
     if unis_en == True:
       try: UnifiedSearch().collect(unis_res)
@@ -599,9 +610,6 @@ def NKN_find(cook):
         furl = find_pg + stxt
         dbg_log('- furl:'+  furl + '\n')
         NKN_start(furl, '1', cook)
-
-def lsChan():
-    xbmcplugin.endOfDirectory(pluginhandle)
 
 def get_params():
     param=[]
