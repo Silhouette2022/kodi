@@ -1,9 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2014, otaranda@hotmail.com
-# Rev. 3.0.1
-
-_REVISION_ = '3.0.1'
+# Rev. 3.3.1
 
 _DEV_VER_ = '1.0.0'
 _ADDOD_ID_= 'plugin.video.rodina.tv'
@@ -88,7 +86,8 @@ class Helpers():
             if (len(command) > 0):
                 splitCommand = command.split('=')
                 key = splitCommand[0]
-                value = splitCommand[1]
+                try: value = splitCommand[1]
+                except: value = ''
                 commands[key] = value
 
         self.log(repr(commands), 5)
@@ -396,7 +395,7 @@ class Helpers():
         try:
             self.log("connecting to server...", 1)
 
-            con = urllib2.urlopen(request)
+            con = urllib2.urlopen(request,timeout=30)
             ret_obj["header"] = con.info()
             ret_obj["new_url"] = con.geturl()
             if get("no-content", "false") == u"false" or get("no-content", "false") == "false":
@@ -492,7 +491,36 @@ class Helpers():
                     s += i
             self.log(repr(s), 5)
             return s
-
+        
+#     def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+#         req = urllib2.Request(url)
+#        
+#         req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
+#         req.add_header('Accept', 'text/html, */*')
+#         req.add_header('Accept-Language', 'en-US,en')
+#     
+#         if cookie: req.add_header('Cookie', cookie)
+#         if referrer: req.add_header('Referer', referrer)
+#         if data: 
+#             response = urllib2.urlopen(req, data)
+#         else:
+#             response = urllib2.urlopen(req)
+#         link=response.read()
+#         if save_cookie:
+#             setcookie = response.info().get('Set-Cookie', None)
+#             if setcookie:
+#                 setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+#                 link = link + '<cookie>' + setcookie + '</cookie>'
+#         
+#         response.close()
+    def get_url(self, url,  referer = None):
+        req = urllib2.Request(url)
+        req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 5.1; rv:20.0) Gecko/20100101 Firefox/20.0')
+        if referer: req.add_header('Referer', referer)        
+        response = urllib2.urlopen(req)
+        link=response.read()
+        response.close()
+        return link
 
 #    def openFile(self, filepath, options=u"r"):
 #        self.log(repr(filepath) + " - " + repr(options))
@@ -516,9 +544,14 @@ class Helpers():
             except:
                 xbmc.log(u"FALLBACK [%s] : '%s'" % (self.plugin, repr(description)), xbmc.LOGNOTICE)
 
+    def track(self, usr, page, cook):
+        try:
+            gif = self.get_url("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
+        except:
+            self.log("http://c.statcounter.com/t.php?sc_project=10645861&camefrom="+page+"&u="+usr+"&java=0&security=3a2e409a&sc_random="+str(hash(cook))+"&sc_snum=1&invisible=1")
 
 common = Helpers()
-common.plugin = "Rodina TV"
+common.plugin = "Rodina TV Cmn"
 
 shstart = 0
     
@@ -537,6 +570,7 @@ class RodinaTV():
         self.icon = self.addon.getAddonInfo('icon')
         self.fanart = self.addon.getAddonInfo('fanart')
         self.profile = self.addon.getAddonInfo('profile')
+        self.version = self.addon.getAddonInfo('version')
 
         self.language = self.addon.getLocalizedString
 
@@ -547,6 +581,7 @@ class RodinaTV():
 
         self.url = 'http://rodina.tv'
         self.api = 'http://api.rodina.tv'
+        self.kodi = 'http://' + self.version + '.kodi.rodina.tv/'
         self.auth = self.api + '/auth.xml'
         self.get_auth = False
 
@@ -592,6 +627,8 @@ class RodinaTV():
         self.cache_fav = xbmc.translatePath('special://temp/' + 'rodinatvf.tmp')
         self.cache_epvr = xbmc.translatePath('special://temp/' + 'rodina_tv_epg')
         
+        try: self.plenable = self.addon.getSetting('plenable')
+        except: self.plenable = 'false'
         try: self.rplist = self.addon.getSetting('rplist')
         except: self.rplist = ''
         try: self.tplist = self.addon.getSetting('tplist')
@@ -602,6 +639,8 @@ class RodinaTV():
         except: self.folder = ''
         if self.tplist != '' : self.tplist = self.tfolder + self.tplist
         if self.tepg != '' : self.tepg = self.tfolder + self.tepg
+        try: self.tlogo = self.addon.getSetting('tlogo')
+        except: self.tlogo = ''
  
 
         self.uid = self.addon.getSetting('uid')
@@ -610,29 +649,58 @@ class RodinaTV():
 #        self.br = '141' if self.addon.getSetting('br') == 'high' else '148'
 
 
-        self.br_lib = {'high' : '141',
-                       'low'   : '148',
-                       'hls'   : '140'
+        self.br_lib = {'Стандарт'       : '141',
+                       'Мобильный'      : '148',
+                       'HLS Авто'       : '140',
+                       'HLS Стандарт'   : '121',
+                       'HLS Мобильный'  : '122'
                       }
-        self.br = self.br_lib[self.addon.getSetting('br')]
-
+        
+        self.br_xml = self.addon.getSetting('br')
+        
+        try:
+            self.br = self.br_lib[self.br_xml]
+        except:
+            if self.br_xml == 'high':
+                self.br = self.br_lib['Стандарт']
+                self.addon.setSetting('br', 'Стандарт')
+            elif self.br_xml == 'hls':
+                self.br = self.br_lib['HLS Авто']
+                self.addon.setSetting('br', 'HLS Авто')
+            else:
+                self.br = self.br_lib['Мобильный']
+                self.addon.setSetting('br', 'Мобильный')
+                
+            self.br_xml = self.addon.getSetting('br')
+        
+        self.hls = True if 'HLS' in self.br_xml else False
             
-        self.dc_lib = {'USA East'   : '121',
-                       'USA West'   : '123',
-                       'Europe'     : '125',
-                       'Middle East': '126'
+        self.dc_lib = {'USA East'    : '121',
+                       'USA West'    : '127',
+                       'Europe'      : '125',
+                       'Israel'      : '126',
+                       'Europe North': '128'
                       }
         try:                      
             self.dc = self.dc_lib[self.addon.getSetting('dc')]
         except:
             if self.addon.getSetting('dc') == 'us':
                 self.dc = self.dc_lib['USA East']
+                self.addon.setSetting('dc', 'USA East')
+            elif self.addon.getSetting('dc') == 'Middle East':
+                self.dc = self.dc_lib['Israel']
+                self.addon.setSetting('dc', 'Israel')
             else:
                 self.dc = self.dc_lib['Europe']
+                self.addon.setSetting('dc', 'Europe')
                 
         
         self.view_mode = self.addon.getSetting('view_mode')
         self.view_epg = self.addon.getSetting('view_epg')
+        try: self.use_percent = self.addon.getSetting('use_percent')
+        except: self.use_percent = 'false'
+        try: self.use_time = self.addon.getSetting('use_time')
+        except: self.use_time = 'true'        
         self.serial = self.addon.getSetting('serial')
         self.token = self.addon.getSetting('token')
         self.view_date = self.addon.getSetting('view_date')
@@ -659,12 +727,16 @@ class RodinaTV():
 #                        '7' : '[COLOR FFC0C0C0]' + self.language(22017) + '[/COLOR]',
 #                        '8' : '[COLOR FFFFFFFF]' + self.language(22018) + '[/COLOR]' }
 
-
-        self.debug = True
-        self.dbg_level = 1
+        try: self.debug = True if self.addon.getSetting('dbg') == 'true' else False
+        except: self.debug = True
+        try: 
+            self.dbg_level = int(self.addon.getSetting('dbglvl'))
+        except: self.dbg_level = 1
+#         self.debug = True
+#         self.dbg_level = 1
         common.dbg = self.debug
         
-        self.log('%s %s'%('Rev.', _REVISION_), 0)
+        self.log('%s %s'%('Rev.', self.version), 0)
         
         self.init_icons()
         
@@ -762,6 +834,7 @@ class RodinaTV():
                         'prev'      : self.addon.getLocalizedString(20009),
                         'part'      : self.addon.getLocalizedString(20010),
                         'pcode'     : self.addon.getLocalizedString(11005),
+                        'plist'     : self.addon.getLocalizedString(11028),
 
                         ''          : '' }
 
@@ -850,14 +923,14 @@ class RodinaTV():
             self.m_favupd()            
         elif self.mode == 'favlst':
             self.m_favlst()
-        elif self.mode == 'repg':
-            self.repg()
         elif self.mode == 'playlist':
-            self.playlist()
-        elif self.mode == 'autotune':
-            self.autotune()
+            self.pvr_playlist()
+        elif self.mode == 'setiptv':
+            self.set_iptv()
         elif self.mode == 'reload':
-            self.reload()
+            self.pvr_reload()
+        elif self.mode == 'magic':
+            self.pvr_magic()
         else:
             self.m_main()
 
@@ -900,37 +973,44 @@ class RodinaTV():
             except: pass
 
                
-    def cached_get(self, type):
+    def cached_get(self, type, isdelay=0):
         self.log("-cached_get: %s" % type)
         cache = ''
         skipt = False
+        
         if type == 'tv':
             cquery = '?query=%s&value=%s&key=icon' % ('get_channels', '300_300_0')
             fn = self.cache_chan
             tt = time.time()
+#            pbtext = 'Loading ' + 'channels' + '...'
         elif type == 'etv':
             cquery = '?query=%s&key="period|count"&value="%s|%s"' % ('get_epg', 60*60*3, 3)
             fn = self.cache_epg
             tt = time.time()
+#            pbtext = 'Loading ' + 'EPG' + '...'
         elif type == 'epvr':
-            cquery = '?query=%s&key="period"&value="%s"' % ('get_epg', 60*60*24)
+            cquery = '?query=%s&key="period"&value="%s"' % ('get_epg', 60*60*12)
             fn = self.cache_epvr
             tt = time.time()
+#            pbtext = 'Loading ' + 'EPG' + '...'
         elif type == 'dtv':
             tstart = str(int(time.time()))
             cquery = '?query=%s&key="start|period|count"&value="%s|%s|%s"' % ('get_epg', tstart, 60*60*3, 3)
             fn = self.cache_epg
             tt = time.time()
+#            pbtext = 'Loading ' + 'EPG' + '...'
         elif type == 'atv':
             cquery = '?query=%s&key="start|period|number"&value="%s|%s|%s"' % ('get_epg', self.adt, 60*60*24, self.numb)
             fn = self.cache_epg
             tt = float(self.adt)
             type += self.numb
+#            pbtext = 'Loading ' + 'EPG' + '...'
         elif type == 'fav':
             cquery = '?query=%s' % 'get_favorites1'
             fn = self.cache_fav
             tt = time.time()
             skipt = True
+#            pbtext = 'Loading ' + 'Favorites' + '...'
         else: return
         self.log("-tt: %s" % tt)
         
@@ -959,13 +1039,11 @@ class RodinaTV():
             
         if cache == '':
             self.log("--empty")
-
-#            self.authorize()
-#            if self.get_auth == False:
-#                self.log("--getUrlPage")
+#            pbar = xbmcgui.DialogProgressBG()
+#            pbar.create('Rodina.TV', pbtext)
+            if isdelay: xbmc.sleep(isdelay)
             req = self.portal + cquery
             resp = self.getUrlPage( req)
-
 
             if resp != None:
                 self.log("--gotit")
@@ -975,7 +1053,11 @@ class RodinaTV():
                 cf.write(resp + '\n')
                 cf.close()
                 cache = resp
+#                pbar.update(100, message='Done') 
+#            else: 
+#                pbar.update(0, message='Failed')
                 
+#            pbar.close()     
         return cache
         
     def setTimeserver(self, contt):
@@ -1010,7 +1092,8 @@ class RodinaTV():
         
     def getUrlPage(self, link, max=5):
         self.log("-getUrlPage:")
-        self.token = self.addon.getSetting('token')
+        if self.token == '':
+            self.token = self.addon.getSetting('token')
         resp = self.getPage({'link':'%s&token=%s&gzip=on' % (link, self.token)})
         cycle = 0
         while self.get_auth == True:
@@ -1114,8 +1197,9 @@ class RodinaTV():
             if ctFolder == False: item.setProperty('IsPlayable', 'true')
             item.setProperty('fanart_image', self.fanart)
             
-            if len(ctPopup) > 0:
-                item.addContextMenuItems(ctPopup,replaceItems=True)
+            uris = sys.argv[0] + '?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set'])
+            ctPopup.append((self.lng['sets'], 'RunPlugin(%s)'%uris,))
+            item.addContextMenuItems(ctPopup,replaceItems=True)
             
             if self.ts != '': ctUrl += ('&ts=%s' % self.ts)
             xbmcplugin.addDirectoryItem(self.handle, sys.argv[0] + ctUrl, item, ctFolder) 
@@ -1142,7 +1226,7 @@ class RodinaTV():
         req = self.portal + '?query=%s' % ('get_client_info')
         resp = self.getUrlPage( req)
         if resp != None:
-            if self.debug: print resp
+            if self.debug and self.dbg_level > 2: print resp
   
     def get_settings(self):
         self.log("-get_settings:")
@@ -1150,7 +1234,7 @@ class RodinaTV():
         req = self.portal + '?query=%s' % ('get_settings')
         resp = self.getUrlPage( req)
         if resp != None:
-            if self.debug: print resp
+            if self.debug and self.dbg_level > 2: print resp
                     
     def get_tstatus(self):
         self.log("-get_tstatus:")
@@ -1201,6 +1285,9 @@ class RodinaTV():
         self.cached_rst(self.cache_chan)
         self.cached_rst(self.cache_epg)
         self.cached_rst(self.cache_fav)
+        
+        common.track(self.kodi + self.uid, self.kodi + 'main', self.serial)
+
 
     def m_cat(self, nmode='tv'):
         self.log("-m_cat:")
@@ -1324,19 +1411,34 @@ class RodinaTV():
 
                         plot = ''
                         title2nd = ''
+                        t2len = 0
                         if title != '' and number != '':
                             try:
                                 lepg = d_epg[number]
-                                title2nd = ''
                                 for ebgn, eend, ename, edescr, pid, rec, utstart, utstop, cutstart in lepg:
+#                                    if self.view_percent == 'true' and pcent == -1:
+#                                        pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
+#                                        title += '  -  [COLOR FF008866][%d %%][/COLOR]' % pcent
                                     if self.view_epg == 'true' and title2nd == '':
-                                        title2nd = '[COLOR FF0084FF]%s-%s[/COLOR] %s' % (ebgn, eend, ename)
+                                        if self.use_percent == 'true':
+                                            pcent = ((self.timeserver - float(cutstart)) * 100) / (float(utstop) - float(utstart))
+                                            stmp = '[%d %%]' % pcent
+                                            t2len += len(stmp) 
+                                            title2nd = '[COLOR FF00BB66]%s[/COLOR]' % stmp
+                                        if self.use_time == 'true':
+                                            stmp = '%s-%s' % (ebgn, eend)
+                                            t2len += (len(stmp) + 1) 
+                                            title2nd += ' [COLOR FF0084FF]%s[/COLOR]' % stmp
+                                        title2nd += ' %s' % ename
+                                        t2len += (len(ename) + 1)
                                     plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
+                                    
                             except: pass
                             plot = plot.replace('&quot;','`').replace('&amp;',' & ')
                             title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
+                            if not t2len: t2len = len(title)
                             nUrl = '?mode=%s&portal=%s&numb=%s&pwd=%s&icon=%s' % ('tvplay', self.portal, number, has_passwd, icon)
-                            d_chan[number] = (nUrl, icon, False, {'title': '[B]%s[/B]\n%s' % (title, title2nd), 'plot':plot}, popup)
+                            d_chan[number] = (nUrl, icon, False, {'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot':plot}, popup)
 
             
             if self.sort == '':
@@ -1354,7 +1456,7 @@ class RodinaTV():
 
     def tv_play(self, seek = 0):
         self.log("-tv_play:")
-        
+
         if self.has_rec == '0': return
         
         if self.has_pwd == '1': 
@@ -1375,7 +1477,7 @@ class RodinaTV():
         else:
             key = "lid"
             value = self.lid
-        if self.br == '140':
+        if self.hls:
             key += "|type"
             value += '|vod'
         if self.start != '':
@@ -1396,7 +1498,7 @@ class RodinaTV():
             
             self.addon.setSetting('start', start)
             value += '|' + start
-            if self.br != '140':
+            if not self.hls:
                 self.addon.setSetting('arch_on', 'true')
 
 
@@ -1588,7 +1690,7 @@ class RodinaTV():
 #            print "TEST - %s, %d, %d, %d, %d"%(rec, self.timeserver, self.duration, float(cutstart), self.timeserver - float(cutstart))
             if rec =='0':
                 futstart = float(cutstart)
-                if (self.br != '140') and (self.timeserver - futstart > 330) and (self.timeserver - futstart < self.duration) :
+                if (not self.hls) and (self.timeserver - futstart > 330) and (self.timeserver - futstart < self.duration) :
                     title = self.color['6'] + '%s[/COLOR]' % (title)
                     rec = '6'
                 else:                
@@ -1626,6 +1728,9 @@ class RodinaTV():
         ct_setall = [('?mode=%s&portal=%s&icon=%s' % ('set', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['sets']}, []),
                      ('?mode=%s&portal=%s&icon=%s' % ('favlst', QT(self.portal), self.icons['f1']), self.icons['f1'], True, {'title': self.lng['favs']}, []),
                      ('?mode=%s&portal=%s&icon=%s' % ('setpc', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['pcode']}, []) ]
+        
+        if self.plenable == 'true':
+             ct_setall.append(('?mode=%s&portal=%s&icon=%s' % ('playlist', QT(self.portal), self.icons['i_set']), self.icons['i_set'], True, {'title': self.lng['plist']}, []))
                                           
         self.list_items(ct_setall, True)
                  
@@ -2186,11 +2291,16 @@ class RodinaTV():
     def repg(self):
         self.log("-repg:")
 
+        if self.plenable != 'true': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        
         chan_ls = []
 
-        resp = self.cached_get('tv')
+        pbar = xbmcgui.DialogProgressBG()
+        pbar.create('Rodina.TV', 'Getting EPG...')
+        resp = self.cached_get('tv', 50)
         if resp != None:
-            d_epg = self.epg2dict(self.cached_get('epvr'))
+            d_epg = self.epg2dict(self.cached_get('epvr', 50))
             a_chan = common.parseDOM(resp, "array", attrs={"name": "channels"})
             
             cf = open(self.tepg, 'w')
@@ -2204,20 +2314,6 @@ class RodinaTV():
                     except: number = ''
                     try: icon = common.parseDOM(raw, "item", attrs={"name": "default"})[0]
                     except: icon = ''
-#                    a_icon45 = common.parseDOM(raw, "item", attrs={"name": "default"})
-#                    a_icon250 = common.parseDOM(raw, "item", attrs={"name": "250_250_1"})
-#                    a_icon300 = common.parseDOM(raw, "item", attrs={"name": "300_300_0"})
-#                    icon = ''
-#                    if len(a_icon300) > 0:
-#                        try: icon = a_icon300[0]
-#                        except: icon = ''
-#                    if icon == '' and len(a_icon250) > 0:
-#                        try: icon = a_icon250[0]
-#                        except: icon = ''                            
-#                    if icon == '' and len(a_icon45) > 0:
-#                        try: icon = a_icon45[0]
-#                        except: icon = ''
-#                    if icon == '': icon = self.path_icons_tv
                     
                     if title != '' and number != '':
                         chan_ls.append((number, title, icon))
@@ -2245,24 +2341,50 @@ class RodinaTV():
             cf.write('</tv>\n')
             cf.close()
             self.log("Updated EPG", 1)
-            
+            pbar.update(100, message='Done.')
         else:
             self.showErrorMessage('RodinaTV: EPG update failed')
+        pbar.close()
         return
 
     def playlist(self):
         self.log("-playlist:")
-        
-        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
-        
+
+        if self.plenable != 'true': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '' or \
+            self.uid == '' or self.pwd == '': return
+        if self.serial == '':
+            import uuid
+            self.serial = '%s' % uuid.uuid4()
+            self.log("Adding UUID", 1)
+            self.addon.setSetting('serial', self.serial)
+            xbmc.sleep(500)
+
+        common.track(self.kodi + self.uid, self.kodi + 'playlist', self.serial)
+#        xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % \
+#        ("RodinaTV", 'Started playlist update...', str(30 * 1000), self.icon))
+        pbar = xbmcgui.DialogProgressBG()
+        pbar.create('Rodina.TV', 'Started playlist update...')
+
+        cycle = 0
         self.authorize()
-#         self.token = self.addon.getSetting('token')
+        while self.get_auth == True or self.token == '':
+            cycle += 1
+            if cycle > 5:
+                self.error('Authorization failed')
+                return
+            else:
+                xbmc.sleep(1000)
+                self.authorize()
         
         self.repg()
         
+#         xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Started M3U update', str(3 * 1000)))
+
+        pbar.update(0, message='Getting channels...')
         name_dic = {}
         cat_dic = {}
-        resp = self.cached_get('tv')
+        resp = self.cached_get('tv', 50)
         if resp != None:
             a_cat = common.parseDOM(resp, "array", attrs={"name": "categories"})
             for cat in a_cat:
@@ -2299,8 +2421,12 @@ class RodinaTV():
                         name_dic[number] = name_ls
                         self.log("number=%s,title=%s,cat=%s"%(number,title,cat_dic[cat]), 4)
                         
+            pbar.update(100, message='Done.');
 
+        else:
+            pbar.update(0, message='Failed.');
                         
+        pbar.update(0, message='Getting playlist...')
 
         rlink = common.fetchPage({"link": self.rplist})
         
@@ -2308,29 +2434,34 @@ class RodinaTV():
             try: 
                 flink = re.compile('http(.*?).m3u').findall(rlink["content"])[0]
             except: 
-                self.showErrorMessage('RodinaTV: Playlist update failed')
+                self.showErrorMessage('RodinaTV: Playlist format failed')
+                pbar.close()
                 return
             
             fplist = common.fetchPage({"link": 'http' + flink + '.m3u'})
             
             if fplist["status"] == 200:
                 lines = fplist["content"].split('\n')
-                if len(lines) != 0: cf = open(self.tplist, 'w')
-                tlogo = self.addon.getSetting('tlogo')
+                if len(lines) != 0: 
+                    cf = open(self.tplist, 'w')
+                else:
+                    self.showErrorMessage('RodinaTV: Playlist read failed')
+                    
+                pbar.update(0, message='Creating playlist...')
+#                 self.tlogo = self.addon.getSetting('tlogo')
                 for i in xrange(len(lines)):
                     if lines[i].startswith('#EXTINF:'):
-                            i += 1
-#                         try:
+                        i += 1
+                        try:
                             numb = re.compile('list/m3u/(.*?)/').findall(lines[i])[0]
                             ls = name_dic[numb]
                             ilinks = ls[2].encode('utf8').rsplit('/',1)
-                            print ilinks
                             if len(ilinks) > 1: 
                                 iname = ilinks[1]
                                 ipath = ilinks[0] + '/'
-                                if tlogo != ipath:
-                                    tlogo = ipath
-                                    self.addon.setSetting('tlogo', tlogo)
+                                if self.tlogo != ipath:
+                                    self.tlogo = ipath
+                                    self.addon.setSetting('tlogo', self.tlogo)
                                     
                             else:
                                 iname = ls[2].encode('utf8')
@@ -2338,41 +2469,60 @@ class RodinaTV():
                             cf.write('#EXTINF:%s tvg-id="%s" group-title="%s" tvg-logo="%s",%s\n'%
                                      (numb.encode('utf8'), numb.encode('utf8'), ls[1].encode('utf8'),
                                        iname, ls[0].encode('utf8')))
-#                         except:
-#                             cf.write(lines[i-1] + '\n')  
+                        except:
+                             cf.write(lines[i-1] + '\n') 
+                             cf.write(lines[i] + '\n') 
 
                     else:
                         cf.write(lines[i] + '\n')
-                    
-#                     EXTINF:-1 tvg-id="id1" tvg-name="Channel_1" tvg-logo="logo1" group-title="Group 1",Channel 1
-#                     EXTINF:-1,Первый канал
-                        
-                    
                 
+                pbar.update(100, message='Done.')
                 cf.close()
                 self.log("Updated M3U", 1)
                 
-                xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'Playlists updated', str(3 * 1000)))
+#                xbmc.executebuiltin("XBMC.Notification(%s,%s,%s,%s)" % \
+#                    ("RodinaTV", 'Playlist updated', str(5 * 1000), self.icon))
+                pbar.update(100, message='Done.') 
                 
             else:
-                self.showErrorMessage('RodinaTV: Playlist update failed')
-    def reload(self):
-        self.log("-reload:")
+                pbar.update(0, message='Failed.') 
+        else:
+            pbar.update(0, message='Failed.')
+        
+        pbar.close()
+                
+        return
 
+
+    def pvr_stop(self):
+        self.log("-pvr_stop:")
+        xbmc.executebuiltin('XBMC.StopPVRManager')
         xbmc.executebuiltin('XBMC.Playlist.Clear')
-        xbmc.sleep(1500)
+
+    def pvr_start(self):
+        self.log("-prv_start:")
         xbmc.executebuiltin('XBMC.StartPVRManager')
+        
+    def pvr_reload(self):
+        self.log("-reload:")
+        self.pvr_stop()
+        xbmc.sleep(1500)
+        self.pvr_start()
         xbmc.sleep(1500)
         
-    def autotune(self):
-        self.log("-autotune:")
+    def set_iptv(self):
+        self.log("-set_iptv:")
 
+        if self.plenable != 'true': return
+        if self.rplist == '' or self.tplist == '' or self.tepg == '': return
+        
         try:
             iptv_addon = xbmcaddon.Addon(id='pvr.iptvsimple')
         except:
             self.showErrorMessage("RodinaTV: PVR IPTV Simple isn't found")
             return
     
+        if self.tlogo == '' : self.tlogo = self.addon.getSetting('tlogo')
         iptv_path = os.path.join(xbmc.translatePath('special://home').decode('utf-8'),'userdata','addon_data','pvr.iptvsimple')
         iptv_data = '<settings>\n' \
         + '<setting id="epgCache" value="false" />\n' \
@@ -2381,10 +2531,10 @@ class RodinaTV():
         + '<setting id="epgTSOverride" value="false" />\n' \
         + '<setting id="epgTimeShift" value="0.000000" />\n' \
         + '<setting id="epgUrl" value=""/>\n' \
-        + '<setting id="logoBaseUrl" value="' + self.addon.getSetting('tlogo') + '"/>\n' \
+        + '<setting id="logoBaseUrl" value="' + self.tlogo + '"/>\n' \
         + '<setting id="logoPath" value="" />\n' \
         + '<setting id="logoPathType" value="1" />\n' \
-        + '<setting id="logoUrl" value="' + self.addon.getSetting('tlogo') + '"/>\n' \
+        + '<setting id="logoUrl" value="' + self.tlogo + '"/>\n' \
         + '<setting id="m3uCache" value="false" />\n' \
         + '<setting id="m3uPath" value="' + self.tplist + '" />\n' \
         + '<setting id="m3uPathType" value="0" />\n' \
@@ -2402,8 +2552,33 @@ class RodinaTV():
             setSimFile.write(iptv_data)
             setSimFile.close()
             
-            xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'IPTV Simple updated', str(3 * 1000)))
+            xbmc.executebuiltin("XBMC.Notification(%s,%s, %s)" % ("RodinaTV", 'IPTV Simple updated', str(5 * 1000)))
+    
+    def pvr_playlist(self):
+        self.log("-prv_playlist:")
+        self.pvr_stop()
+        xbmc.sleep(1500)
+        self.playlist()
+        self.pvr_start()
+        xbmc.sleep(1500)
+    
+    def pvr_magic(self):
+        self.log("-prv_magic:")
+        common.track(self.kodi + self.uid, self.kodi + 'magic', self.serial)
 
+        if self.rplist == '' or self.tfolder == '' \
+        or self.tplist == '' or self.tepg == '':
+            self.showErrorMessage("RodinaTV: Fill all fields")
+            return
+        self.pvr_stop()
+        xbmc.sleep(1500)
+        self.playlist()
+        if self.token == '' or self.get_auth == True:
+            return
+        
+        self.set_iptv()
+        self.pvr_start()
+        xbmc.sleep(1500)
 
 rodina = RodinaTV()
 rodina.main()        

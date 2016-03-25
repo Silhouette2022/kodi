@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.8.0
+# Rev. 0.9.2
 
 
-import urllib, urllib2, os, re, sys, json, cookielib
+import urllib, urllib2, os, re, sys, json, cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 import urllib, urllib2, os, re, sys, json, cookielib
@@ -26,7 +26,7 @@ except: use_translit = 'false'
 
 dbg = 0
 
-supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru'}
+supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru', 'moonwalk.cc', 'moonwalk.co'}
 
 pluginhandle = int(sys.argv[1])
 
@@ -43,15 +43,22 @@ def gettranslit(msg):
 def dbg_log(line):
     if dbg: print line
 
-def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
+    dbg_log("get_url=>%s"%url)
+    if data: dbg_log("get_data=>%s"%data)
     req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
-    req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
+    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
+#     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
+    req.add_header('Accept', '*/*')
     req.add_header('Accept-Language', 'ru,en;q=0.9')
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
+    if opts:
+        for x1, x2 in opts:
+            req.add_header(x1, x2)
+
     if data: 
-        response = urllib2.urlopen(req, data,timeout=30)
+        response = urllib2.urlopen(req, data)
     else:
         response = urllib2.urlopen(req,timeout=30)
     link=response.read()
@@ -77,7 +84,8 @@ def NKN_start(url, page, cook):
     if cook == "unis":
         cook = ""
         unis_en = True
-        
+    else:
+        xbmcplugin.setContent(int(sys.argv[1]), 'movies')#movies episodes tvshows    
               
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
@@ -100,6 +108,9 @@ def NKN_start(url, page, cook):
 
     http = re.sub('<br />', '', horg)
     hrefs = re.compile('<a href="(.*?)(#|">|" >)(.*?)</a></h4>').findall(http)
+#     print http
+    extras = re.compile('<h2><a href="(.*?)">(.*?)</a></h2>').findall(http)
+    print extras
 
     if len(hrefs):
         news_id = re.compile("news-id-[0-9]")
@@ -107,32 +118,43 @@ def NKN_start(url, page, cook):
         
         if (len(hrefs) == len(news)):
             for sa in news:
-
+#                 print str(sa)
                 href = hrefs[i][0]
                 dbg_log('-HREF %s'%href)
 #                infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />(</a><!--TEnd--></div>|<!--dle_image_end-->)(.*?)<').findall(str(sa))
                 infos = re.compile('<img src="/(.*?)" alt="(.*?)" title="(.*?)" />').findall(str(sa))
+                plots = re.compile('</div>(.*?)</div>').findall(str(sa))
 #                print infos
+#                 print str(sa)
 #                 for logo, alt, title, plot in infos:
                 for logo, alt, title in infos:
                   img = start_pg + logo
                   dbg_log('-TITLE %s'%title)
+                  try:
+                      if title == '': 
+                          title = extras[i][1].decode('cp1251').encode('utf-8').strip()
+                          dbg_log('-EXTRAS %s'%title)
+                  except: pass
                   dbg_log('-IMG %s'%img)
-#                   dbg_log('-PLOT %s'%plot)
+                  try: dbg_log('-PLOT %s'%plots[0])
+                  except: dbg_log('-PLOT ')
                   
                   if unis_en == False:
                     item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-#                     item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-                    item.setInfo( type='video', infoLabels={'title': title})
+                    try: item.setInfo( type='video', infoLabels={'title': title, 'plot': plots[0]})
+                    except: item.setInfo( type='video', infoLabels={'title': title})
+                    item.setArt({'thumb': img, 'poster': img})
+#                     item.setArt({'thumb': img, 'poster': img, 'fanart': img})
                     uri = sys.argv[0] + '?mode=view' \
                     + '&url=' + urllib.quote_plus(href) + '&img=' + urllib.quote_plus(img) \
                      + '&name=' + urllib.quote_plus(title)+ '&cook=' + urllib.quote_plus(cook)
                     xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                     dbg_log('- uri:'+  uri + '\n')
-                    i = i + 1
                   else:
                     try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.new-kino.net'})
                     except: pass
+                    
+                  i = i + 1
     
     if unis_en == True:
       try: UnifiedSearch().collect(unis_res)
@@ -173,25 +195,13 @@ def NKN_view(url, img, name, cook):
     dbg_log('- name:'+  name + '\n')
         
     http = get_url(url, cookie = cook)
-#    news_id = re.compile("news-id-[0-9]")
-#    news = BeautifulSoup(http).findAll('div',{"id":news_id})
-
-#    for sa in news:    
-        #print str(sa)
-#        flvars = re.compile('<param name="flashvars" value="(.*?)"').findall(str(sa))
-        #print urllib.unquote_plus(flvars[0])
-#        files = re.compile('file=(.*?)"').findall(str(sa))
 
     frames = re.compile('<iframe (.*?)</iframe>').findall(http)
     if len(frames) > 0:
         
-#         files = re.compile('src="(.*?)"').findall(frames[0])
-        
-#         print files
 
         i = 1
-#         for file in files:
-        
+       
         wdic = { '' : 0}
         for frame in frames:
             files = re.compile('src="(.*?)"').findall(frame)
@@ -456,9 +466,38 @@ def get_mailru(url):
     except:
         return None
 
-        
 
-def NKN_play(url, cook, name, web):     
+   
+def get_moonwalk(url):
+        
+    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
+    page = get_url(url)
+    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    did = re.findall("d_id: (.*?),", page)[0]
+    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    akey = re.findall("access_key: '(.*?)'", page)[0]
+    csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
+    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+    opts = []
+    opts.append(('Accept-Encoding', 'gzip, deflate'))
+    opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
+    opts.append(('X-CSRF-Token', csrf))
+    opts.append(('Content-Data', bdata))
+    opts.append(('X-Requested-With', 'XMLHttpRequest'))
+    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+
+    html = get_url('http://moonwalk.cc/sessions/create_session', 
+                   data=udata, 
+                   referrer=url,
+#                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
+                   opts=opts)
+    
+    
+    page=json.loads(html)
+    url = page["manifest_m3u8"]
+    return url   
+
+def NKN_play(url, cook, name, web):
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url.replace('&amp;', '&') + '\n')
     url = url.replace('&amp;', '&')
@@ -491,6 +530,10 @@ def NKN_play(url, cook, name, web):
                 furls.append(d['url'])
                 break
         except: pass
+    elif 'moonwalk.c' in web:
+        furl = get_moonwalk(url.replace('.co','.cc'))
+        if furl != None: furls.append(furl)
+        else:  dbg_log('Moonwalk : no url returned')
         
     if len(furls) == 1:
         dbg_log('- furl:'+  furls[0] + '\n')
@@ -567,9 +610,6 @@ def NKN_find(cook):
         furl = find_pg + stxt
         dbg_log('- furl:'+  furl + '\n')
         NKN_start(furl, '1', cook)
-
-def lsChan():
-    xbmcplugin.endOfDirectory(pluginhandle)
 
 def get_params():
     param=[]

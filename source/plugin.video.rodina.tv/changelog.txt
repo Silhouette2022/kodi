@@ -1,4 +1,29 @@
-[B]3.0.0[/B]
+[B]3.3.1[/B]
+Archive favorites fix. 2nd title scrolling fix
+[B]3.3.0[/B]
+HLS stream fix. Settings in context menu
+[B]3.2.1[/B]
+Bitrates bug fix
+[B]3.2.0[/B]
+Updated bitrates and data centers
+[B]3.1.1[/B]
+Moved percentage to 2nd line
+[B]3.1.0[/B]
+Added percentage
+[B]3.0.7[/B]
+Playlist EPG redused to 12 hours
+[B]3.0.6[/B]
+Track bug fix
+[B]3.0.5[/B]
+Log version fix
+[B]3.0.4[/B]
+Increased timeout for http calls
+[B]3.0.3[/B]
+Rearranged playlist scripts and delay between calls
+[B]3.0.2[/B]
+Bug fix
+[B]3.0.1[/B]
+Settings translations and other tuneup for playlist support
 IPTV Simple Automation
 [B]3.0.0[/B]
 playlist support

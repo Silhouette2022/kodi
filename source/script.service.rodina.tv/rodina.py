@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, otaranda@hotmail.com
-# Rev. 2.0.0
+# Rev. 2.1.0
 
 import os, sys, time
 import xbmc, xbmcaddon, xbmcgui
@@ -18,6 +18,7 @@ _SERVICE_ID_ = 'script.service.rodina.tv'
 _RODINA_ID_ = 'plugin.video.rodina.tv'
 
 tt = 0
+asking = False
 
 def log(message, level = 1):
     print '[%s LOG]: %s' % (__addonname__, message.encode('utf8'))
@@ -30,25 +31,37 @@ class RodinaService:
         self._daemon()
 
     def _daemon(self):
+        global asking
         while not xbmc.abortRequested:
-            global tt
-            dt = 60 * 60 * 3
-            nt = time.time()
-            if tt == 0: tt = nt - dt + 20
-            if nt - tt >= dt:
-                try:
-                    if not xbmc.Player().isPlaying():
-
-                        log('Getting playlist')
-                        params = 'mode=playlist'
-                        script = 'special://home/addons/%s/default.py' % 'plugin.video.rodina.tv'
-                        xbmc.executebuiltin('XBMC.RunScript(%s, %d, %s)' % (script, 99, params))
-
-                        
-                        tt = nt
-                except:
-                    log('ERROR playlist/epg update')
-                    tt = 0
+            plrun = False
+            pldelta = 3
+            try:
+                if xbmcaddon.Addon(_RODINA_ID_).getSetting('plenable') == 'true':
+                    plrun = True
+                pldelta = int(xbmcaddon.Addon(_RODINA_ID_).getSetting('pldelta'))
+            except: pass
+            
+            if plrun and not asking:
+                global tt
+                asking = True
+                dt = 60 * 60 * pldelta
+                nt = time.time()
+    #             if tt == 0: tt = nt - dt + 20
+                if nt - tt >= dt:
+                    try:
+                        if not xbmc.Player().isPlaying():
+    
+                            log('Getting playlist')
+                            params = 'mode=playlist'
+                            script = 'special://home/addons/%s/default.py' % 'plugin.video.rodina.tv'
+                            xbmc.executebuiltin('XBMC.RunScript(%s, %d, %s)' % (script, 99, params))
+    
+                            
+                            tt = nt
+                    except:
+                        log('ERROR playlist/epg update')
+                        tt = 0
+                asking = False
 
             xbmc.sleep(1000)
 
@@ -78,7 +91,8 @@ class RodinaPlayer(xbmc.Player):
     def onPlayBackStopped(self):
 #        log('player stops')
         self.arch_play = 'false'
-        xbmcaddon.Addon(_RODINA_ID_).setSetting('arch_on', 'false')
+        try: xbmcaddon.Addon(_RODINA_ID_).setSetting('arch_on', 'false')
+        except: pass
 
 #    def onPlayBackPaused(self):
 #        log('player pauses')
@@ -98,14 +112,15 @@ class RodinaPlayer(xbmc.Player):
         self.newSeek()
 
     def onPlayBackSpeedChanged(self, speed):
-        log('## Playback BackSpeedChanged')  
+        log('## Playback BackSpeedChanged')
 #        log('#speed: %s #' % speed)
         self.newSeek()   
         
     def newSeek(self):
         log('## New Playback Seek ##')
-        self.arch_play = xbmcaddon.Addon(_RODINA_ID_).getSetting('arch_on')
-        if self.arch_play == 'true':        
+        try: self.arch_play = xbmcaddon.Addon(_RODINA_ID_).getSetting('arch_on')
+        except: self.arch_play = 'false'
+        if self.arch_play == 'true':
             stime = self.getTime()
             self.pause()
             
