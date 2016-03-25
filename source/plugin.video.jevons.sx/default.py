@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.3.5
+# Rev. 0.3.7
 
 
 import urllib,urllib2,re,sys
@@ -23,7 +23,7 @@ dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
-start_pg = "http://www.jevonsru.com"
+start_pg = "http://www.jevons1.com"
 page_pg = start_pg + "/reviews/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
@@ -82,10 +82,10 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONSru.com', thumbnailImage=jevs_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS1.com', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me', thumbnailImage=rfpl_icon), True)
+#    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me', thumbnailImage=rfpl_icon), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by', thumbnailImage=pbtv_icon), True)
 
      
@@ -357,21 +357,24 @@ def touch(url):
         return False            
 
 def get_mailru(url):
-    try:
+#    try:
         url = url.replace('/my.mail.ru/video/', '/api.video.mail.ru/videos/embed/')
         url = url.replace('/my.mail.ru/mail/', '/api.video.mail.ru/videos/embed/mail/')
         url = url.replace('/videoapi.my.mail.ru/', '/api.video.mail.ru/')
         result = get_url(url)
-
+#        print result
         url = re.compile('"metadataUrl" *: *"(.+?)"').findall(result)[0]
+#        print url
+        if not url.startswith('http'): url = 'http:' + url
         mycookie = get_url(url, save_cookie = True)
         cookie = re.search('<cookie>(.+?)</cookie>', mycookie).group(1)
         h = "|Cookie=%s" % urllib.quote(cookie)
 
         result = get_url(url)
+#        print result
         result = json.loads(result)
         result = result['videos']
-
+#        print result
         url = []
         url += [{'quality': '1080p', 'url': i['url'] + h} for i in result if i['key'] == '1080p']
         url += [{'quality': 'HD', 'url': i['url'] + h} for i in result if i['key'] == '720p']
@@ -379,7 +382,7 @@ def get_mailru(url):
 
         if url == []: return None
         return url
-    except:
+#    except:
         return None
 
 def JVS_show(url, name):
@@ -480,6 +483,7 @@ def JVS_play(url, title):
         uri = get_VK(url)     
     
     if uri != None:
+        if not uri.startswith('http'): uri = 'http:' + uri
         uri = urllib.unquote_plus(uri)
         dbg_log('- uri: '+  uri + '\n')
         try: name = title[(title.find('~') + 1):]
