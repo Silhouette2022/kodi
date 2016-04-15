@@ -20,7 +20,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.3.7" provider-name="Silhouette">
+<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.4.0" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
@@ -66,7 +66,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.9.2" provider-name="Silhouette">
+<addon id="plugin.video.new-kino.net" name="[COLOR FF37C6FD]New-Kino.net[/COLOR]" version="0.9.3" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.3.7
+# Rev. 0.4.0
 
 
 import urllib,urllib2,re,sys
@@ -19,7 +19,7 @@ rfpl_icon = xbmc.translatePath(os.path.join(plugin_path, 'rfpl.png'))
 jevs_icon = xbmc.translatePath(os.path.join(plugin_path, 'jevs.png'))
 pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbtv.png'))
 
-dbg = 0
+dbg = 1
 
 pluginhandle = int(sys.argv[1])
 
@@ -27,7 +27,7 @@ start_pg = "http://www.jevons1.com"
 page_pg = start_pg + "/reviews/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
-vk_pg = vk_start + "/videos270805795"
+vk_pg = vk_start + "/videos-76470207?section=playlists"
 rfpl_start = "http://rfpl.me"
 rfpl_pg = rfpl_start + "/matche/page/"
 pbtv_start = "http://www.pressball.by"
@@ -85,48 +85,83 @@ def JVS_top():
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS1.com', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-#    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=rfpl&url=' + urllib.quote_plus(rfpl_pg), xbmcgui.ListItem('RFPL.me', thumbnailImage=rfpl_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gtime&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by', thumbnailImage=pbtv_icon), True)
 
      
     xbmcplugin.endOfDirectory(pluginhandle)
 
-def JVS_vk(url):
-    dbg_log('-JVS_vk:' + '\n')
+def JVS_gtime(url):
+    dbg_log('-JVS_gtime:' + '\n')
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
     
-    thumb = BeautifulSoup(http).findAll('div',{"class":"video_row_thumb"})
-    info = BeautifulSoup(http).findAll('div',{"class":"video_row_info"}) 
+    plists = BeautifulSoup(http).findAll('div',{"id":"video_playlists"})
     
-    drt = {}
-    dri = []
-    for t in thumb: 
+    inners = BeautifulSoup(str(plists)).findAll('div',{"class":"video_row_inner"})
+    
+    for s in inners: 
       try:
-        drt[t.a['href']] = re.compile("background-image: url\(\'(.*?)\'\);").findall(t.div['style'])[0]
+        img = re.compile("background-image: url\(\'(.*?)\'\);").findall(str(s))[0]
       except:
-        drt[t.a['href']] = ""
-
-    for i in info:
-        dri.append((i.a['href'], i.a.string.strip().encode('utf8')))
+        img = rfpl_icon
+      try:
+        href = re.compile("return nav.go\(\'(.*?)\'\);").findall(str(s))[0]
+      except:
+        href = ""
+      try:
+        title = re.compile('data-album-id=".*?">(.*?)</a').findall(str(s))[0]
+      except:
+        title = "Album"
         
-#    print drt
-#    print dri
-    for href, title in dri:
-        img = drt[href]
+      if href != "":
+        xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gshow' + '&url=' + urllib.quote_plus(href), xbmcgui.ListItem(title, thumbnailImage=img), True)
+
+      dbg_log('- title:' + title + '\n')
+      dbg_log('- img:'+  img + '\n')
+      dbg_log('- href:'+  href + '\n')
+
+    xbmcplugin.endOfDirectory(pluginhandle) 
+
+def JVS_gshow(url, page):
+    dbg_log('-JVS_list:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- page:'+  page + '\n')
+    
+    http = get_url(vk_start + url)
+
+    rinfos = BeautifulSoup(http).findAll('div',{"class":"video_row_info"})
+
+    for rows in rinfos:
+        row = BeautifulSoup(str(rows)).findAll('div',{"class":"video_row_info_name"})
+
+#         href = vk_start + re.compile('<a href="(.*?)"').findall(str(row))[0]
+#         title = re.compile('<a *?>(.*?)</a>').findall(str(row))[0].strip()
+        try:
+            ht = re.compile('<a href="(.*?)"(.*?)">(.*?)</a>').findall(str(row).replace('\n','').replace('\r',''))[0]
+            href = vk_start + ht[0]
+            title = ht[2].strip()
+        except:
+            href = ''
+            title = ''
+        img = rfpl_icon
+
         dbg_log('-HREF %s'%href)
         dbg_log('-TITLE %s'%title)
         dbg_log('-IMG %s'%img)
 
-        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-        item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
-        uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(vk_start + href) + '&name=' + urllib.quote_plus(title)
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-        dbg_log('- uri:'+  uri + '\n')
+        if href != '':
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+            uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+            dbg_log('- uri:'+  uri + '\n')
 
+     
     xbmcplugin.endOfDirectory(pluginhandle) 
-
+    
 def JVS_list(url, page):
     dbg_log('-JVS_list:' + '\n')
     dbg_log('- url:'+  url + '\n')
@@ -275,65 +310,79 @@ def JVS_pbtv(url, page):
     xbmcplugin.endOfDirectory(pluginhandle)     
 
 def get_VK(url):
+    dbg_log('-get_VK:' + '\n')
     html = get_url(url)
-    soup = BeautifulSoup(html, fromEncoding="utf-8")
+    dbg_log('- url:'+  url + '\n')
+#    url = None
+    rec = None
+    try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
+    except: pass
+        
+    if rec == None:
+        try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
+        except: pass
+        
+    if rec == None: return
     
-    recs = soup.findAll('param', {'name':'flashvars'})
-
-    for rec in recs:
-        fv={}
-        for s in rec['value'].split('&'):
-            sdd=s.split('=',1)
-            try:
-                fv[sdd[0]]=sdd[1]
-            except:
-                fv[sdd[0]]=''
-            if s.split('=',1)[0] == 'uid':
-                uid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'vtag':
-                vtag = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'host':
-                host = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'vid':
-                vid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'oid':
-                oid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'hd':
-                hd = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url240':
-                url240 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url360':
-                url360 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url480':
-                url480 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url720':
-                url720 = s.split('=',1)[1]
-
-#        url = host+'u'+uid+'/videos/'+vtag+'.240.mp4'
-#        if int(hd)==3:
-#            url = host+'u'+uid+'/videos/'+vtag+'.720.mp4'
-#        if int(hd)==2:
-#            url = host+'u'+uid+'/videos/'+vtag+'.480.mp4'
-#        if int(hd)==1:
-#            url = host+'u'+uid+'/videos/'+vtag+'.360.mp4'
-        url = url240
-        qual = '240'
-        if int(hd)==3:
-            url = url720
-            ual = '720'
-        if int(hd)==2:
-            url = url480
-            ual = '480'
-        if int(hd)==1:
-            url = url360
-            ual = '360'
+    fv={}
     
+    for s in rec.split(','):
+        
+#         print "S=%s"%s
+
+        s0 = s.split(':',1)[0].replace('\\"', '"').strip('"')
+        try:
+            s1 = s.split(':',1)[1].replace('\\"', '"').strip('"')
+        except:
+            s1 = ''
+#         print "S0=%s"%s0
+#         print "S1=%s"%s1
+        
+        fv[s0] = s1
+            
+        if s0 == 'uid':
+            uid = s1
+        if s0 == 'vtag':
+            vtag = s1
+        if s0 == 'host':
+            host = s1
+        if s0 == 'vid':
+            vid = s1
+        if s0 == 'oid':
+            oid = s1
+        if s0 == 'hd':
+            hd = s1
+        if s0 == 'url240':
+            url240 = s1
+        if s0 == 'url360':
+            url360 = s1
+        if s0 == 'url480':
+            url480 = s1
+        if s0 == 'url720':
+            url720 = s1
+
+    url = url240
+    qual = '240'
+    if int(hd)==3:
+        url = url720
+        ual = '720'
+    if int(hd)==2:
+        url = url480
+        ual = '480'
+    if int(hd)==1:
+        url = url360
+        ual = '360'
+    
+    url = url.replace('\\', '')
+    dbg_log('- nurl:'+  url + '\n')
+#     surl = url.split('|')
+#     print surl
     try:
         uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
         html = get_url(uri)
     except: pass
 
-    if not touch(url):
+    if not url or not touch(url):
         try:
             if int(hd)==3:
                 url = fv['cache720']
@@ -345,6 +394,7 @@ def get_VK(url):
             print 'Vk parser failed'
             return None
 
+    dbg_log('- rurl:'+  url + '\n')
     return url
 
 def touch(url):
@@ -551,13 +601,13 @@ url  = urllib.unquote_plus(params['url']) if 'url' in params else page_pg
 if mode == '': JVS_top()
 #if mode == '': JVS_list(url, page)
 elif mode == 'list': JVS_list(url, page)
-elif mode == 'rfpl': JVS_rfpl(url, page)
+elif mode == 'gtime': JVS_gtime(url)
 elif mode == 'pbtvtop': JVS_pbtvtop()
 elif mode == 'pbtv': JVS_pbtv(url, page)
 elif mode == 'play': JVS_play(url, name)
 elif mode == 'playpbtv': JVS_playpbtv(url, name)
 elif mode == 'show': JVS_show(url, name)
-elif mode == 'showrfpl': JVS_showrfpl(url, name)
+elif mode == 'gshow': JVS_gshow(url, name)
 elif mode == 'mail': JVS_mail(url)
 elif mode == 'vk': JVS_vk(url)
 

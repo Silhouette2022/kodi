@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.9.2
+# Rev. 0.9.3
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -363,8 +363,96 @@ def DecodeUppod_Base64(param):
 
     return loc_2        
 
-   
 def get_VK(url):
+    dbg_log('-get_VK:' + '\n')
+    html = get_url(url)
+    dbg_log('- url:'+  url + '\n')
+#    url = None
+    rec = None
+    try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
+    except: pass
+        
+    if rec == None:
+        try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
+        except: pass
+        
+    if rec == None: return
+    
+    fv={}
+    
+    for s in rec.split(','):
+        
+#         print "S=%s"%s
+
+        s0 = s.split(':',1)[0].replace('\\"', '"').strip('"')
+        try:
+            s1 = s.split(':',1)[1].replace('\\"', '"').strip('"')
+        except:
+            s1 = ''
+#         print "S0=%s"%s0
+#         print "S1=%s"%s1
+        
+        fv[s0] = s1
+            
+        if s0 == 'uid':
+            uid = s1
+        if s0 == 'vtag':
+            vtag = s1
+        if s0 == 'host':
+            host = s1
+        if s0 == 'vid':
+            vid = s1
+        if s0 == 'oid':
+            oid = s1
+        if s0 == 'hd':
+            hd = s1
+        if s0 == 'url240':
+            url240 = s1
+        if s0 == 'url360':
+            url360 = s1
+        if s0 == 'url480':
+            url480 = s1
+        if s0 == 'url720':
+            url720 = s1
+
+    url = url240
+    qual = '240'
+    if int(hd)==3:
+        url = url720
+        ual = '720'
+    if int(hd)==2:
+        url = url480
+        ual = '480'
+    if int(hd)==1:
+        url = url360
+        ual = '360'
+    
+    url = url.replace('\\', '')
+    dbg_log('- nurl:'+  url + '\n')
+#     surl = url.split('|')
+#     print surl
+    try:
+        uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
+        html = get_url(uri)
+    except: pass
+
+    if not url or not touch(url):
+        try:
+            if int(hd)==3:
+                url = fv['cache720']
+            if int(hd)==2:
+                url = fv['cache480']
+            if int(hd)==1:
+                url = fv['cache360']
+        except:
+            print 'Vk parser failed'
+            return None
+
+    dbg_log('- rurl:'+  url + '\n')
+    return url
+
+   
+def get_VK1(url):
     html = get_url(url)
 #    url = None
     soup = BeautifulSoup(html, fromEncoding="utf-8")
