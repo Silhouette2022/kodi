@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.0
+# Rev. 0.4.1
 
 
 import urllib,urllib2,re,sys
@@ -19,7 +19,7 @@ rfpl_icon = xbmc.translatePath(os.path.join(plugin_path, 'rfpl.png'))
 jevs_icon = xbmc.translatePath(os.path.join(plugin_path, 'jevs.png'))
 pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbtv.png'))
 
-dbg = 1
+dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
@@ -27,11 +27,15 @@ start_pg = "http://www.jevons1.com"
 page_pg = start_pg + "/reviews/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
-vk_pg = vk_start + "/videos-76470207?section=playlists"
+vk_oid = '76470207'
+vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
+vk_alv = '/al_video.php'
 rfpl_start = "http://rfpl.me"
 rfpl_pg = rfpl_start + "/matche/page/"
 pbtv_start = "http://www.pressball.by"
 pbtv_pg = pbtv_start + "/tv/search/tag?ajax=yw0&q=222-pressbol-TV&TvVideo_page="
+vk_vid = "/video-%s_%s"
+
 
 def reportUsage(addonid,action):
     host = 'xbmc-doplnky.googlecode.com'
@@ -124,40 +128,89 @@ def JVS_gtime(url):
 
     xbmcplugin.endOfDirectory(pluginhandle) 
 
+def uni2enc(ustr):
+    raw = ''
+    uni = unicode(ustr, 'utf8')
+    uni_sz = len(uni)
+    for i in xrange(len(ustr)):
+        raw += ('%%%02X') % ord(ustr[i])        
+    return raw
+    
+def uni2cp(ustr):
+    raw = ''
+    uni = unicode(ustr, 'utf8')
+    uni_sz = len(uni)
+    for i in range(uni_sz):
+        raw += ('%%%02X') % ord(uni[i].encode('cp1251'))
+    return raw  
+
 def JVS_gshow(url, page):
-    dbg_log('-JVS_list:' + '\n')
+    dbg_log('-JVS_gshow:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
-    
+
     http = get_url(vk_start + url)
+    
+    sect = url.split('=')[1]
+    pdata = 'act=load_videos_silent&al=1&extended=0&offset=0&oid=-' + vk_oid + '&section=' + sect
+    hpost = get_url(vk_start + vk_alv, data = pdata, referrer = vk_start + url)
+#     print hpost.replace('],[', '],\n[')
 
-    rinfos = BeautifulSoup(http).findAll('div',{"class":"video_row_info"})
-
-    for rows in rinfos:
-        row = BeautifulSoup(str(rows)).findAll('div',{"class":"video_row_info_name"})
-
-#         href = vk_start + re.compile('<a href="(.*?)"').findall(str(row))[0]
-#         title = re.compile('<a *?>(.*?)</a>').findall(str(row))[0].strip()
-        try:
-            ht = re.compile('<a href="(.*?)"(.*?)">(.*?)</a>').findall(str(row).replace('\n','').replace('\r',''))[0]
-            href = vk_start + ht[0]
-            title = ht[2].strip()
-        except:
-            href = ''
-            title = ''
-        img = rfpl_icon
-
-        dbg_log('-HREF %s'%href)
-        dbg_log('-TITLE %s'%title)
-        dbg_log('-IMG %s'%img)
-
-        if href != '':
-            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-            item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
-            uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
-            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-            dbg_log('- uri:'+  uri + '\n')
+    
+    if 1:
+        entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall(hpost)
+        for entry in entries:
+            print entry
+            try:
+                ht = "/video-76470207_%s"%entry[1]
+                href = vk_start + ht
+                title = entry[3].decode('cp1251').encode('utf-8').strip('"')
+                img = entry[2].replace('\/', '/').strip('"')
+                if entry[19].find('rutube') == -1: href = ''
+            except:
+                href = ''
+                title = ''
+                img = rfpl_icon
+    
+            dbg_log('-HREF %s'%href)
+            dbg_log('-TITLE %s'%title)
+            dbg_log('-IMG %s'%img)
+    
+            if href != '':
+                item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+                item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+                uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+                item.setProperty('IsPlayable', 'true')
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+                dbg_log('- uri:'+  uri + '\n')
+    else:
+        rinfos = BeautifulSoup(http).findAll('div',{"class":"video_row_info"})
+    
+        for rows in rinfos:
+            row = BeautifulSoup(str(rows)).findAll('div',{"class":"video_row_info_name"})
+    
+    #         href = vk_start + re.compile('<a href="(.*?)"').findall(str(row))[0]
+    #         title = re.compile('<a *?>(.*?)</a>').findall(str(row))[0].strip()
+            try:
+                ht = re.compile('<a href="(.*?)"(.*?)">(.*?)</a>').findall(str(row).replace('\n','').replace('\r',''))[0]
+                href = vk_start + ht[0]
+                title = ht[2].strip()
+            except:
+                href = ''
+                title = ''
+            img = rfpl_icon
+    
+            dbg_log('-HREF %s'%href)
+            dbg_log('-TITLE %s'%title)
+            dbg_log('-IMG %s'%img)
+    
+            if href != '':
+                item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+                item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
+                uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+                item.setProperty('IsPlayable', 'true')
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+                dbg_log('- uri:'+  uri + '\n')
 
      
     xbmcplugin.endOfDirectory(pluginhandle) 
