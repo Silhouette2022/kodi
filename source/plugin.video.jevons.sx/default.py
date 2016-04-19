@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.1
+# Rev. 0.4.2
 
 
 import urllib,urllib2,re,sys
@@ -128,22 +128,6 @@ def JVS_gtime(url):
 
     xbmcplugin.endOfDirectory(pluginhandle) 
 
-def uni2enc(ustr):
-    raw = ''
-    uni = unicode(ustr, 'utf8')
-    uni_sz = len(uni)
-    for i in xrange(len(ustr)):
-        raw += ('%%%02X') % ord(ustr[i])        
-    return raw
-    
-def uni2cp(ustr):
-    raw = ''
-    uni = unicode(ustr, 'utf8')
-    uni_sz = len(uni)
-    for i in range(uni_sz):
-        raw += ('%%%02X') % ord(uni[i].encode('cp1251'))
-    return raw  
-
 def JVS_gshow(url, page):
     dbg_log('-JVS_gshow:' + '\n')
     dbg_log('- url:'+  url + '\n')
@@ -160,13 +144,12 @@ def JVS_gshow(url, page):
     if 1:
         entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall(hpost)
         for entry in entries:
-            print entry
             try:
                 ht = "/video-76470207_%s"%entry[1]
                 href = vk_start + ht
                 title = entry[3].decode('cp1251').encode('utf-8').strip('"')
                 img = entry[2].replace('\/', '/').strip('"')
-                if entry[19].find('rutube') == -1: href = ''
+                if entry[19].find('rutube') != -1: href = ''
             except:
                 href = ''
                 title = ''
