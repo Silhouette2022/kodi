@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.2
+# Rev. 0.4.3
 
 
 import urllib,urllib2,re,sys
@@ -149,7 +149,7 @@ def JVS_gshow(url, page):
                 href = vk_start + ht
                 title = entry[3].decode('cp1251').encode('utf-8').strip('"')
                 img = entry[2].replace('\/', '/').strip('"')
-                if entry[19].find('rutube') != -1: href = ''
+#                if entry[19].find('rutube') != -1: href = ''
             except:
                 href = ''
                 title = ''
@@ -345,6 +345,18 @@ def JVS_pbtv(url, page):
      
     xbmcplugin.endOfDirectory(pluginhandle)     
 
+def get_rutube(url):
+    dbg_log('-get_rutube:' + '\n')
+    if not url.startswith('http'): url = 'http:' + url
+    dbg_log('- url-in:'+  url + '\n')
+    result = get_url(url)
+    jdata = urllib.unquote_plus(result).replace('&quot;','"').replace('&amp;','&')
+    try: 
+        url = re.compile('"m3u8": "(.*?)"').findall(jdata)[0]
+        dbg_log('- url-out:'+  url + '\n')
+    except: url = None
+    return url
+        
 def get_VK(url):
     dbg_log('-get_VK:' + '\n')
     html = get_url(url)
@@ -358,7 +370,17 @@ def get_VK(url):
         try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
         except: pass
         
-    if rec == None: return
+    if rec == None: 
+        try: 
+            frame = re.compile('<iframe id=(.*?)allowfullscreen').findall(urllib.unquote_plus(html))[0]
+            src = re.compile('src="(.*?)"').findall(frame.replace('\\', ''))[0]
+        except:
+            src = ''
+        if src.find('rutube') > -1: 
+                return get_rutube(src);
+        else:
+            print 'Vk unknown external player'
+            return None
     
     fv={}
     
