@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #!/usr/bin/python
 # Writer (c) 2012, Silhouette, E-mail: silhouette2022@gmail.com
-# Rev. 0.0.1
+# Rev. 0.0.2
 
 
 
@@ -27,9 +27,10 @@ def dbg_log(line):
 def getURL(url, data = None, cookie = None, save_cookie = False, referrer = None):
     dbg_log(url)
     req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
-    req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
-    req.add_header('Accept-Language', 'ru,en;q=0.9')
+    req.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:44.0) Gecko/20100101 Firefox/44.0')
+    req.add_header('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8')
+    req.add_header('Accept-Language', 'en-US,en;q=0.5')
+    
     if cookie: req.add_header('Cookie', cookie)
     if referrer: req.add_header('Referer', referrer)
     if data: 
@@ -194,22 +195,38 @@ def GTV_archs(url, name2, thumbnail, mycook):
 def GTV_plarch(url, name, mycook):
     dbg_log('-GTV_plarch')
     dbg_log('-url=%s'%url)
-    response = getURL('%s/maclist/?_=%d' % (GTV_url, (time.time())*1000), cookie = mycook, referrer = url)
+    dbg_log('-mycook=%s'%mycook)
+    resp1 = getURL(url,  save_cookie = True, cookie = mycook)
+    mycookie = re.search('<cookie>(.+?)</cookie>', resp1).group(1)
+    dbg_log('-newcook=%s'%mycookie)
+#    print resp1
+    response = getURL('%s/maclist/?_=%d' % (GTV_url, (time.time())*1000),  cookie = mycookie, referrer = url)
+#    print response
+
     try: src = re.compile('src="(.*?)"').findall(response)[0]
     except: 
         try: src = re.compile('video_src = "(.*?)"').findall(response)[0]
         except: return
     dbg_log('-src=%s'%src)
-    
-    pls = src.split("-")
 
-    tm0 = time.mktime(time.strptime(url[-17:-7],"%Y-%m-%d"))
-    tm1 = time.mktime(time.strptime(url[-17:-1],"%Y-%m-%d/%H:%M"))
-    
-    try: uri = '%s-%d-%s'%(pls[0],int(pls[1]) + (tm1 - tm0),pls[2])
-#     try: uri = '%s-%d-%s'%(pls[0],tml,pls[2])
-    except: uri = srs
+    if 0:
+        pls = src.split("-")
+        tm0 = time.mktime(time.strptime(url[-17:-7],"%Y-%m-%d"))
+        tm1 = time.mktime(time.strptime(url[-17:-1],"%Y-%m-%d/%H:%M"))
+        try: uri = '%s-%d-%s'%(pls[0],int(pls[1]) + (tm1 - tm0),pls[2])
+        
+    #     try: uri = '%s-%d-%s'%(pls[0],tml,pls[2])
+        except: uri = src
+    else:
+        uri = src
+ 
     dbg_log('-uri=%s'%uri)
+
+#    uri += '|Origin=' + urllib.quote_plus(GTV_url)
+#    uri += '|Accept-Encoding=gzip, deflate' 
+    uri += '|User-Agent=' + urllib.quote_plus('Mozilla/5.0 (Windows NT 6.1; WOW64; rv:44.0) Gecko/20100101 Firefox/44.0')
+#    uri += '|Referer=' + urllib.quote_plus(url)    
+    
     item = xbmcgui.ListItem(path = uri)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
 # http://www.gamak.tv/rossiia_1/2015-11-13/14:00/
