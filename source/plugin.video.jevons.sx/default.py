@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.3
+# Rev. 0.4.4
 
 
 import urllib,urllib2,re,sys
@@ -23,8 +23,8 @@ dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
-start_pg = "http://www.jevons1.com"
-page_pg = start_pg + "/reviews/"
+start_pg = "http://jevons.ru"
+page_pg = start_pg + "/category/futbol-obzori/page/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "http://vk.com"
 vk_oid = '76470207'
@@ -63,6 +63,8 @@ def dbg_log(line):
     if dbg: print line
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
+    dbg_log('-get_url:' + '\n')
+    dbg_log('- url:'+  url + '\n')
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Opera/9.80 (X11; Linux i686; U; ru) Presto/2.7.62 Version/11.00')
     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
@@ -86,7 +88,7 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS1.com', thumbnailImage=jevs_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gtime&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
@@ -203,8 +205,8 @@ def JVS_list(url, page):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
     
-    http = get_url(url + page)
-    
+    http = get_url(url + page + '/')
+
     i = 0
 
     entrys = re.compile(' <a title="(.*?)" href="(.*?)">').findall(http)
@@ -359,8 +361,10 @@ def get_rutube(url):
         
 def get_VK(url):
     dbg_log('-get_VK:' + '\n')
-    html = get_url(url)
     dbg_log('- url:'+  url + '\n')
+    
+    html = get_url(url)
+
 #    url = None
     rec = None
     try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
