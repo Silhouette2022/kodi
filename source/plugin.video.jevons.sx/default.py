@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.4
+# Rev. 0.4.5
 
 
 import urllib,urllib2,re,sys
@@ -26,9 +26,10 @@ pluginhandle = int(sys.argv[1])
 start_pg = "http://jevons.ru"
 page_pg = start_pg + "/category/futbol-obzori/page/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
-vk_start = "http://vk.com"
+vk_start = "https://new.vk.com"
 vk_oid = '76470207'
-vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
+# vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
+vk_pg = vk_start + "/videos-"+ vk_oid
 vk_alv = '/al_video.php'
 rfpl_start = "http://rfpl.me"
 rfpl_pg = rfpl_start + "/matche/page/"
@@ -88,7 +89,7 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
 def JVS_top():
     dbg_log('-JVS_top:' + '\n')
 
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
+#     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gtime&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
@@ -102,24 +103,15 @@ def JVS_gtime(url):
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
+    js = re.compile('{"albumsPreload":{(.*?):\[\[(.*?)\]\]}').findall(http)[0]
+    entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+js[1]+']')
     
-    plists = BeautifulSoup(http).findAll('div',{"id":"video_playlists"})
-    
-    inners = BeautifulSoup(str(plists)).findAll('div',{"class":"video_row_inner"})
-    
-    for s in inners: 
-      try:
-        img = re.compile("background-image: url\(\'(.*?)\'\);").findall(str(s))[0]
-      except:
-        img = rfpl_icon
-      try:
-        href = re.compile("return nav.go\(\'(.*?)\'\);").findall(str(s))[0]
-      except:
-        href = ""
-      try:
-        title = re.compile('data-album-id=".*?">(.*?)</a').findall(str(s))[0]
-      except:
-        title = "Album"
+    print entries
+    for en in entries: 
+      print en
+      title = en[0].decode('cp1251').encode('utf-8').strip('"').strip("'").replace('\/','/')
+      img = en[2].strip('"').strip("'").replace('\/','/')
+      href = en[3].strip('"').strip("'").replace('\/','/')
         
       if href != "":
         xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gshow' + '&url=' + urllib.quote_plus(href), xbmcgui.ListItem(title, thumbnailImage=img), True)
