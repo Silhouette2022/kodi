@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.5
+# Rev. 0.4.6
 
 
 import urllib,urllib2,re,sys
@@ -103,12 +103,10 @@ def JVS_gtime(url):
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
-    js = re.compile('{"albumsPreload":{(.*?):\[\[(.*?)\]\]}').findall(http)[0]
-    entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+js[1]+']')
+    ap = re.compile('{"albumsPreload":{(.*?):\[\[(.*?)\]\]}').findall(http)[0]
+    entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+ap[1]+']')
     
-    print entries
     for en in entries: 
-      print en
       title = en[0].decode('cp1251').encode('utf-8').strip('"').strip("'").replace('\/','/')
       img = en[2].strip('"').strip("'").replace('\/','/')
       href = en[3].strip('"').strip("'").replace('\/','/')
@@ -132,12 +130,16 @@ def JVS_gshow(url, page):
     sect = url.split('=')[1]
     pdata = 'act=load_videos_silent&al=1&extended=0&offset=0&oid=-' + vk_oid + '&section=' + sect
     hpost = get_url(vk_start + vk_alv, data = pdata, referrer = vk_start + url)
-#     print hpost.replace('],[', '],\n[')
+#     print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
 
     
     if 1:
-        entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall(hpost)
+#         "pageVideosList":{"-76470207":{"album_10":[[-
+        pv = re.compile('"list":\[\[(.*?)\]\]').findall(hpost)[0]
+#         print pv.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
+        entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+pv+']')
         for entry in entries:
+#             print entry
             try:
                 ht = "/video-76470207_%s"%entry[1]
                 href = vk_start + ht
@@ -346,7 +348,24 @@ def get_rutube(url):
     result = get_url(url)
     jdata = urllib.unquote_plus(result).replace('&quot;','"').replace('&amp;','&')
     try: 
-        url = re.compile('"m3u8": "(.*?)"').findall(jdata)[0]
+#         url = re.compile('"m3u8": "(.*?)"').findall(jdata)[0]
+        url = re.compile('href="(.*?)"').findall(jdata)[0].replace('rutube.ru/', 'rutube.ru/api/')
+        result = get_url(url)
+#         print result
+#         url = re.compile('rel="video_src" href="(.*?)"').findall(result)[0]
+#         result = get_url(url)
+        
+#         <meta property="og:video" content="https://video.rutube.ru/8810316" />
+#         <meta property="og:video:secure_url" content="https://video.rutube.ru/8810316" />
+        try:
+            url = re.compile('"og:video" content="(.*?)"').findall(result)[0]
+        except:
+            try:
+                url = re.compile('"og:video:secure_url" content="(.*?)"').findall(result)[0]
+            except:
+                url = ''
+                
+                                
         dbg_log('- url-out:'+  url + '\n')
     except: url = None
     return url
