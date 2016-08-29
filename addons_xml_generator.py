@@ -12,8 +12,9 @@ class Generator:
     """
     def __init__( self ):
         # generate files
+        self._generate_zips_md5()
         self._generate_addons_file()
-        self._generate_md5_file()
+        self._generate_md5_file("addons.xml")
         # notify user
         print "Finished updating addons xml and md5 files"
 
@@ -27,7 +28,7 @@ class Generator:
         for addon in addons:
             try:
                 addon = "./source/"+addon
-				# skip any file or .svn folder
+                # skip any file or .svn folder
                 if ( not os.path.isdir( addon ) or addon == ".svn" ): continue
                 # create path
                 _path = os.path.join( addon, "addon.xml" )
@@ -52,15 +53,15 @@ class Generator:
         # save file
         self._save_file( addons_xml.encode( "UTF-8" ), file="addons.xml" )
 
-    def _generate_md5_file( self ):
+    def _generate_md5_file( self, fname ):
         try:
             # create a new md5 hash
-            m = md5.new( open( "addons.xml" ).read() ).hexdigest()
+            m = md5.new( open( fname ).read() ).hexdigest()
             # save file
-            self._save_file( m, file="addons.xml.md5" )
+            self._save_file( m, file=fname + ".md5" )
         except Exception, e:
             # oops
-            print "An error occurred creating addons.xml.md5 file!\n%s" % ( e, )
+            print "An error occurred creating %s.md5 file!\n%s" % (fname, e, )
 
     def _save_file( self, data, file ):
         try:
@@ -69,7 +70,29 @@ class Generator:
         except Exception, e:
             # oops
             print "An error occurred saving %s file!\n%s" % ( file, e, )
-
+            
+    def _generate_zips_md5( self ):
+        # addon list
+        addons = os.listdir( "./repo/" )
+        #print addons
+        # loop thru and add each addons addon.xml file
+        for addon in addons:
+            try:
+                addon = "./repo/"+addon
+                #print addon
+                if ( not os.path.isdir( addon ) or addon == ".svn" ): continue
+                # create path
+                zips = os.listdir( addon )
+                #print zips
+                for zip in zips:
+                    #print zip
+                    if zip.endswith(".zip"):
+                      md5f = addon + "/" + zip
+                      #print md5f
+                      self._generate_md5_file(md5f)
+            except Exception, e:
+                # missing or poorly formatted addon.xml
+                print "Error creating md5 for zip %s : %s" % ( zip, e, )                    
 
 if ( __name__ == "__main__" ):
     # start

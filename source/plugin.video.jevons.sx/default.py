@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.6
+# Rev. 0.4.7
 
 
 import urllib,urllib2,re,sys
@@ -26,7 +26,7 @@ pluginhandle = int(sys.argv[1])
 start_pg = "http://jevons.ru"
 page_pg = start_pg + "/category/futbol-obzori/page/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
-vk_start = "https://new.vk.com"
+vk_start = "https://vk.com"
 vk_oid = '76470207'
 # vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
 vk_pg = vk_start + "/videos-"+ vk_oid
@@ -130,11 +130,10 @@ def JVS_gshow(url, page):
     sect = url.split('=')[1]
     pdata = 'act=load_videos_silent&al=1&extended=0&offset=0&oid=-' + vk_oid + '&section=' + sect
     hpost = get_url(vk_start + vk_alv, data = pdata, referrer = vk_start + url)
-#     print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
+#    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
 
     
     if 1:
-#         "pageVideosList":{"-76470207":{"album_10":[[-
         pv = re.compile('"list":\[\[(.*?)\]\]').findall(hpost)[0]
 #         print pv.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
         entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+pv+']')
