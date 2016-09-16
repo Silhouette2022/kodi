@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.4.7
+# Rev. 0.5.0
 
 
 import urllib,urllib2,re,sys
@@ -27,9 +27,12 @@ start_pg = "http://jevons.ru"
 page_pg = start_pg + "/category/futbol-obzori/page/"
 mail_pg = "http://my.mail.ru/mail/jevons/video/"
 vk_start = "https://vk.com"
-vk_oid = '76470207'
+vk_videos = "/videos-"
+#vk_oid = '76470207'
 # vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
-vk_pg = vk_start + "/videos-"+ vk_oid
+tvg_oid = '22893032'
+gt_oid = '76470207'
+vk_pg = vk_start + vk_videos #+ vk_oid
 vk_alv = '/al_video.php'
 rfpl_start = "http://rfpl.me"
 rfpl_pg = rfpl_start + "/matche/page/"
@@ -92,14 +95,15 @@ def JVS_top():
 #     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
 #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gtime&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vkalb&oid=' + gt_oid+ '&url=' + urllib.quote_plus(vk_pg + gt_oid), xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vkshow&oid=' + tvg_oid+ '&url=' + urllib.quote_plus(vk_videos + tvg_oid), xbmcgui.ListItem('vk.com/TVGOAL', thumbnailImage=rfpl_icon), True)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', xbmcgui.ListItem('PRESSBALL.by', thumbnailImage=pbtv_icon), True)
 
      
     xbmcplugin.endOfDirectory(pluginhandle)
 
-def JVS_gtime(url):
-    dbg_log('-JVS_gtime:' + '\n')
+def JVS_vkalb(url, oid):
+    dbg_log('-JVS_vkalb:' + '\n')
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
@@ -112,7 +116,7 @@ def JVS_gtime(url):
       href = en[3].strip('"').strip("'").replace('\/','/')
         
       if href != "":
-        xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=gshow' + '&url=' + urllib.quote_plus(href), xbmcgui.ListItem(title, thumbnailImage=img), True)
+        xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vkshow&oid=' + oid + '&url=' + urllib.quote_plus(href), xbmcgui.ListItem(title, thumbnailImage=img), True)
 
       dbg_log('- title:' + title + '\n')
       dbg_log('- img:'+  img + '\n')
@@ -120,27 +124,32 @@ def JVS_gtime(url):
 
     xbmcplugin.endOfDirectory(pluginhandle) 
 
-def JVS_gshow(url, page):
-    dbg_log('-JVS_gshow:' + '\n')
+def JVS_vkshow(url, page, oid):
+    dbg_log('-JVS_vkshow:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
 
     http = get_url(vk_start + url)
     
-    sect = url.split('=')[1]
-    pdata = 'act=load_videos_silent&al=1&extended=0&offset=0&oid=-' + vk_oid + '&section=' + sect
-    hpost = get_url(vk_start + vk_alv, data = pdata, referrer = vk_start + url)
-#    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
+    try:
+        sect = url.split('=')[1]
+        pdata = 'act=load_videos_silent&al=1&extended=0&offset=0&oid=-' + oid + '&section=' + sect
+        hpost = get_url(vk_start + vk_alv, data = pdata, referrer = vk_start + url)
+        slist = "list"
+    except:
+        hpost = http
+        slist = "all"
 
+    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
     
     if 1:
-        pv = re.compile('"list":\[\[(.*?)\]\]').findall(hpost)[0]
-#         print pv.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
+        pv = re.compile('"' + slist + '":\[\[(.*?)\]\]').findall(hpost)[0]
+#        print pv.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
         entries = re.compile('\[(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?),(.*?)\]').findall('['+pv+']')
         for entry in entries:
 #             print entry
             try:
-                ht = "/video-76470207_%s"%entry[1]
+                ht = "/video-%s_%s"%(oid,entry[1])
                 href = vk_start + ht
                 title = entry[3].decode('cp1251').encode('utf-8').strip('"')
                 img = entry[2].replace('\/', '/').strip('"')
@@ -667,19 +676,20 @@ def get_params():
 params=get_params()
 mode = params['mode'] if 'mode' in params else ''
 page = params['page'] if 'page' in params else '1'
+oid = params['oid'] if 'oid' in params else ''
 name = urllib.unquote_plus(params['name']) if 'name' in params else ''
 url  = urllib.unquote_plus(params['url']) if 'url' in params else page_pg
 
 if mode == '': JVS_top()
 #if mode == '': JVS_list(url, page)
 elif mode == 'list': JVS_list(url, page)
-elif mode == 'gtime': JVS_gtime(url)
+elif mode == 'vkalb': JVS_vkalb(url, oid)
 elif mode == 'pbtvtop': JVS_pbtvtop()
 elif mode == 'pbtv': JVS_pbtv(url, page)
 elif mode == 'play': JVS_play(url, name)
 elif mode == 'playpbtv': JVS_playpbtv(url, name)
 elif mode == 'show': JVS_show(url, name)
-elif mode == 'gshow': JVS_gshow(url, name)
+elif mode == 'vkshow': JVS_vkshow(url, name, oid)
 elif mode == 'mail': JVS_mail(url)
 elif mode == 'vk': JVS_vk(url)
 
