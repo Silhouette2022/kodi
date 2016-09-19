@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.5.0
+# Rev. 0.5.1
 
 
 import urllib,urllib2,re,sys
@@ -140,7 +140,7 @@ def JVS_vkshow(url, page, oid):
         hpost = http
         slist = "all"
 
-    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
+#    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
     
     if 1:
         pv = re.compile('"' + slist + '":\[\[(.*?)\]\]').findall(hpost)[0]
