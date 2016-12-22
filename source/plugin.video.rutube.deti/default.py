@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.1
+# Rev. 0.1.2
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -44,7 +44,7 @@ class RTFeeds():
         self.prev = ''
         
         self.debug = 0
-        self.dbg_level = 1
+        self.dbg_level = 0
         
     # start_pg = fixurl(u"http://спутник.дети")
     def fixurl(self, url):
@@ -185,9 +185,9 @@ class RTFeeds():
             if ctFolder == False: item.setProperty('IsPlayable', 'true')
             item.setProperty('fanart_image', self.fanart)
             xbmcplugin.addDirectoryItem(self.handle, sys.argv[0] + ctUrl, item, ctFolder)
-            self.log("ctTitle: %s"  % ctTitle, 2) 
+            self.log("ctTitle: %s"  % ctTitle) 
 #             self.log("ctUrl: %s"  % ctUrl, 2) 
-            self.log("ctIcon: %s"  % ctIcon, 2) 
+            self.log("ctIcon: %s"  % ctIcon) 
 
         xbmcplugin.endOfDirectory(self.handle)
             
