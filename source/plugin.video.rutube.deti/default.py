@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.3
+# Rev. 0.1.4
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json
-from xml.sax.saxutils import escape, unescape
+#from xml.sax.saxutils import escape, unescape
 # escape() and unescape() takes care of &, < and >.
 # html_escape_table = {
 #     '"': "&quot;",
