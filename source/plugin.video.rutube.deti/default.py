@@ -1,24 +1,31 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.2
+# Rev. 0.1.3
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json
 from xml.sax.saxutils import escape, unescape
 # escape() and unescape() takes care of &, < and >.
-html_escape_table = {
-    '"': "&quot;",
-    "'": "&apos;"
-}
-html_unescape_table = {v:k for k, v in html_escape_table.items()}
+# html_escape_table = {
+#     '"': "&quot;",
+#     "'": "&apos;"
+# }
+# html_unescape_table = {v:k for k, v in html_escape_table.items()}
 
 def html_escape(text):
-    return escape(text, html_escape_table)
+#     return escape(text, html_escape_table)
+    text = text.replace("&", "&amp;")
+    text = text.replace(">", ">")
+    text = text.replace("<", "<")
+    text = text.replace('"', "&quot;")
+    text = text.replace("'", "&apos;")
+    return text
 
 def html_unescape(text):
-    return unescape(text, html_unescape_table)
+#     return unescape(text, html_unescape_table)
+    return text.replace("&amp;", "&").replace(">", ">").replace("<", "<").replace("&quot;", '"').replace("&apos;", "'")
 
 _ADDOD_ID_= 'plugin.video.rutube.deti'
 _FEEDS_URL_= 'https://rutube.ru/feeds/kids/'
@@ -43,8 +50,8 @@ class RTFeeds():
         self.name = ''
         self.prev = ''
         
-        self.debug = 0
-        self.dbg_level = 0
+        self.debug = 1
+        self.dbg_level = 1
         
     # start_pg = fixurl(u"http://спутник.дети")
     def fixurl(self, url):
