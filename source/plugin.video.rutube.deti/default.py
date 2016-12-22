@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.4
+# Rev. 0.1.5
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -50,8 +50,8 @@ class RTFeeds():
         self.name = ''
         self.prev = ''
         
-        self.debug = 1
-        self.dbg_level = 1
+        self.debug = 0
+        self.dbg_level = 0
         
     # start_pg = fixurl(u"http://спутник.дети")
     def fixurl(self, url):
