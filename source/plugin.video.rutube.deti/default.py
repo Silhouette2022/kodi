@@ -1,11 +1,24 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.0
+# Rev. 0.1.1
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json
+from xml.sax.saxutils import escape, unescape
+# escape() and unescape() takes care of &, < and >.
+html_escape_table = {
+    '"': "&quot;",
+    "'": "&apos;"
+}
+html_unescape_table = {v:k for k, v in html_escape_table.items()}
+
+def html_escape(text):
+    return escape(text, html_escape_table)
+
+def html_unescape(text):
+    return unescape(text, html_unescape_table)
 
 _ADDOD_ID_= 'plugin.video.rutube.deti'
 _FEEDS_URL_= 'https://rutube.ru/feeds/kids/'
@@ -28,9 +41,10 @@ class RTFeeds():
         self.icon = ''
         self.url = ''  
         self.name = ''
+        self.prev = ''
         
-        self.debug = 1
-        self.dbg_level = 2
+        self.debug = 0
+        self.dbg_level = 1
         
     # start_pg = fixurl(u"http://спутник.дети")
     def fixurl(self, url):
@@ -135,7 +149,12 @@ class RTFeeds():
       # *** Add-on helpers
     def log(self, message, level = 1):
         if (level < self.dbg_level) or (self.debug and self.dbg_level >= level):
-            xbmc.log("[%s LOG]: %s" % (self.id, message.encode('utf8')))
+            try: xbmc.log("[%s LOG]: %s" % (self.id, message))
+            except: 
+                try: xbmc.log("[%s LOG]: %s" % (self.id, message.encode('utf-8')))
+                except:
+                    try: xbmc.log("[%s LOG]: %s" % (self.id, message.encode('utf-8')))
+                    except: xbmc.log("[%s LOG]: %s" % (self.id, 'message encoding issue'))
 
     def error(self, message):
         xbmc.log("[%s ERROR]: %s" % (self.id, message))
@@ -178,6 +197,7 @@ class RTFeeds():
         self.icon = UQT(params['icon']) if 'icon' in params else ''
         self.url = UQT(params['url']) if 'url' in params else ''  
         self.name = params['name'] if 'name' in params else ''
+        self.prev = params['prev'] if 'prev' in params else ''
             
     def main(self):
         self.log("Addon: %s"  % self.id)
@@ -253,8 +273,8 @@ class RTFeeds():
                 self.log("-m_list-url: %s"%url)
                 
                 if url and name:
-                    if url.find('video') > -1 or url.find('play/embed') > -1:
-                        mode = 'play'
+                    if (url.find('rutube.ru/video') > -1 or url.find('play/embed') > -1) and url.find('person') < 0 :
+                        mode = 'play&name=%s&icon=%s&prev=list'%(name, QT(pic))
                         folder = False
                     else:
                         mode = 'show'
@@ -281,14 +301,14 @@ class RTFeeds():
         except: pass
         
         
-        try: jtdata = re.compile("initialData.resultsOfActiveTabResources\[(.*?)\] = '{(.*?)}';").findall(http)[0][1].decode('unicode-escape')
+        try: jtdata = re.compile("initialData.resultsOfActiveTabResources\[(.*?)\] = '{(.*?)}';").findall(http)[0][1].decode('unicode-escape').replace("\n", " ")
         except:
-            try: jtdata = re.compile("initialData.personVideoTab = JSON.parse\('{(.*?)}'\);").findall(http)[0].decode('unicode-escape')
-            except: jtdata = re.compile('data-value="{(.*?)}"></div>').findall(http)[0]
-            
-#         self.log(str(jtdata).decode('unicode-escape'))
-        try:jts = json.loads('{'+jtdata+'}')
-        except:jts = json.loads(jtdata)
+            try: jtdata = re.compile("initialData.personVideoTab = JSON.parse\('{(.*?)}'\);").findall(http)[0].decode('unicode-escape').replace("\n", " ")
+            except: jtdata = html_unescape(re.compile('data-value="{(.*?)}">').findall(http)[0].decode('unicode-escape')).replace("\n", " ")
+
+#         self.dbg_log(str(jtdata.encode('utf-8')))
+        judata = '{'+jtdata+'}'
+        jts = json.loads(judata)
 #         self.log(str(jts).decode('unicode-escape'))
         for res in jts['results']:
 #             self.log(str(res).decode('unicode-escape'))
@@ -321,8 +341,8 @@ class RTFeeds():
             self.log("-m_show-url: %s"%url)
             
             if url and name:
-                params = '?mode=play&url=%s&icon=%s&name=%s'%(QT(url), QT(pic), name)
-                ct_show.append((params, pic, True, {'title': name, 'plot':plot}))
+                params = '?mode=play&name=%s&icon=%s&prev=show&url=%s'%(name, QT(pic), QT(url) )
+                ct_show.append((params, pic, False, {'title': name, 'plot':plot}))
 
         self.list_items(ct_show, True)
 
@@ -338,19 +358,21 @@ class RTFeeds():
             if not uri.startswith('http'): uri = 'http:' + uri
             uri = UQT(uri)
             self.dbg_log('- uri: '+  uri + '\n')
-            if 0:
+            
+#             if self.prev == 'list':
+            if 1:
                 item = xbmcgui.ListItem(self.name, path = uri, iconImage=self.icon, thumbnailImage=self.icon)
-                xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+                xbmcplugin.setResolvedUrl(self.handle, True, item)
             else:
                 item = xbmcgui.ListItem(self.name, iconImage=self.icon, thumbnailImage=self.icon)
                 sPlayer = xbmc.Player()
-                item.setInfo( type='Video', infoLabels={'title':self.name})
+                item.setInfo( type='Video', infoLabels={'title':self.name.decode('cp1251')})
                 item.setProperty('IsPlayable', 'true')
                 sPlayer.play(uri, item)
         else:
             self.showErrorMessage("Sorry.\nYour region is not supported")
 
 
-rodina = RTFeeds()
-rodina.main()  
+kids = RTFeeds()
+kids.main()  
 
