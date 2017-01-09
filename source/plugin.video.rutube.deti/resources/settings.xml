@@ -1,0 +1,3 @@
+<settings>
+    <setting id="vpn" type="bool" label="Use OpenVPN" default="false" />
+</settings>

@@ -6,6 +6,10 @@
 
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json
+
+
+# from subprocess import PIPE
+
 #from xml.sax.saxutils import escape, unescape
 # escape() and unescape() takes care of &, < and >.
 # html_escape_table = {
@@ -41,6 +45,7 @@ class RTFeeds():
         self.fanart = self.addon.getAddonInfo('fanart')
         self.profile = self.addon.getAddonInfo('profile')
         self.version = self.addon.getAddonInfo('version')
+        self.usevpn = self.addon.getSetting('vpn')
         self.handle = int(sys.argv[1])
         self.params = sys.argv[2]
         self.murl = _FEEDS_URL_
@@ -49,11 +54,11 @@ class RTFeeds():
         self.url = ''  
         self.name = ''
         self.prev = ''
+
+        self.debug = 1
+        self.dbg_level = 1
         
-        self.debug = 0
-        self.dbg_level = 0
-        
-    # start_pg = fixurl(u"http://спутник.дети")
+    # start_pg = fixurl(u"http://???????�??????.???�?�??")
     def fixurl(self, url):
         # turn string into unicode
         if not isinstance(url,unicode):
@@ -87,24 +92,7 @@ class RTFeeds():
         netloc = ''.join((user,colon1,pass_,at,host,colon2,port))
         return urlparse.urlunsplit((scheme,netloc,path,query,fragment))
     
-    def get_rutube(self, url):
-        self.dbg_log('-get_rutube:' + '\n')
-        self.dbg_log('- url-in:'+  url + '\n')
-        if 'rutube.ru' in url:
-            try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
-            except:
-                try: videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
-                except: return None
-            url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
-            request = urllib2.Request(url)
-            request.add_header('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
-            response = urllib2.urlopen(request)
-            resp = response.read()
-            jsonDict = json.loads(resp)
-            link = urllib.quote_plus(jsonDict['video_balancer']['m3u8'])
-            return link
-        else: 
-            return None
+
     
     def dbg_log(self, line):
         if self.debug: xbmc.log(line)
@@ -133,8 +121,102 @@ class RTFeeds():
         
         response.close()
         return link
+        
+    def xvpngate(self, url, country, lcmd=['sudo', 'openvpn', '--config']):
+        #country = [country name | country code]
+        self.dbg_log('-xvpngate:' + '\n')
+        self.dbg_log('- url:'+  url + '\n')
+        self.dbg_log('- country:'+  country + '\n')
+        
+        import tempfile, subprocess, base64, time
 
+        if len(country) == 2:
+            i = 6 # short name for country
+        elif len(country) > 2:
+            i = 5 # long name for country
+        else:
+            return (1,'Country is too short!')
 
+        try:
+            vpn_data = self.get_url('http://www.vpngate.net/api/iphone/')
+            servers = [line.split(',') for line in vpn_data.split('\n')]
+
+            servers = [s for s in servers[2:] if len(s) > 1]
+        except:
+            return (1, 'Cannot get VPN servers data')
+
+        desired = [s for s in servers if country.lower() in s[i].lower()]
+        found = len(desired)
+        if found == 0:
+            return (1, "Can't find any server")
+
+        supported = [s for s in desired if len(s[-1]) > 0]
+        # We pick the best servers by score
+        sortservs = sorted(supported, key=lambda s: s[2], reverse=True)
+        _, path = tempfile.mkstemp()
+        lcmd.append(path)
+        for winner in sortservs:
+            self.dbg_log('- winner:'+  winner[0] + '\n')
+
+            f = open(path, 'w')
+            f.write(base64.b64decode(winner[-1]))
+            f.write('\nscript-security 2\nconnect-retry-max 1\n')
+            f.close()
+
+            x = subprocess.Popen(lcmd)
+#             x = subprocess.Popen(tcmd, stdout=PIPE, stderr=PIPE)
+#         stdout, stderr = x.communicate()
+            result = ''
+            try:
+                time.sleep(10)
+                result = self.get_url(url)
+            except: pass
+            try: x.kill()
+            except: pass
+            #     while x.poll() != 0:
+            #         time.sleep(1)
+            time.sleep(1)
+            
+            if result != '':
+                self.dbg_log('- result :'+  '\n')
+#                 self.dbg_log(str(result))
+                return (0, result)
+
+        return (1, result)
+
+    def get_rutube(self, url):
+        self.dbg_log('-get_rutube:' + '\n')
+        self.dbg_log('- url-in:'+  url + '\n')
+        c = 0
+        if 'rutube.ru' in url:
+            try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+            except:
+                try: videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
+                except: return None
+            url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
+            self.dbg_log('- url-req:'+  url + '\n')
+            request = urllib2.Request(url)
+            request.add_header('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
+            try:
+                response = urllib2.urlopen(request)
+                resp = response.read()
+            except:
+                if self.usevpn == 'true':
+                    (c, resp) = self.xvpngate(url, 'Ru')
+                else:
+                    c = 1
+                    resp = 'Unsupported region'
+               
+            if not c:
+                jsonDict = json.loads(resp)
+                link = urllib.quote_plus(jsonDict['video_balancer']['m3u8'])
+            else:
+                link = None
+                self.dbg_log('- xvpngate err:'+  resp + '\n')
+                
+            return link
+        else: 
+            return None
 
       # Converts the request url passed on by xbmc to the plugin into a dict of key-value pairs
     def getParameters(self, parameterString):
@@ -358,9 +440,9 @@ class RTFeeds():
 
         
         uri = None
-        try:uri = self.get_rutube(self.url)
-        except:pass
-            
+        uri = self.get_rutube(self.url)
+        #except:pass
+           
         if uri != None and uri != False:
             if not uri.startswith('http'): uri = 'http:' + uri
             uri = UQT(uri)
