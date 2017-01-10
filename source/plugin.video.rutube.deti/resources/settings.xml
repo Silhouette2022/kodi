@@ -1,3 +1,5 @@
 <settings>
     <setting id="vpn" type="bool" label="Use OpenVPN" default="false" />
+    <setting id="sudo" type="bool" label="Use sudo" default="false" enable="eq(-1,true)"/>
+	<setting id="dbg" type="labelenum" values="0|1|2|3|4|5" label="Debug" default="0" />
 </settings>

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.1.5
+# Rev. 0.2.1
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -46,6 +46,8 @@ class RTFeeds():
         self.profile = self.addon.getAddonInfo('profile')
         self.version = self.addon.getAddonInfo('version')
         self.usevpn = self.addon.getSetting('vpn')
+        self.usesudo = self.addon.getSetting('sudo')
+        self.usedbg = int(self.addon.getSetting('dbg'))
         self.handle = int(sys.argv[1])
         self.params = sys.argv[2]
         self.murl = _FEEDS_URL_
@@ -55,8 +57,8 @@ class RTFeeds():
         self.name = ''
         self.prev = ''
 
-        self.debug = 1
-        self.dbg_level = 1
+        self.debug = self.usedbg
+        self.dbg_level = self.usedbg
         
     # start_pg = fixurl(u"http://???????�??????.???�?�??")
     def fixurl(self, url):
@@ -122,7 +124,8 @@ class RTFeeds():
         response.close()
         return link
         
-    def xvpngate(self, url, country, lcmd=['sudo', 'openvpn', '--config']):
+        
+    def xvpngate(self, url, country, lcmd=None):
         #country = [country name | country code]
         self.dbg_log('-xvpngate:' + '\n')
         self.dbg_log('- url:'+  url + '\n')
@@ -137,13 +140,26 @@ class RTFeeds():
         else:
             return (1,'Country is too short!')
 
-        try:
-            vpn_data = self.get_url('http://www.vpngate.net/api/iphone/')
-            servers = [line.split(',') for line in vpn_data.split('\n')]
+#         try:
+        cache_vpn = xbmc.translatePath('special://temp/' + 'cchdeti.tmp')
+        vpn_data = ''
+        if os.path.isfile(cache_vpn):
+            lmod = os.path.getmtime(cache_vpn)
+            if lmod + 3*3600 > time.time():  
+                cf = open(cache_vpn, 'r')
+                vpn_data = cf.read()
+                cf.close()
 
-            servers = [s for s in servers[2:] if len(s) > 1]
-        except:
-            return (1, 'Cannot get VPN servers data')
+        if vpn_data == '':
+            vpn_data = self.get_url('http://www.vpngate.net/api/iphone/')
+            cf = open(cache_vpn, 'w')
+            cf.write(vpn_data)
+            cf.close()
+
+        servers = [line.split(',') for line in vpn_data.split('\n')]
+        servers = [s for s in servers[2:] if len(s) > 1]
+#         except:
+#             return (1, 'Cannot get VPN servers data')
 
         desired = [s for s in servers if country.lower() in s[i].lower()]
         found = len(desired)
@@ -153,30 +169,71 @@ class RTFeeds():
         supported = [s for s in desired if len(s[-1]) > 0]
         # We pick the best servers by score
         sortservs = sorted(supported, key=lambda s: s[2], reverse=True)
+        
+        
+
         _, path = tempfile.mkstemp()
+        if lcmd == None:
+            if self.usesudo == 'true': lcmd = ['sudo']
+            else: lcmd = []
+            lcmd.append('openvpn')
+            lcmd.append('--remap-usr1')
+            lcmd.append('SIGHUP')
+            lcmd.append('--connect-retry-max')
+            lcmd.append('1')
+            lcmd.append('--config')
+            
         lcmd.append(path)
+
         for winner in sortservs:
             self.dbg_log('- winner:'+  winner[0] + '\n')
 
             f = open(path, 'w')
             f.write(base64.b64decode(winner[-1]))
-            f.write('\nscript-security 2\nconnect-retry-max 1\n')
+#             f.write('\n--remap-usr1 SIGHUP\nscript-security 2\nconnect-retry-max 1\n')
             f.close()
 
             x = subprocess.Popen(lcmd)
-#             x = subprocess.Popen(tcmd, stdout=PIPE, stderr=PIPE)
-#         stdout, stderr = x.communicate()
+#             x = subprocess.Popen(lcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#             stdout, stderr = x.communicate()
+#             os.system("echo ***started-%s\n" % (x.pid))
             result = ''
             try:
-                time.sleep(10)
+                time.sleep(11)
+#                 os.system("echo ***wokeup-%s\n" % (x.pid))
+#                 i = 3
+#                 while i != 0:
+#                     time.sleep(3)
+#                     i -= 1
+#                     line = x.stdout.readline()
+#                     self.dbg_log('- line:'+  line + '\n')
+#                     if line.find('Sequence Completed') != -1:
+#                         break
+                    
                 result = self.get_url(url)
             except: pass
-            try: x.kill()
-            except: pass
-            #     while x.poll() != 0:
-            #         time.sleep(1)
-            time.sleep(1)
             
+#             os.system("echo ***ending-%s\n" % (x.pid))
+            try: 
+                x.kill()
+                time.sleep(2)
+            except: pass
+
+            if x.poll() is None:
+                if self.usesudo == 'true':
+#                     os.system("echo ***sudokill-1-%s\n" % (x.pid))
+                    os.system("sudo kill -2 %s\n" % (x.pid))
+                    time.sleep(2)
+                    
+            if x.poll() is None:
+                if self.usesudo == 'true':
+#                     os.system("echo ***sudokill-9-%s\n" % (x.pid))
+                    os.system("sudo kill -9 %s" % (x.pid))
+                    time.sleep(2)                    
+                    
+#             if x.poll() is None:
+#                 os.system("echo ***stillRunning-%s\n" % (x.pid))
+
             if result != '':
                 self.dbg_log('- result :'+  '\n')
 #                 self.dbg_log(str(result))
