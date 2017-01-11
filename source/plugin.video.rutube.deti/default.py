@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.2.1
+# Rev. 0.2.2
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -178,7 +178,7 @@ class RTFeeds():
             else: lcmd = []
             lcmd.append('openvpn')
             lcmd.append('--remap-usr1')
-            lcmd.append('SIGHUP')
+            lcmd.append('SIGTERM')
             lcmd.append('--connect-retry-max')
             lcmd.append('1')
             lcmd.append('--config')
@@ -221,18 +221,18 @@ class RTFeeds():
 
             if x.poll() is None:
                 if self.usesudo == 'true':
-#                     os.system("echo ***sudokill-1-%s\n" % (x.pid))
-                    os.system("sudo kill -2 %s\n" % (x.pid))
+#                     os.system("echo ***sudokillall\n")
+                    os.system("sudo killall openvpn\n")
                     time.sleep(2)
-                    
-            if x.poll() is None:
-                if self.usesudo == 'true':
-#                     os.system("echo ***sudokill-9-%s\n" % (x.pid))
-                    os.system("sudo kill -9 %s" % (x.pid))
-                    time.sleep(2)                    
+                else:
+#                     os.system("echo ***killall\n")
+                    os.system("killall openvpn\n")
+                    time.sleep(2)
                     
 #             if x.poll() is None:
 #                 os.system("echo ***stillRunning-%s\n" % (x.pid))
+#             else: 
+#                 os.system("echo ***died-%s\n" % (x.pid))
 
             if result != '':
                 self.dbg_log('- result :'+  '\n')
@@ -435,7 +435,12 @@ class RTFeeds():
         self.log("--url: %s"%self.url)
         ct_show = []
         
-        http = self.get_url(self.url)
+        try:
+            http = self.get_url(self.url)
+        except:
+            self.showErrorMessage("Sorry.\nShow is not available")
+            return
+            
 
         try:
             brdata = re.compile("initialData.branding = '{(.*?)}';").findall(http)[0].decode('unicode-escape')
