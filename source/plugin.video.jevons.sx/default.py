@@ -1,13 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.5.1
+# Rev. 0.6.0
 
 
 import urllib,urllib2,re,sys
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json, cookielib
 from BeautifulSoup import BeautifulSoup
+import YDStreamExtractor
+
+
+
 
 
 __settings__ = xbmcaddon.Addon(id='plugin.video.jevons.sx')
@@ -64,7 +68,7 @@ def resolve(self,url):
                 
 
 def dbg_log(line):
-    if dbg: print line
+    if dbg: xbmc.log(line)
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None):
     dbg_log('-get_url:' + '\n')
@@ -141,7 +145,7 @@ def JVS_vkshow(url, page, oid):
         slist = "all"
 
 #    print hpost.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
-    
+    dbg_log('- slist:'+  slist + '\n')
     if 1:
         pv = re.compile('"' + slist + '":\[\[(.*?)\]\]').findall(hpost)[0]
 #        print pv.replace('],[', '],\n[').decode('cp1251').encode('utf-8')
@@ -151,7 +155,7 @@ def JVS_vkshow(url, page, oid):
             try:
                 ht = "/video-%s_%s"%(oid,entry[1])
                 href = vk_start + ht
-                title = entry[3].decode('cp1251').encode('utf-8').strip('"')
+                title = entry[3].decode('cp1251').encode('utf-8').replace('\/', '/').strip('"')
                 img = entry[2].replace('\/', '/').strip('"')
 #                if entry[19].find('rutube') != -1: href = ''
             except:
@@ -168,7 +172,7 @@ def JVS_vkshow(url, page, oid):
                 item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
                 uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
                 item.setProperty('IsPlayable', 'true')
-                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
                 dbg_log('- uri:'+  uri + '\n')
     else:
         rinfos = BeautifulSoup(http).findAll('div',{"class":"video_row_info"})
@@ -238,49 +242,6 @@ def JVS_list(url, page):
      
     xbmcplugin.endOfDirectory(pluginhandle) 
 
-def JVS_rfpl(url, page):
-    dbg_log('-JVS_rfpl:' + '\n')
-    dbg_log('- url:'+  url + '\n')
-    dbg_log('- page:'+  page + '\n')
-    
-    http = get_url(url + page + '/')
-    
-    
-    
-    i = 0
-
-    panels = BeautifulSoup(http).findAll('div',{"class":"panel b-a"})
-    
-    for panel in panels:
-        href = re.compile('<a href="(.*?)">').findall(str(panel))[0]
-        img  = rfpl_start + re.compile('<img src="(.*?)"').findall(str(panel))[0]
-        title = re.compile('<div style="font-size: .*?">(.*?)</div>').findall(str(panel).replace('\n','').replace('\r',''))[0].strip()
-        
-#        img = plugin_icon
-        dbg_log('-HREF %s'%href)
-        dbg_log('-TITLE %s'%title)
-        dbg_log('-IMG %s'%img)
-
-        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-        item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
-        uri = sys.argv[0] + '?mode=showrfpl' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)  
-        dbg_log('- uri:'+  uri + '\n')
-        i = i + 1
-
-    if i :
-        item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=rfpl&url=' + urllib.quote_plus(rfpl_pg)
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-        dbg_log('- uri:'+  uri + '\n')
-        item = xbmcgui.ListItem('<NEXT PAGE +5>')
-        uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&mode=rfpl&url=' + urllib.quote_plus(rfpl_pg)
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-        dbg_log('- uri:'+  uri + '\n')        
-     
-    xbmcplugin.endOfDirectory(pluginhandle) 
-    
-    
 def JVS_pbtvtop():
     dbg_log('-JVS_pbyvtop:' + '\n')
     
@@ -351,6 +312,50 @@ def JVS_pbtv(url, page):
 
 def get_rutube(url):
     dbg_log('-get_rutube:' + '\n')
+    dbg_log('- url-in:'+  url + '\n')
+    c = 0
+    if 'rutube.ru' in url:
+        try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+        except:
+            try: videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
+            except: return None
+        url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
+        dbg_log('- url-req:'+  url + '\n')
+        request = urllib2.Request(url)
+        request.add_header('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
+        try:
+            response = urllib2.urlopen(request)
+            resp = response.read()
+        except:
+            pass
+           
+
+        jsonDict = json.loads(resp)
+        link = urllib.quote_plus(jsonDict['video_balancer']['m3u8'])
+           
+        return link
+    else: 
+        return None
+        
+def get_rutube1(url):
+        dbg_log('-get_rutube:' + '\n')
+        dbg_log('- url-in:'+  url + '\n')
+        if 'rutube.ru/play/embed/' in url:
+            videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+            url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
+            request = urllib2.Request(url)
+            request.add_header('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
+            response = urllib2.urlopen(request)
+            resp = response.read()
+            jsonDict = json.loads(resp)
+            link = urllib.quote_plus(jsonDict['video_balancer']['m3u8'])
+            return link
+        else: 
+            return None
+    
+    
+def get_rutube2(url):
+    dbg_log('-get_rutube:' + '\n')
     if not url.startswith('http'): url = 'http:' + url
     dbg_log('- url-in:'+  url + '\n')
     result = get_url(url)
@@ -384,40 +389,53 @@ def get_VK(url):
     
     html = get_url(url)
 
-#    url = None
     rec = None
-    try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
-    except: pass
-        
-    if rec == None:
-        try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
-        except: pass
+    
+#     dbg_log("try-1")
+#     try: rec = re.compile('var vk = {(.*?)};').findall(html.replace('\n',''))[0]
+#     except: pass
+#     
+#     if rec == None:
+#         dbg_log("try-2")
+#         try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
+#         except: pass
+#         
+#     if rec == None:
+#         dbg_log("try-3")
+#         try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
+#         except: pass
         
     if rec == None: 
+        dbg_log("try-ajax")
         try: 
-            frame = re.compile('<iframe id=(.*?)allowfullscreen').findall(urllib.unquote_plus(html))[0]
-            src = re.compile('src="(.*?)"').findall(frame.replace('\\', ''))[0]
+            ajax = re.compile('ajax.preload\((.*?)\]\);').findall(html)[0]
+            dbg_log(ajax.replace('\/','/').replace('\\"','"'))
+            iframe = re.compile('<iframe(.*?)/iframe>').findall(ajax)[0].replace('\/','/').replace('\\"','"')
+            dbg_log(iframe)
+            src = re.compile('src="(.*?)"').findall(iframe)[0]
+            dbg_log(src)
         except:
             src = ''
         if src.find('rutube') > -1: 
-                return get_rutube(src);
+                return get_rutube(src+'"');
         else:
             print 'Vk unknown external player'
             return None
     
     fv={}
+    print rec
     
     for s in rec.split(','):
         
-#         print "S=%s"%s
+        print "S=%s"%s
 
         s0 = s.split(':',1)[0].replace('\\"', '"').strip('"')
         try:
             s1 = s.split(':',1)[1].replace('\\"', '"').strip('"')
         except:
             s1 = ''
-#         print "S0=%s"%s0
-#         print "S1=%s"%s1
+        print "S0=%s"%s0
+        print "S1=%s"%s1
         
         fv[s0] = s1
             
@@ -477,6 +495,37 @@ def get_VK(url):
 
     dbg_log('- rurl:'+  url + '\n')
     return url
+
+
+def get_YTD(url):
+# import urlresolver
+#     rurl = urlresolver.resolve(url)
+#     return rurl
+
+#     return 'https://cs9-1v4.vk.me/video/hls/p14/0c47dbcfedfd/index-f2-v1-a1.m3u8?extra=u_E-znf0xY2BHjn5njielmAohTD8JZ6l038lRNyfkTupdi83nejMhVfrv6xF0-pEYJ6duShxBfAzPXoaCJCKQJ-DlcnR07EC5yy8QwIUQRjOZTm_qmRQtalofgHHDGpq'
+
+#     url= 'https://openload.co/embed/5VuUxHSVhug/'
+
+#     import web_pdb; web_pdb.set_trace()
+#     
+#     url = 'https://vk.com/video-76470207_456252512'
+
+    vid = YDStreamExtractor.getVideoInfo(url,resolve_redirects=True)
+    
+
+    dbg_log('- YTD: \n')
+    if vid:
+        dbg_log('- YTD: Try\n')
+        stream_url = vid.streamURL()
+#         stream_url = vid.streamURL().split('|')[0]
+        dbg_log('- surl:'+  stream_url + '\n')
+        if stream_url.find('rutube') > -1: 
+                return get_rutube(url);
+        return stream_url
+    else: 
+        dbg_log('- YTD: None\n')
+        return None
+    
 
 def touch(url):
     req = urllib2.Request(url)
@@ -546,53 +595,20 @@ def JVS_show(url, name):
             item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
             uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
             item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)
             dbg_log('- uri:'+  uri + '\n')
 
     xbmcplugin.endOfDirectory(pluginhandle) 
 
-def JVS_showrfpl(url, name):
-    nurl = url
-    dbg_log('-JVS_showrfpl:' + '\n')
-    dbg_log('- url:'+  nurl + '\n')
-    
-    http = get_url(nurl)
 
-    entrys = re.compile('<a data-players-url="(.*?)">(.*?)</a>').findall(http)
-    
-    for href, pname in entrys:
-        img = rfpl_icon
-        dbg_log('-HREF %s'%href)
-        
-        try:
-            rsrc = re.compile('//(.*?)/').findall(href)
-#            print rsrc
-            lsrc = rsrc[0].split('.')
-#            print lsrc
-            lens = len(lsrc)
-#            print lens
-            if lens > 1: title = '[%s.%s]~%s'%(lsrc[lens - 2], lsrc[lens -1], name)
-            else: title = name
-        except: title = name
-        
-        title = '%s (%s)'%(title, pname)
-        if 'http' not in href: href = 'http:' + href 
-        item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-        item.setInfo( type='video', infoLabels={'title': title, 'plot': title})
-        uri = sys.argv[0] + '?mode=play' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
-        item.setProperty('IsPlayable', 'true')
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-        dbg_log('- uri:'+  uri + '\n')
-
-    xbmcplugin.endOfDirectory(pluginhandle) 
-      
 def JVS_play(url, title):
     url = url.replace('&amp;', '&')
         
     dbg_log('-JVS_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
+    dbg_log('- title:'+  title + '\n')
     uri = None
-        
+
     if url.find('videoapi.my.mail.ru') > -1:
         quals = get_mailru(url)
         for d in quals: 
@@ -611,16 +627,25 @@ def JVS_play(url, title):
     elif url.find('vkontakte.ru') > -1:
         uri = get_VK(url)
     elif url.find('vk.com') > -1:
-        uri = get_VK(url)     
-    
-    if uri != None:
+        uri = get_YTD(url)
+        #uri = get_YTD(url)
+    elif url.find('rutube') > -1:
+        uri = get_rutube(url)
+             
+    if uri != None and uri != False:
         if not uri.startswith('http'): uri = 'http:' + uri
         uri = urllib.unquote_plus(uri)
         dbg_log('- uri: '+  uri + '\n')
         try: name = title[(title.find('~') + 1):]
         except: name = title
-        item = xbmcgui.ListItem(label=name, path = uri)
-        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        item = xbmcgui.ListItem(path = uri)
+        if 0:
+            xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+        else:
+            sPlayer = xbmc.Player()
+            item.setInfo( type='Video', infoLabels={'title':name})
+            item.setProperty('IsPlayable', 'true')
+            sPlayer.play(uri, item)
         
 def JVS_playpbtv(url, title):
     url = urllib.unquote_plus(url.replace('&amp;', '&'))
