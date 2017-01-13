@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.9.3
+# Rev. 0.10.0
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 import urllib, urllib2, os, re, sys, json, cookielib
-
+import YDStreamExtractor
 
 try:
   # Import UnifiedSearch
@@ -24,7 +24,7 @@ try:
   translit = translit.Translit()  
 except: use_translit = 'false'
 
-dbg = 0
+dbg = 1
 
 supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru', 'moonwalk.cc', 'moonwalk.co'}
 
@@ -41,7 +41,7 @@ def gettranslit(msg):
     else: return msg
 
 def dbg_log(line):
-    if dbg: print line
+    if dbg: xbmc.log(line)
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
     dbg_log("get_url=>%s"%url)
@@ -182,7 +182,9 @@ def getSite(s):
             except: full = s
     parts = full.split('.')
     psz = len(parts)
-    if psz > 1:
+    if psz == 4:
+      site = full
+    elif psz > 1:
         site = '%s.%s'%(parts[psz - 2], parts[psz - 1])
     else: site = full
     
@@ -213,12 +215,17 @@ def NKN_view(url, img, name, cook):
                         web = getSite(file)
                     except: 
                         web = ''
+                        
+                    dbg_log('- web:'+  str(web) + '\n')
 
                     if web in wdic: 
                         t = wdic[web] + 1
                         wdic[web] = t
                     else: wdic[web] = 1
-                    if web not in supported:
+                    
+                    if web[0].isdigit():
+                        title = '[[COLOR FFFFFF00]%s-%s[/COLOR]] %s'%(str(wdic[web]),web,name)
+                    elif web not in supported:
                         title = '[[COLOR FFFF0000]%s-%s[/COLOR]] %s'%(str(wdic[web]),web,name)
                     else:
                         title = '[%s-%s] %s'%(str(wdic[web]),web,name)
@@ -232,6 +239,7 @@ def NKN_view(url, img, name, cook):
                     uri = sys.argv[0] + '?mode=play' \
                     + '&name=' + urllib.quote_plus(name) \
                     + '&web=' + urllib.quote_plus(web) \
+                    + '&ref=' + urllib.quote_plus(url) \
                     + '&url=' + urllib.quote_plus(file) + '&cook=' + urllib.quote_plus(cook)
                     item.setProperty('IsPlayable', 'true')
                     xbmcplugin.addDirectoryItem(pluginhandle, uri, item)  
@@ -526,7 +534,21 @@ def touch(url):
         res.close()
         return True
     except:
-        return False      
+        return False
+    
+def get_YTD(url):
+    vid = YDStreamExtractor.getVideoInfo(url,resolve_redirects=True)
+    dbg_log('- YTD: \n')
+    if vid:
+        dbg_log('- YTD: Try\n')
+        stream_url = vid.streamURL()
+#         stream_url = vid.streamURL().split('|')[0]
+        dbg_log('- surl:'+  stream_url + '\n')
+
+    else: 
+        dbg_log('- YTD: None\n')
+        return None
+              
         
 def get_mailru(url):
     try:
@@ -556,36 +578,60 @@ def get_mailru(url):
 
 
    
-def get_moonwalk(url):
+def get_moonwalk(url, ref):
         
-    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url)
-    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-    did = re.findall("d_id: (.*?),", page)[0]
-    ctype = re.findall("content_type: '(.*?)'", page)[0]
-    akey = re.findall("access_key: '(.*?)'", page)[0]
+#    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
+    page = get_url(url, referrer=ref)
+#    xbmc.log(page)
+
+#    video_token: 'f956e26b0ffe0ab9',
+#                                                content_type: 'movie',
+#                                                mw_key: '1152cb1dd4c4d544',
+#                                                mw_pid: 537,
+#                                                mw_domain_id: 13338,
+#                                                ad_attr: condition_detected ? 1 : 0,
+#                                                debug: false,
+#                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
+                                                
+    
+#    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+#    did = re.findall("d_id: (.*?),", page)[0]
+#    ctype = re.findall("content_type: '(.*?)'", page)[0]
+#    akey = re.findall("access_key: '(.*?)'", page)[0]
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+#    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+
+    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    mw_key = re.findall("mw_key: '(.*?)'", page)[0]
+    mw_pid = re.findall("mw_pid: (.*?),", page)[0]
+    mw_domain_id = re.findall("mw_domain_id: (.*?),", page)[0]
+    uuid = re.findall("uuid: '(.*?)'", page)[0]
+        
+    
     opts = []
     opts.append(('Accept-Encoding', 'gzip, deflate'))
     opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
     opts.append(('X-CSRF-Token', csrf))
-    opts.append(('Content-Data', bdata))
+#    opts.append(('Content-Data', bdata))
+    opts.append(('X-Iframe-Option', 'Direct'))
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
-    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+#    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&mw_domain_id=%s&uuid=%s'%(vtoken, ctype, mw_key, mw_pid, mw_domain_id, uuid)
 
-    html = get_url('http://moonwalk.cc/sessions/create_session', 
+
+    html = get_url('http://moonwalk.cc/sessions/new_session', 
                    data=udata, 
                    referrer=url,
 #                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
                    opts=opts)
-    
-    
+#    xbmc.log(html)    
     page=json.loads(html)
-    url = page["manifest_m3u8"]
+    xbmc.log(str(page))
+    url = page["mans"]["manifest_m3u8"]
     return url   
 
-def NKN_play(url, cook, name, web):
+def NKN_play(url, cook, name, web, ref):
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url.replace('&amp;', '&') + '\n')
     url = url.replace('&amp;', '&')
@@ -597,11 +643,11 @@ def NKN_play(url, cook, name, web):
         if len(files):
             furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
     elif 'vk.com' in web:
-        furl = get_VK(url)
+        furl = get_YTD(url)
         if furl != None: furls.append(furl)
         else:  dbg_log('VK : no url returned')
     elif 'vkontakte.ru' in web:
-        furl = get_VK(url)
+        furl = get_YTD(url)
         if furl != None: furls.append(furl)
         else:  dbg_log('VK : no url returned')
     elif 'mail.ru' in web:
@@ -618,10 +664,15 @@ def NKN_play(url, cook, name, web):
                 furls.append(d['url'])
                 break
         except: pass
-    elif 'moonwalk.c' in web:
-        furl = get_moonwalk(url.replace('.co','.cc'))
+    elif 'moonwalk.c' in web or web[0].isdigit():
+        furl = get_moonwalk(url.replace('.co','.cc'), ref)
         if furl != None: furls.append(furl)
         else:  dbg_log('Moonwalk : no url returned')
+    
+    if len(furls) == 0:
+        furl = get_YTD(url)
+        if furl != None: furls.append(furl)
+        else:  dbg_log('OTHER : no url returned')        
         
     if len(furls) == 1:
         dbg_log('- furl:'+  furls[0] + '\n')
@@ -730,6 +781,7 @@ gnrs=''
 imag=''
 name=''
 web = ''
+ref = ''
 
 try:
     mode=params['mode']
@@ -759,6 +811,10 @@ try:
     web=urllib.unquote_plus(params['web'])
     dbg_log('-WEB:'+ web + '\n')
 except: pass
+try: 
+    ref=urllib.unquote_plus(params['ref'])
+    dbg_log('-REF:'+ ref + '\n')
+except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
@@ -769,7 +825,7 @@ if url=='':
 if mode == '': NKN_start(url, page, cook)
 elif mode == 'ctlg': NKN_ctlg(url, cook)
 elif mode == 'view': NKN_view(url, imag, name, cook)
-elif mode == 'play': NKN_play(url, cook, name, web)
+elif mode == 'play': NKN_play(url, cook, name, web, ref)
 elif mode == 'find': NKN_find(cook)
 elif mode == 'show': NKN_view(url, imag, "Play Video", cook)
 elif mode == 'search': 
