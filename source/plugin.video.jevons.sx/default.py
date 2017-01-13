@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.6.1
+# Rev. 0.6.2
 
 
 import urllib,urllib2,re,sys
@@ -310,15 +310,18 @@ def JVS_pbtv(url, page):
      
     xbmcplugin.endOfDirectory(pluginhandle)     
 
-def get_rutube(url):
+def get_rutube(url, videoId=None):
     dbg_log('-get_rutube:' + '\n')
     dbg_log('- url-in:'+  url + '\n')
     c = 0
-    if 'rutube.ru' in url:
-        try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
-        except:
-            try: videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
-            except: return None
+    if not videoId:
+        if 'rutube.ru' in url:
+            try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+            except:
+                try: videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
+                except: pass
+
+    if videoId:    
         url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
         dbg_log('- url-req:'+  url + '\n')
         request = urllib2.Request(url)
@@ -340,8 +343,11 @@ def get_rutube(url):
 def get_rutube1(url):
         dbg_log('-get_rutube:' + '\n')
         dbg_log('- url-in:'+  url + '\n')
-        if 'rutube.ru/play/embed/' in url:
-            videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+        if not videoID:
+            if 'rutube.ru/play/embed/' in url:
+                try: videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
+                except: pass
+        if videoID:
             url = 'http://rutube.ru/api/play/options/'+videoId+'?format=json'
             request = urllib2.Request(url)
             request.add_header('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
@@ -509,7 +515,7 @@ def get_YTD(url):
 #     import web_pdb; web_pdb.set_trace()
 #     
 #     url = 'https://vk.com/video-76470207_456252512'
-
+#    import web_pdb; web_pdb.set_trace()
     vid = YDStreamExtractor.getVideoInfo(url,resolve_redirects=True)
     
 
@@ -519,8 +525,27 @@ def get_YTD(url):
         stream_url = vid.streamURL()
 #         stream_url = vid.streamURL().split('|')[0]
         dbg_log('- surl:'+  stream_url + '\n')
-        if stream_url.find('rutube') > -1: 
-                return get_rutube(url);
+        if stream_url.find('rutube') > -1:
+            dbg_log('- rutube\n')
+            streams = vid.streams()
+#            dbg_log('- id1:'+str(streams)+'\n')
+#            dbg_log('- id1:'+str(streams[0]['ytdl_format'])+'\n')
+#            dbg_log('- id1:'+str(streams[0]['ytdl_format']['id'])+'\n')
+            id = ''
+            try: id = streams[0]['ytdl_format']['id']
+            except: pass
+            dbg_log('- id1:'+id+'\n')
+            if id == '':
+              try: id = streams[0]['ytdl_format']['webpage_url_basename'] 
+              except: pass
+            dbg_log('- id2:'+id+'\n')
+            if id == '':
+              try: id = streams[0]['ytdl_format']['display_id']
+              except: pass
+            dbg_log('- id3:'+id+'\n')
+            if id != '': return get_rutube(url, id);
+            else: return None
+            
         return stream_url
     else: 
         dbg_log('- YTD: None\n')
