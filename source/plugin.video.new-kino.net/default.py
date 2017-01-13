@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.10.0
+# Rev. 0.10.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -24,7 +24,7 @@ try:
   translit = translit.Translit()  
 except: use_translit = 'false'
 
-dbg = 1
+dbg = 0
 
 supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru', 'moonwalk.cc', 'moonwalk.co'}
 

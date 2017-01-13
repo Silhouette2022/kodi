@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.6.0
+# Rev. 0.6.1
 
 
 import urllib,urllib2,re,sys, json,cookielib, base64
@@ -245,34 +245,58 @@ def KNX_list2(url, page):
  
     xbmcplugin.endOfDirectory(pluginhandle) 
     
-def get_moonwalk(url):
+def get_moonwalk(url, ref):
         
-    page = get_url(url)
-    print page
-    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-    did = re.findall("d_id: (.*?),", page)[0]
-    ctype = re.findall("content_type: '(.*?)'", page)[0]
-    akey = re.findall("access_key: '(.*?)'", page)[0]
+#    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
+    page = get_url(url, referrer=ref)
+#    xbmc.log(page)
+
+#    video_token: 'f956e26b0ffe0ab9',
+#                                                content_type: 'movie',
+#                                                mw_key: '1152cb1dd4c4d544',
+#                                                mw_pid: 537,
+#                                                mw_domain_id: 13338,
+#                                                ad_attr: condition_detected ? 1 : 0,
+#                                                debug: false,
+#                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
+                                                
+    
+#    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+#    did = re.findall("d_id: (.*?),", page)[0]
+#    ctype = re.findall("content_type: '(.*?)'", page)[0]
+#    akey = re.findall("access_key: '(.*?)'", page)[0]
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+#    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+
+    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    mw_key = re.findall("mw_key: '(.*?)'", page)[0]
+    mw_pid = re.findall("mw_pid: (.*?),", page)[0]
+    mw_domain_id = re.findall("mw_domain_id: (.*?),", page)[0]
+    uuid = re.findall("uuid: '(.*?)'", page)[0]
+        
+    
     opts = []
     opts.append(('Accept-Encoding', 'gzip, deflate'))
     opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
     opts.append(('X-CSRF-Token', csrf))
-    opts.append(('Content-Data', bdata))
+#    opts.append(('Content-Data', bdata))
+    opts.append(('X-Iframe-Option', 'Direct'))
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
-    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+#    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&mw_domain_id=%s&uuid=%s'%(vtoken, ctype, mw_key, mw_pid, mw_domain_id, uuid)
 
-    html = get_url('http://moonwalk.cc/sessions/create_session', 
+
+    html = get_url('http://moonwalk.cc/sessions/new_session', 
                    data=udata, 
                    referrer=url,
 #                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
                    opts=opts)
-    
-    
+#    xbmc.log(html)    
     page=json.loads(html)
-    url = page["manifest_m3u8"]
-    return url  
+    xbmc.log(str(page))
+    url = page["mans"]["manifest_m3u8"]
+    return url   
 
 def get_kinoxa(url):
     dbg_log('-get_kinoxa:'+ '\n')
@@ -310,7 +334,7 @@ def KNX_play(url):
     if "kinoxa" in iframes[0][1]:
         link = get_kinoxa(iframes[0][1])
     else:
-        link = get_moonwalk(iframes[0][1])
+        link = get_moonwalk(iframes[0][1], url)
 
     if link != None:
         item = xbmcgui.ListItem(path = link)
@@ -431,6 +455,7 @@ type = ''
 mode = ''
 url = ''
 find = ''
+ref = ''
 
 try:
     mode=params['mode']
@@ -440,6 +465,12 @@ try:
     url=urllib.unquote_plus(params['url'])
     dbg_log('-URL:'+ url + '\n')
 except: pass  
+try: 
+
+    ref=urllib.unquote_plus(params['ref'])
+    dbg_log('-REF:'+ ref + '\n')
+
+except: pass 
 try: 
     page=urllib.unquote_plus(params['page'])
     dbg_log('-PAGE:'+ page + '\n')
