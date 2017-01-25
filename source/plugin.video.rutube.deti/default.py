@@ -1,22 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2016, Silhouette, E-mail: 
-# Rev. 0.2.2
+# Rev. 0.3.0
 
 
 import xbmcplugin,xbmcgui,xbmcaddon
 import urllib, urllib2, os, re, sys, json
-
-
-# from subprocess import PIPE
-
-#from xml.sax.saxutils import escape, unescape
-# escape() and unescape() takes care of &, < and >.
-# html_escape_table = {
-#     '"': "&quot;",
-#     "'": "&apos;"
-# }
-# html_unescape_table = {v:k for k, v in html_escape_table.items()}
 
 def html_escape(text):
 #     return escape(text, html_escape_table)
@@ -30,6 +19,50 @@ def html_escape(text):
 def html_unescape(text):
 #     return unescape(text, html_unescape_table)
     return text.replace("&amp;", "&").replace(">", ">").replace("<", "<").replace("&quot;", '"').replace("&apos;", "'")
+
+
+import xml.etree.ElementTree
+ 
+def make_dict_from_tree(element_tree):
+    """Traverse the given XML element tree to convert it into a dictionary.
+ 
+    :param element_tree: An XML element tree
+    :type element_tree: xml.etree.ElementTree
+    :rtype: dict
+    """
+    def internal_iter(tree, accum):
+        """Recursively iterate through the elements of the tree accumulating
+        a dictionary result.
+ 
+        :param tree: The XML element tree
+        :type tree: xml.etree.ElementTree
+        :param accum: Dictionary into which data is accumulated
+        :type accum: dict
+        :rtype: dict
+        """
+        if tree is None:
+            return accum
+ 
+        if tree.getchildren():
+            accum[tree.tag] = {}
+            for each in tree.getchildren():
+                result = internal_iter(each, {})
+                if each.tag in accum[tree.tag]:
+                    if not isinstance(accum[tree.tag][each.tag], list):
+                        accum[tree.tag][each.tag] = [
+                            accum[tree.tag][each.tag]
+                        ]
+                    accum[tree.tag][each.tag].append(result[each.tag])
+                else:
+                    accum[tree.tag].update(result)
+        else:
+            accum[tree.tag] = tree.text
+ 
+        return accum
+ 
+    return internal_iter(element_tree, {})
+ 
+# make_dict_from_tree(xml.etree.ElementTree.fromstring(xml_string))
 
 _ADDOD_ID_= 'plugin.video.rutube.deti'
 _FEEDS_URL_= 'https://rutube.ru/feeds/kids/'
@@ -375,7 +408,8 @@ class RTFeeds():
             name = tab['name']
             url = tab['url']
             params = '?mode=list&url=' + QT(url)
-            ct_cat.append((params, self.aicon, True, {'title': name}))
+            if '/feeds/kids/popular/' not in url:
+                ct_cat.append((params, self.aicon, True, {'title': name}))
         self.list_items(ct_cat, True)
         
     def m_list(self):
@@ -383,7 +417,8 @@ class RTFeeds():
         self.log("--url: %s"%self.url)
         ct_list = []
         
-        if not self.url == 'https://rutube.ru/feeds/kids/popular/':
+#         if not self.url == 'https://rutube.ru/feeds/kids/popular/':
+        if 1:
     #     if 1:
             http = self.get_url(self.url)
             jtdata = re.compile("initialData.resultsOfActiveTabResources\[(.*?)\] = '{(.*?)}';").findall(http)[0][1].decode('unicode-escape')
@@ -441,28 +476,35 @@ class RTFeeds():
             self.showErrorMessage("Sorry.\nShow is not available")
             return
             
-
-        try:
-            brdata = re.compile("initialData.branding = '{(.*?)}';").findall(http)[0].decode('unicode-escape')
-            brs = json.loads('{'+brdata+'}')
-#             self.log(str(brs).decode('unicode-escape'))
-            try: self.fanart = brs['banner'][1]['picture']
-            except: self.fanart = brs['banner'][0]['picture']
-            self.log(self.fanart)
-        except: pass
-        
-        
-        try: jtdata = re.compile("initialData.resultsOfActiveTabResources\[(.*?)\] = '{(.*?)}';").findall(http)[0][1].decode('unicode-escape').replace("\n", " ")
-        except:
-            try: jtdata = re.compile("initialData.personVideoTab = JSON.parse\('{(.*?)}'\);").findall(http)[0].decode('unicode-escape').replace("\n", " ")
-            except: jtdata = html_unescape(re.compile('data-value="{(.*?)}">').findall(http)[0].decode('unicode-escape')).replace("\n", " ")
-
-#         self.dbg_log(str(jtdata.encode('utf-8')))
-        judata = '{'+jtdata+'}'
-        jts = json.loads(judata)
-#         self.log(str(jts).decode('unicode-escape'))
-        for res in jts['results']:
-#             self.log(str(res).decode('unicode-escape'))
+        if self.prev == 'show':
+            jts = make_dict_from_tree(xml.etree.ElementTree.fromstring(http))['root']
+            results = jts['results']['list-item']
+#             self.log(str(results).decode('unicode-escape'))
+        else:
+            
+            try:
+                brdata = re.compile("initialData.branding = '{(.*?)}';").findall(http)[0].decode('unicode-escape')
+                brs = json.loads('{'+brdata+'}')
+    #             self.log(str(brs).decode('unicode-escape'))
+                try: self.fanart = brs['banner'][1]['picture']
+                except: self.fanart = brs['banner'][0]['picture']
+                self.log(self.fanart)
+            except: pass
+            
+            
+            try: jtdata = re.compile("initialData.resultsOfActiveTabResources\[(.*?)\] = '{(.*?)}';").findall(http)[0][1].decode('unicode-escape').replace("\n", " ")
+            except:
+                try: jtdata = re.compile("initialData.personVideoTab = JSON.parse\('{(.*?)}'\);").findall(http)[0].decode('unicode-escape').replace("\n", " ")
+                except: jtdata = html_unescape(re.compile('data-value="{(.*?)}">').findall(http)[0].decode('unicode-escape')).replace("\n", " ")
+    
+    #         self.dbg_log(str(jtdata.encode('utf-8')))
+            judata = '{'+jtdata+'}'
+            jts = json.loads(judata)
+            results = jts['results']
+    #         self.log(str(jts).decode('unicode-escape'))
+    
+        for res in results:
+            self.log(str(res).decode('unicode-escape'))
             name = ''
             url = ''
             pic = ''
@@ -480,10 +522,10 @@ class RTFeeds():
                     plot = res['description']
                 except: pass
 
-            if pic == '':
+            if pic == '' or pic == None:
                 try: pic = res['thumbnail_url']
                 except: pass
-            if plot == '':
+            if plot == '' or plot == None:
                 try: plot = res['short_description']
                 except: pass
             
@@ -494,6 +536,15 @@ class RTFeeds():
             if url and name:
                 params = '?mode=play&name=%s&icon=%s&prev=show&url=%s'%(name, QT(pic), QT(url) )
                 ct_show.append((params, pic, False, {'title': name, 'plot':plot}))
+        
+        try: next = str(jts['has_next']).capitalize()
+        except: next = ''
+            
+        if next == 'True':
+            params = '?mode=%s&prev=show&url=%s'%('show', QT(jts['next']))
+            ct_show.append((params, '', True, {'title': '<NEXT PAGE>'}))
+        else: self.log("--has_next:>%s<"%next)
+            
 
         self.list_items(ct_show, True)
 
