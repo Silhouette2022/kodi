@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.10.1
+# Rev. 0.10.2
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -578,10 +578,10 @@ def get_mailru(url):
 
 
    
-def get_moonwalk(url, ref):
+def get_moonwalk(url, ref, cook):
         
 #    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url, referrer=ref)
+    page = get_url(url, referrer=ref, cookie = cook)
 #    xbmc.log(page)
 
 #    video_token: 'f956e26b0ffe0ab9',
@@ -605,24 +605,27 @@ def get_moonwalk(url, ref):
     ctype = re.findall("content_type: '(.*?)'", page)[0]
     mw_key = re.findall("mw_key: '(.*?)'", page)[0]
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
-    mw_domain_id = re.findall("mw_domain_id: (.*?),", page)[0]
-    uuid = re.findall("uuid: '(.*?)'", page)[0]
+    p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
+#    uuid = re.findall("uuid: '(.*?)'", page)[0]
+    csafe = re.findall("condition_safe = '(.*?)'", page)[0]
+#condition_safe = 'ed064acb78fd5dd9'
         
     
     opts = []
     opts.append(('Accept-Encoding', 'gzip, deflate'))
     opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
     opts.append(('X-CSRF-Token', csrf))
-#    opts.append(('Content-Data', bdata))
-    opts.append(('X-Iframe-Option', 'Direct'))
+    opts.append(('X-Condition-Safe', 'Normal'))
+#    opts.append(('X-Iframe-Option', 'Direct'))
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
 #    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
-    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&mw_domain_id=%s&uuid=%s'%(vtoken, ctype, mw_key, mw_pid, mw_domain_id, uuid)
+    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_atr=0&debug=false&condition_safe=%s'%(vtoken, ctype, mw_key, mw_pid, p_domain_id, csafe)
 
 
     html = get_url('http://moonwalk.cc/sessions/new_session', 
                    data=udata, 
                    referrer=url,
+                   cookie=cook,
 #                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
                    opts=opts)
 #    xbmc.log(html)    
@@ -665,7 +668,7 @@ def NKN_play(url, cook, name, web, ref):
                 break
         except: pass
     elif 'moonwalk.c' in web or web[0].isdigit():
-        furl = get_moonwalk(url.replace('.co','.cc'), ref)
+        furl = get_moonwalk(url.replace('.co','.cc'), ref, cook)
         if furl != None: furls.append(furl)
         else:  dbg_log('Moonwalk : no url returned')
     
