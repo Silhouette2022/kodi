@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.10.2
+# Rev. 0.10.4
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 import urllib, urllib2, os, re, sys, json, cookielib
-import YDStreamExtractor
+
 
 try:
   # Import UnifiedSearch
@@ -45,7 +45,9 @@ def dbg_log(line):
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
     dbg_log("get_url=>%s"%url)
-    if data: dbg_log("get_data=>%s"%data)
+    if data: dbg_log("data=>%s"%data)
+    if cookie: dbg_log("cookie=>%s" % cookie)
+    if data: dbg_log("referrer=>%s" % referrer)
     req = urllib2.Request(url)
     req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
 #     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
@@ -94,8 +96,7 @@ def NKN_start(url, page, cook):
         
     dbg_log('- n_url:'+  n_url + '\n')
     horg = get_url(n_url, cookie = cook, save_cookie = True)
-    if cook=='':
-        cook = re.search('<cookie>(.+?)</cookie>', horg).group(1)
+    cook = re.search('<cookie>(.+?)</cookie>', horg).group(1)
     i = 0
     
     if unis_en == False:
@@ -196,7 +197,8 @@ def NKN_view(url, img, name, cook):
     dbg_log('- img:'+  img + '\n')
     dbg_log('- name:'+  name + '\n')
         
-    http = get_url(url, cookie = cook)
+    http = get_url(url, cookie = cook, save_cookie=True)
+    cook = re.search('<cookie>(.+?)</cookie>', http).group(1)
 
     frames = re.compile('<iframe (.*?)</iframe>').findall(http)
     if len(frames) > 0:
@@ -370,173 +372,220 @@ def DecodeUppod_Base64(param):
         i = i + 4
 
     return loc_2        
-
-def get_VK(url):
-    dbg_log('-get_VK:' + '\n')
-    html = get_url(url)
-    dbg_log('- url:'+  url + '\n')
-#    url = None
-    rec = None
-    try: rec = re.compile('var vars = {(.*?)};').findall(html)[0]
-    except: pass
-        
-    if rec == None:
-        try: rec = re.compile('var vars = {(.*?)};').findall(urllib.unquote_plus(html))[0]
-        except: pass
-        
-    if rec == None: return
     
-    fv={}
-    
-    for s in rec.split(','):
-        
-#         print "S=%s"%s
+try:
+    compat_str = unicode  # Python 2
+except NameError:
+    compat_str = str
+# This is not clearly defined otherwise
+compiled_regex_type = type(re.compile(''))
 
-        s0 = s.split(':',1)[0].replace('\\"', '"').strip('"')
-        try:
-            s1 = s.split(':',1)[1].replace('\\"', '"').strip('"')
-        except:
-            s1 = ''
-#         print "S0=%s"%s0
-#         print "S1=%s"%s1
-        
-        fv[s0] = s1
-            
-        if s0 == 'uid':
-            uid = s1
-        if s0 == 'vtag':
-            vtag = s1
-        if s0 == 'host':
-            host = s1
-        if s0 == 'vid':
-            vid = s1
-        if s0 == 'oid':
-            oid = s1
-        if s0 == 'hd':
-            hd = s1
-        if s0 == 'url240':
-            url240 = s1
-        if s0 == 'url360':
-            url360 = s1
-        if s0 == 'url480':
-            url480 = s1
-        if s0 == 'url720':
-            url720 = s1
-
-    url = url240
-    qual = '240'
-    if int(hd)==3:
-        url = url720
-        ual = '720'
-    if int(hd)==2:
-        url = url480
-        ual = '480'
-    if int(hd)==1:
-        url = url360
-        ual = '360'
-    
-    url = url.replace('\\', '')
-    dbg_log('- nurl:'+  url + '\n')
-#     surl = url.split('|')
-#     print surl
+def int_or_none(v, scale=1, default=None, get_attr=None, invscale=1):
+    if get_attr:
+        if v is not None:
+            v = getattr(v, get_attr, None)
+    if v == '':
+        v = None
+    if v is None:
+        return default
     try:
-        uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
-        html = get_url(uri)
-    except: pass
+        return int(v) * invscale // scale
+    except ValueError:
+        return default
 
-    if not url or not touch(url):
-        try:
-            if int(hd)==3:
-                url = fv['cache720']
-            if int(hd)==2:
-                url = fv['cache480']
-            if int(hd)==1:
-                url = fv['cache360']
-        except:
-            print 'Vk parser failed'
+class VKIE():
+    _VALID_URL = r'''(?x)
+                    https?://
+                        (?:
+                            (?:
+                                (?:(?:m|new)\.)?vk\.com/video_|
+                                (?:www\.)?daxab.com/
+                            )
+                            ext\.php\?(?P<embed_query>.*?\boid=(?P<oid>-?\d+).*?\bid=(?P<id>\d+).*)|
+                            (?:
+                                (?:(?:m|new)\.)?vk\.com/(?:.+?\?.*?z=)?video|
+                                (?:www\.)?daxab.com/embed/
+                            )
+                            (?P<videoid>-?\d+_\d+)(?:.*\blist=(?P<list_id>[\da-f]+))?
+                        )
+                    '''
+
+
+    def _search_regex(self, pattern, string, name, flags=0, group=None):
+        """
+        Perform a regex search on the given string, using a single or a list of
+        patterns returning the first matching group.
+        In case of failure return a default value or raise a WARNING or a
+        RegexNotFoundError, depending on fatal, specifying the field name.
+        """
+        if isinstance(pattern, (str, compat_str, compiled_regex_type)):
+            mobj = re.search(pattern, string, flags)
+        else:
+            for p in pattern:
+                mobj = re.search(p, string, flags)
+                if mobj:
+                    break
+
+        if mobj:
+            if group is None:
+                # return the first matching group
+                return next(g for g in mobj.groups() if g is not None)
+            else:
+                return mobj.group(group)
+        else:
             return None
 
-    dbg_log('- rurl:'+  url + '\n')
-    return url
+    def _html_search_regex(self, pattern, string, name, flags=0, group=None):
+        """
+        Like _search_regex, but strips HTML tags and unescapes entities.
+        """
+        res = self._search_regex(pattern, string, name, flags, group)
+        if res:
+            return res.strip()
+        else:
+            return res
 
-   
-def get_VK1(url):
-    html = get_url(url)
-#    url = None
-    soup = BeautifulSoup(html, fromEncoding="utf-8")
-    
-    recs = soup.findAll('param', {'name':'flashvars'})
+    def _real_extract(self, url):
+        dbg_log('-_real_extract:\n')
+        dbg_log('-url:' + url + '\n')
+        mobj = re.match(self._VALID_URL, url)
+        video_id = mobj.group('videoid')
+        dbg_log('--video_id:' + str(video_id) + '\n')
+        if video_id:
+            info_url = 'https://vk.com/al_video.php?act=show&al=1&module=video&video=%s' % video_id
+            dbg_log('--info_url:' + info_url + '\n')
+            # Some videos (removed?) can only be downloaded with list id specified
+            list_id = mobj.group('list_id')
+            if list_id:
+                info_url += '&list=%s' % list_id
+                dbg_log('--info_url:' + info_url + '\n')
+        else:
+            info_url = 'http://vk.com/video_ext.php?' + mobj.group('embed_query')
+            dbg_log('--info_url:' + info_url + '\n')
+            video_id = '%s_%s' % (mobj.group('oid'), mobj.group('id'))
+            dbg_log('--video_id:' + video_id + '\n')
 
-    for rec in recs:
-        fv={}
-        for s in rec['value'].split('&'):
-            sdd=s.split('=',1)
+        info_page = get_url(info_url)
+
+        error_message = self._html_search_regex(
+            [r'(?s)<!><div[^>]+class="video_layer_message"[^>]*>(.+?)</div>',
+             r'(?s)<div[^>]+id="video_ext_msg"[^>]*>(.+?)</div>'],
+            info_page, 'error message')
+
+        if error_message:
+            return None
+
+        if re.search(r'<!>/login\.php\?.*\bact=security_check', info_page):
+            return None
+
+        m_rutube = re.search(
+            r'\ssrc="((?:https?:)?//rutube\.ru\\?/(?:video|play)\\?/embed(?:.*?))\\?"', info_page)
+        if m_rutube is not None:
+            return m_rutube.group(1).replace('\\', '')
+
+        m_opts = re.search(r'(?s)var\s+opts\s*=\s*({.+?});', info_page)
+        if m_opts:
+            m_opts_url = re.search(r"url\s*:\s*'((?!/\b)[^']+)", m_opts.group(1))
+            dbg_log('--m_opts_url:' + m_opts_url + '\n')
+            if m_opts_url:
+                opts_url = m_opts_url.group(1)
+                if opts_url.startswith('//'):
+                    opts_url = 'http:' + opts_url
+                dbg_log('--opts_url:' + opts_url + '\n')
+                return self.url_result(opts_url)
+
+        rdata = self._search_regex(
+                r'<!json>\s*({.+?})\s*<!>', info_page, 'json')
+        jdata = json.loads(rdata.decode('cp1251').encode('utf-8'))
+        data = jdata['player']['params'][0]
+
+        formats = []
+        for format_id, format_url in data.items():
+            if not isinstance(format_url, compat_str) or not format_url.startswith(('http', '//', 'rtmp')):
+                continue
+            if format_id.startswith(('url', 'cache')) or format_id in ('extra_data', 'live_mp4'):
+                height = int_or_none(self._search_regex(
+                    r'^(?:url|cache)(\d+)', format_id, 'height'))
+                formats.append({
+                    'format_id': format_id,
+                    'url': format_url,
+                    'height': height,
+                })
+            # elif format_id == 'hls':
+            #     formats.extend(self._extract_m3u8_formats(
+            #         format_url, video_id, 'mp4', m3u8_id=format_id,
+            #         fatal=False, live=True))
+            # elif format_id == 'rtmp':
+            #     formats.append({
+            #         'format_id': format_id,
+            #         'url': format_url,
+            #         'ext': 'flv',
+            #     })
+        return self._sort_fid(formats)
+        #         self._sort_formats(formats)
+
+    def _sort_fid(self, uslist):
+        nurl = None
+        fids = ['url720', 'cache720', 'url480', 'cache480', 'url360', 'cache360', 'url240', 'cache240']
+        for fid in fids:
+            for item in uslist:
+                if item['format_id'] == fid:
+                    dbg_log('- nurl:' + str(nurl) + '\n')
+                    nurl = item['url']
+                    break
+
+            if nurl != None: break
+
+        return nurl
+
+def get_rutube(url, videoId=None):
+    dbg_log('-get_rutube:' + '\n')
+    dbg_log('- url-in:' + url + '\n')
+    c = 0
+    if not videoId:
+        if 'rutube.ru' in url:
             try:
-                fv[sdd[0]]=sdd[1]
+                videoId = re.findall('rutube.ru/play/embed/(.*?)"', url)[0]
             except:
-                fv[sdd[0]]=''
-            if s.split('=',1)[0] == 'uid':
-                uid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'vtag':
-                vtag = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'host':
-                host = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'vid':
-                vid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'oid':
-                oid = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'hd':
-                hd = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url240':
-                url240 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url360':
-                url360 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url480':
-                url480 = s.split('=',1)[1]
-            if s.split('=',1)[0] == 'url720':
-                url720 = s.split('=',1)[1]
+                try:
+                    videoId = re.findall('rutube.ru/video/(.*?)/', url)[0]
+                except:
+                    pass
 
-        url = url240
-        qual = '240'
-        if int(hd)==3:
-            url = url720
-            ual = '720'
-        if int(hd)==2:
-            url = url480
-            ual = '480'
-        if int(hd)==1:
-            url = url360
-            ual = '360'
-    
-    try:
-        uri = 'http://vk.com/videostats.php?act=view&oid='+oid+'&vid='+vid+'&quality='+qual
-        html = get_url(uri)
-    except: pass
-
-    if not url or not touch(url):
+    if videoId:
+        url = 'http://rutube.ru/api/play/options/' + videoId + '?format=json'
+        dbg_log('- url-req:' + url + '\n')
+        request = urllib2.Request(url)
+        request.add_header('User-agent',
+                           'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.71 Safari/537.36')
         try:
-            if int(hd)==3:
-                url = fv['cache720']
-            if int(hd)==2:
-                url = fv['cache480']
-            if int(hd)==1:
-                url = fv['cache360']
+            response = urllib2.urlopen(request)
+            resp = response.read()
         except:
-            print 'Vk parser failed'
-            return None
+            pass
 
-    return url
+        jsonDict = json.loads(resp)
+        link = urllib.quote_plus(jsonDict['video_balancer']['m3u8'])
 
-def touch(url):
-    req = urllib2.Request(url)
-    try:
-        res=urllib2.urlopen(req)
-        res.close()
-        return True
-    except:
-        return False
+        return link
+    else:
+        return None
+
+def get_VK(url, n = 0):
+    dbg_log('-get_VK:' + '\n')
+    dbg_log('- url:' + url + '\n')
+
+    newVK = VKIE()
+    nurl = newVK._real_extract(url)
+
+    if nurl and 'rutube' in nurl:
+        nurl = get_rutube(nurl.replace('?','"'))
+
+    return nurl
     
 def get_YTD(url):
+    import YDStreamExtractor
+    
     vid = YDStreamExtractor.getVideoInfo(url,resolve_redirects=True)
     dbg_log('- YTD: \n')
     if vid:
@@ -581,8 +630,9 @@ def get_mailru(url):
 def get_moonwalk(url, ref, cook):
         
 #    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url, referrer=ref, cookie = cook)
-#    xbmc.log(page)
+    page = get_url(url, referrer=ref, cookie = cook, save_cookie=True)
+    cook = re.search('<cookie>(.+?)</cookie>', page).group(1)
+    # xbmc.log(page)
 
 #    video_token: 'f956e26b0ffe0ab9',
 #                                                content_type: 'movie',
@@ -603,12 +653,15 @@ def get_moonwalk(url, ref, cook):
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
     ctype = re.findall("content_type: '(.*?)'", page)[0]
-    mw_key = re.findall("mw_key: '(.*?)'", page)[0]
+    mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
+    # mw_key = '1152%D1%81b1dd4c4d544'
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
     p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
 #    uuid = re.findall("uuid: '(.*?)'", page)[0]
-    csafe = re.findall("condition_safe = '(.*?)'", page)[0]
+#     vctrl = re.findall("version_control = '(.*?)'", page)[0]
 #condition_safe = 'ed064acb78fd5dd9'
+    asmethod = urllib.quote_plus(re.findall("var async_method = '(.*?)'", page)[0])
+# var async_method = '4e5cb79586b68d648926ae0762cfbd92';
         
     
     opts = []
@@ -616,10 +669,11 @@ def get_moonwalk(url, ref, cook):
     opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
     opts.append(('X-CSRF-Token', csrf))
     opts.append(('X-Condition-Safe', 'Normal'))
-#    opts.append(('X-Iframe-Option', 'Direct'))
+    opts.append(('X-Format-Token', 'B300'))
+
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
 #    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
-    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_atr=0&debug=false&condition_safe=%s'%(vtoken, ctype, mw_key, mw_pid, p_domain_id, csafe)
+    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_attr=0&debug=false&async_method=%s'%(vtoken, ctype, mw_key, mw_pid, p_domain_id, asmethod)
 
 
     html = get_url('http://moonwalk.cc/sessions/new_session', 
@@ -646,7 +700,8 @@ def NKN_play(url, cook, name, web, ref):
         if len(files):
             furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
     elif 'vk.com' in web:
-        furl = get_YTD(url)
+#        furl = get_YTD(url)
+        furl = get_VK(url)
         if furl != None: furls.append(furl)
         else:  dbg_log('VK : no url returned')
     elif 'vkontakte.ru' in web:
