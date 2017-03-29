@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.6.2
+# Rev. 0.6.3
 
 
 import urllib,urllib2,re,sys, json,cookielib, base64
@@ -243,63 +243,68 @@ def KNX_list2(url, page):
         dbg_log('- uri:'+  uri + '\n')
       
  
-    xbmcplugin.endOfDirectory(pluginhandle) 
-    
-def get_moonwalk(url, ref, cook):
-        
-#    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url, referrer=ref, cookie = cook)
-#    xbmc.log(page)
+    xbmcplugin.endOfDirectory(pluginhandle)
 
-#    video_token: 'f956e26b0ffe0ab9',
-#                                                content_type: 'movie',
-#                                                mw_key: '1152cb1dd4c4d544',
-#                                                mw_pid: 537,
-#                                                mw_domain_id: 13338,
-#                                                ad_attr: condition_detected ? 1 : 0,
-#                                                debug: false,
-#                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
-                                                
-    
-#    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-#    did = re.findall("d_id: (.*?),", page)[0]
-#    ctype = re.findall("content_type: '(.*?)'", page)[0]
-#    akey = re.findall("access_key: '(.*?)'", page)[0]
+
+def get_moonwalk(url, ref, cook):
+    #    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
+    page = get_url(url, referrer=ref, cookie=cook, save_cookie=True)
+    cook = re.search('<cookie>(.+?)</cookie>', page).group(1)
+    # xbmc.log(page)
+
+    #    video_token: 'f956e26b0ffe0ab9',
+    #                                                content_type: 'movie',
+    #                                                mw_key: '1152cb1dd4c4d544',
+    #                                                mw_pid: 537,
+    #                                                mw_domain_id: 13338,
+    #                                                ad_attr: condition_detected ? 1 : 0,
+    #                                                debug: false,
+    #                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
+
+
+    #    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    #    did = re.findall("d_id: (.*?),", page)[0]
+    #    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    #    akey = re.findall("access_key: '(.*?)'", page)[0]
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-#    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+    #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
     ctype = re.findall("content_type: '(.*?)'", page)[0]
-    mw_key = re.findall("mw_key: '(.*?)'", page)[0]
+    mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
+    # mw_key = '1152%D1%81b1dd4c4d544'
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
     p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
-#    uuid = re.findall("uuid: '(.*?)'", page)[0]
-    csafe = re.findall("condition_safe = '(.*?)'", page)[0]
-#condition_safe = 'ed064acb78fd5dd9'
-        
-    
+    #    uuid = re.findall("uuid: '(.*?)'", page)[0]
+    #     vctrl = re.findall("version_control = '(.*?)'", page)[0]
+    # condition_safe = 'ed064acb78fd5dd9'
+    asmethod = urllib.quote_plus(re.findall("var async_method = '(.*?)'", page)[0])
+    # var async_method = '4e5cb79586b68d648926ae0762cfbd92';
+
+
     opts = []
     opts.append(('Accept-Encoding', 'gzip, deflate'))
     opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
     opts.append(('X-CSRF-Token', csrf))
     opts.append(('X-Condition-Safe', 'Normal'))
-#    opts.append(('X-Iframe-Option', 'Direct'))
+    opts.append(('X-Format-Token', 'B300'))
+
     opts.append(('X-Requested-With', 'XMLHttpRequest'))
-#    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
-    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_atr=0&debug=false&condition_safe=%s'%(vtoken, ctype, mw_key, mw_pid, p_domain_id, csafe)
+    #    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
+    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_attr=0&debug=false&async_method=%s' % (
+    vtoken, ctype, mw_key, mw_pid, p_domain_id, asmethod)
 
-
-    html = get_url('http://moonwalk.cc/sessions/new_session', 
-                   data=udata, 
+    html = get_url('http://moonwalk.cc/sessions/new_session',
+                   data=udata,
                    referrer=url,
                    cookie=cook,
-#                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
+                   #                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29',
                    opts=opts)
-#    xbmc.log(html)    
-    page=json.loads(html)
+    #    xbmc.log(html)
+    page = json.loads(html)
     xbmc.log(str(page))
     url = page["mans"]["manifest_m3u8"]
-    return url     
+    return url
 
 def get_kinoxa(url):
     dbg_log('-get_kinoxa:'+ '\n')
@@ -325,10 +330,11 @@ def KNX_play(url):
     dbg_log('- url:'+  url + '\n')
     
     http = get_url(url)
-#    print http
-    iframes = re.compile('<iframe class="prerolllvid" (onload="StopLoading\(\)"|) itemprop="video" src="(.*?)"').findall(http)
-    
-#     print iframes[0][1]
+    # print http
+    iframes = re.compile('<iframe class="prerolllvid"(.*?)src="(.*?)"').findall(http)
+#                         <iframe class="prerolllvid" block-time="10" onload="StopLoading()" itemprop="video" src="http://moonwalk.cc/video/f9539ce0f228ab05/iframe" style="width:632px; height:445px !important;" frameborder="0" scrolling="no" allowfullscreen></iframe>
+
+    print iframes[0][1]
     
     if len(iframes[0][1]) == 0: return
 
@@ -337,7 +343,7 @@ def KNX_play(url):
     if "kinoxa" in iframes[0][1]:
         link = get_kinoxa(iframes[0][1])
     else:
-        link = get_moonwalk(iframes[0][1], url)
+        link = get_moonwalk(iframes[0][1], url, "")
 
     if link != None:
         item = xbmcgui.ListItem(path = link)
