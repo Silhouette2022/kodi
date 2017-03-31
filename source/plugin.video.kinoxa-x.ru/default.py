@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.6.3
+# Rev. 0.6.4
 
 
-import urllib,urllib2,re,sys, json,cookielib, base64
+import urllib,urllib2, os, re,sys, json,cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 
@@ -28,15 +28,17 @@ dbg = 0
 
 pluginhandle = int(sys.argv[1])
 
-start_pg = "http://www.kinoxa-x.ru"
+start_pg = "http://kinoxa-x.net"
 #page_pg = start_pg + "/load/0-"
 page_pg = start_pg + "/page/"
 # fdpg_pg = ";t=0;md=;p="
 # find_pg = start_pg + "/search/?q="
 find_pg = start_pg + "/index.php?do=search"
-find_dt = "do=search&subaction=search&search_start="
+find_dt = "titleonly=3&do=search&subaction=search"
+find_ss = "&search_start="
 # find_str = "&full_search=0&result_from=25&story="
-find_str = "&full_search=0&story="
+find_rs = "&full_search=0&result_from="
+find_str = "&story="
 # do=search&subaction=search&search_start=3&full_search=0&result_from=25&story=mama
 # do=search&subaction=search&story=test&sfSbm=&a=2
 
@@ -48,7 +50,7 @@ def gettranslit(msg):
     
 
 def dbg_log(line):
-    if dbg: print line
+    if dbg: xbmc.log(line)
 
 def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
     dbg_log("get_url=>%s"%url)
@@ -78,7 +80,7 @@ def get_url(url, data = None, cookie = None, save_cookie = False, referrer = Non
     response.close()
     return link
 
-def KNX_list(url, page, type, fdata):
+def KNX_list(url, page, type, fdata, cook):
     dbg_log('-KNX_list:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- page:'+  page + '\n')
@@ -89,8 +91,13 @@ def KNX_list(url, page, type, fdata):
         n_url = url + 'page/' + page + '/'
         pdata = ''
     elif fdata != '':
-        n_url = url
-        pdata = find_dt + page + find_str + fdata
+
+        if page != '1':
+            n_url = url
+            pdata = find_dt + find_ss + page + find_rs + str(((int(page) - 1) * 12) + 1)  + find_str + fdata
+        else:
+            n_url = start_pg
+            pdata = find_dt + find_rs + find_str + fdata + "&sfSbm=&a=2"
     else:
         n_url = url + page + '/'
         pdata = ''
@@ -104,11 +111,14 @@ def KNX_list(url, page, type, fdata):
         xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
     
 #     try:
-    http = get_url(n_url, data=pdata)
+#     http = get_url(n_url, data=pdata)
+    http = get_url(n_url, cookie = cook, save_cookie = True, data=pdata)
+    cook = re.search('<cookie>(.+?)</cookie>', http).group(1)
 #     except:
 #         return
     
     i = 0
+    unis_res = []
     
     
     if type == '':
@@ -163,22 +173,21 @@ def KNX_list(url, page, type, fdata):
                 dbg_log('- uri:'+  uri + '\n')
                 i = i + 1
             else:
-              try:
-                unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
+              try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
               except: pass
 
     if type == 'unis':
       try: UnifiedSearch().collect(unis_res)
-      except:  pass
+      except: pass
     else:
       if i :
           item = xbmcgui.ListItem('<NEXT PAGE>')
-          uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata)
+          uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata) + '&cook=' + urllib.quote_plus(cook)
           xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
           dbg_log('- uri:'+  uri + '\n')
           if type != 'find':
               item = xbmcgui.ListItem('<NEXT PAGE +5>')
-              uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata)
+              uri = sys.argv[0] + '?page=' + str(int(page) + 5) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata) + '&cook=' + urllib.quote_plus(cook)
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
               dbg_log('- uri:'+  uri + '\n')        
      
@@ -422,7 +431,7 @@ def uni2cp(ustr):
         raw += ('%%%02X') % ord(uni[i].encode('cp1251'))
     return raw  
         
-def KNX_find():     
+def KNX_find(cook):
     dbg_log('-KNX_find:'+ '\n')
     
     kbd = xbmc.Keyboard()
@@ -434,7 +443,7 @@ def KNX_find():
 #         furl = find_pg + stxt + fdpg_pg
         furl = find_pg
         dbg_log('- furl:'+  furl + '\n')
-        KNX_list(furl, '1', 'find', stxt)
+        KNX_list(furl, '1', 'find', stxt, cook)
 
 def lsChan():
     xbmcplugin.endOfDirectory(pluginhandle)
@@ -465,6 +474,7 @@ mode = ''
 url = ''
 find = ''
 ref = ''
+cook = ''
 
 try:
     mode=params['mode']
@@ -492,6 +502,10 @@ try:
     find=urllib.unquote_plus(params['find'])
     dbg_log('-FIND:'+ find + '\n')
 except: pass
+try:
+    cook=urllib.unquote_plus(params['cook'])
+    dbg_log('-COOK:'+ cook + '\n')
+except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
@@ -499,14 +513,14 @@ unified = params['unified'] if 'unified' in params else None
 if url=='':
     url = page_pg
 
-if mode == '': KNX_list(url, page, type, find)
+if mode == '': KNX_list(url, page, type, find, cook)
 elif mode == 'ctlg': KNX_ctlg(url)
 elif mode == 'play': KNX_play(url)
-elif mode == 'find': KNX_find()
+elif mode == 'find': KNX_find(cook)
 elif mode == 'show': KNX_show(url)
 elif mode == 'search': 
     url = find_pg
-    KNX_list(url, '1', 'unis', uni2cp(gettranslit(keyword)))
+    KNX_list(url, '1', 'unis', uni2cp(gettranslit(keyword)), cook)
     
 #elif mode == 'list': KNX_list(url, page)
 
