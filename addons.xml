@@ -20,7 +20,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.7.0" provider-name="Silhouette">
+<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.7.1" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
@@ -28,8 +28,8 @@
   </requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
-    <summary>Футбольные обзоры from vk.com/GOALTIME and Pressball.by</summary>
-    <description>Футбольные обзоры from vk.com/GOALTIME and Pressball.by</description>
+    <summary>Футбольные обзоры from vk.com/GOALTIME, vk.com/TVGOAL and Pressball.by</summary>
+    <description>Футбольные обзоры from vk.com/GOALTIME, vk.com/TVGOAL and Pressball.by</description>
     <platform>all</platform>
   </extension>
 </addon>
@@ -77,20 +77,6 @@
   <extension point="xbmc.addon.metadata">
     <summary>new-kino.net - фильмы, мультфильмы, сериалы</summary>
     <description>new-kino.net - фильмы, мультфильмы, сериалы - круглосуточно на нашем сайте, смотрите, наслаждайтесь и отдыхайте</description>
-    <platform>all</platform>
-  </extension>
-</addon>
-
-<addon id="plugin.video.rodina.tv" name="[COLOR FF23a0e3]Rodina.TV[/COLOR]" version="3.3.1" provider-name="Rodina TV">
-  <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
-    <import addon="script.service.rodina.tv" version="2.1.0"/>
-  </requires>
-  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
-  <extension point="xbmc.addon.metadata">
-    <summary>Rodina.TV – Новости, кино, музыка, спортивные трансляции, кинозал, архив программ за 2 недели.</summary>
-    <description>Rodina.TV – это качественное русскоязычное и интернациональное интернет телевидение в любой точке земного шара. Спортивные трансляции, кино, новости, музыка.
-Сервис ТВ онлайн позволяет смотреть эфирные русскоязычные и другие каналы, пользоваться онлайн кинозалом со множеством новинок и киноклассикой. В вашем распоряжении архив программ за  2 недели, а также функция тайм-шифт.</description>
     <platform>all</platform>
   </extension>
 </addon>

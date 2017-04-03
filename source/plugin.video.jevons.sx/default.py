@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.7.0
+# Rev. 0.7.1
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -13,15 +13,18 @@ from BeautifulSoup import BeautifulSoup
 # from YDStreamExtractor.youtube_dl.extractor import common
 # xbmc.log(str(dir(YDStreamExtractor)))
 
-__settings__ = xbmcaddon.Addon(id='plugin.video.jevons.sx')
-plugin_path = __settings__.getAddonInfo('path').replace(';', '')
-plugin_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon.png'))
-plugin_fanart = xbmc.translatePath(os.path.join(plugin_path, 'fanart.png'))
-context_path = xbmc.translatePath(os.path.join(plugin_path, 'default.py'))
 
-rfpl_icon = xbmc.translatePath(os.path.join(plugin_path, 'rfpl.png'))
+__addon__ = xbmcaddon.Addon(id='plugin.video.jevons.sx')
+plugin_path = __addon__.getAddonInfo('path').decode('utf-8')
+plugin_icon = __addon__.getAddonInfo('icon')
+plugin_fanart = __addon__.getAddonInfo('fanart')
+
+lite_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon2.png'))
 jevs_icon = xbmc.translatePath(os.path.join(plugin_path, 'jevs.png'))
-pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbtv.png'))
+pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pb.png'))
+pbart_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbart.png'))
+art2_icon = xbmc.translatePath(os.path.join(plugin_path, 'fanart2.png'))
+icon4_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon4.png'))
 
 dbg = 0
 
@@ -291,13 +294,19 @@ def JVS_top():
     #     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
+    item = xbmcgui.ListItem('vk.com/GOALTIME', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
-                                sys.argv[0] + '?mode=vkalb&oid=' + gt_oid + '&url=' + urllib.quote_plus(vk_pg + gt_oid),
-                                xbmcgui.ListItem('vk.com/GOALTIME', thumbnailImage=rfpl_icon), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vkshow&oid=' + tvg_oid + '&url=' + urllib.quote_plus(
-        vk_videos + tvg_oid), xbmcgui.ListItem('vk.com/TVGOAL', thumbnailImage=rfpl_icon), True)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop',
-                                xbmcgui.ListItem('PRESSBALL.by', thumbnailImage=pbtv_icon), True)
+                                sys.argv[0] + '?mode=vkalb&oid=' + gt_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + gt_oid), item, True)
+    item = xbmcgui.ListItem('vk.com/TVGOAL', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkshow&oid=' + tvg_oid + '&url=' +
+                                urllib.quote_plus(vk_videos + tvg_oid), item, True)
+    item = xbmcgui.ListItem('PRESSBALL.by', iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
+    item.setProperty('fanart_image', pbart_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', item, True)
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -362,7 +371,7 @@ def JVS_vkshow(url, page, oid):
             except:
                 href = ''
                 title = ''
-                img = rfpl_icon
+                img = lite_icon
 
             dbg_log('-HREF %s' % href)
             dbg_log('-TITLE %s' % title)
@@ -393,7 +402,7 @@ def JVS_vkshow(url, page, oid):
             except:
                 href = ''
                 title = ''
-            img = rfpl_icon
+            img = lite_icon
 
             dbg_log('-HREF %s' % href)
             dbg_log('-TITLE %s' % title)
@@ -462,8 +471,10 @@ def JVS_pbtvtop():
              ("Судите с нами", "/tv/search/tag?q=267-sudite-s-nami&TvVideo_page=")]
 
     for title, url in pbtop:
+        item = xbmcgui.ListItem(title, iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
+        item.setProperty('fanart_image', pbart_icon)
         xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtv&url=' + urllib.quote_plus(pbtv_start + url),
-                                    xbmcgui.ListItem(title), True)
+                                    item , True)
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -505,7 +516,7 @@ def JVS_pbtv(url, page):
 
             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
             item.setInfo(type='video', infoLabels={'title': title, 'plot': title})
-            item.setProperty('fanart_image', plugin_fanart)
+            item.setProperty('fanart_image', pbart_icon)
             uri = sys.argv[0] + '?mode=playpbtv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(
                 title)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
@@ -516,7 +527,7 @@ def JVS_pbtv(url, page):
 
     if next:
         item = xbmcgui.ListItem('<NEXT PAGE>')
-        item.setProperty('fanart_image', plugin_fanart)
+        item.setProperty('fanart_image', pbart_icon)
         uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&mode=pbtv&url=' + urllib.quote_plus(url)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
         dbg_log('- uri:' + uri + '\n')
