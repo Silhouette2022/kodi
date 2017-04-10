@@ -20,7 +20,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.7.1" provider-name="Silhouette">
+<addon id="plugin.video.jevons.sx" name="Футбольные обзоры" version="0.8.0" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
@@ -28,8 +28,8 @@
   </requires>
   <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
   <extension point="xbmc.addon.metadata">
-    <summary>Футбольные обзоры from vk.com/GOALTIME, vk.com/TVGOAL and Pressball.by</summary>
-    <description>Футбольные обзоры from vk.com/GOALTIME, vk.com/TVGOAL and Pressball.by</description>
+    <summary>Футбольные обзоры от vk.com/[GOALTIME|TVGOAL|Живу Футболом] и Pressball.by</summary>
+    <description>Футбольные обзоры от vk.com/[GOALTIME|TVGOAL|Живу Футболом] и Pressball.by</description>
     <platform>all</platform>
   </extension>
 </addon>

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.7.1
+# Rev. 0.8.0
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -39,6 +39,7 @@ vk_videos = "/videos-"
 # vk_pg = vk_start + "/videos-"+ vk_oid + "?section=playlists"
 tvg_oid = '22893032'
 gt_oid = '76470207'
+fnp_oid = '87879667'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
 rfpl_start = "http://rfpl.me"
@@ -294,12 +295,17 @@ def JVS_top():
     #     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-    item = xbmcgui.ListItem('vk.com/GOALTIME', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item = xbmcgui.ListItem('GOALTIME [vk.com/goaltime ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
                                 sys.argv[0] + '?mode=vkalb&oid=' + gt_oid + '&url=' +
                                 urllib.quote_plus(vk_pg + gt_oid), item, True)
-    item = xbmcgui.ListItem('vk.com/TVGOAL', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item = xbmcgui.ListItem('ЖИВУ ФУТБОЛОМ [vk.com/football_news_pro ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkalb&oid=' + fnp_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + fnp_oid), item, True)
+    item = xbmcgui.ListItem('TVGOAL [vk.com/tvgoal ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
                                 sys.argv[0] + '?mode=vkshow&oid=' + tvg_oid + '&url=' +
