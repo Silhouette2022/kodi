@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.8.0
+# Rev. 0.8.1
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -308,8 +308,8 @@ def JVS_top():
     item = xbmcgui.ListItem('TVGOAL [vk.com/tvgoal ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
-                                sys.argv[0] + '?mode=vkshow&oid=' + tvg_oid + '&url=' +
-                                urllib.quote_plus(vk_videos + tvg_oid), item, True)
+                                sys.argv[0] + '?mode=vkalb&oid=' + tvg_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + tvg_oid), item, True)
     item = xbmcgui.ListItem('PRESSBALL.by', iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
     item.setProperty('fanart_image', pbart_icon)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', item, True)
@@ -320,6 +320,12 @@ def JVS_top():
 def JVS_vkalb(url, oid):
     dbg_log('-JVS_vkalb:' + '\n')
     dbg_log('- url:' + url + '\n')
+
+    item = xbmcgui.ListItem('Добавленные', thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', plugin_fanart)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkshow&oid=' + oid + '&url=' + urllib.quote_plus(vk_videos + oid),
+                                item, True)
 
     http = get_url(url)
     ap = re.compile('{"albumsPreload":{(.*?):\[\[(.*?)\]\]}').findall(http)[0]
