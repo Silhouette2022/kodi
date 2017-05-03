@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.8.1
+# Rev. 0.8.2
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -40,6 +40,7 @@ vk_videos = "/videos-"
 tvg_oid = '22893032'
 gt_oid = '76470207'
 fnp_oid = '87879667'
+ls_oid = '122493044'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
 rfpl_start = "http://rfpl.me"
@@ -194,23 +195,29 @@ class VKIE():
 
         info_page = get_url(info_url)
 
+        # dbg_log(str(info_page))
+
         error_message = self._html_search_regex(
             [r'(?s)<!><div[^>]+class="video_layer_message"[^>]*>(.+?)</div>',
              r'(?s)<div[^>]+id="video_ext_msg"[^>]*>(.+?)</div>'],
             info_page, 'error message')
 
         if error_message:
+            dbg_log('-error_message:\n')
             return None
 
         if re.search(r'<!>/login\.php\?.*\bact=security_check', info_page):
+            dbg_log('-login:\n')
             return None
 
         m_rutube = re.search(
             r'\ssrc="((?:https?:)?//rutube\.ru\\?/(?:video|play)\\?/embed(?:.*?))\\?"', info_page)
         if m_rutube is not None:
+            dbg_log('-rutube:\n')
             return m_rutube.group(1).replace('\\', '')
 
         m_opts = re.search(r'(?s)var\s+opts\s*=\s*({.+?});', info_page)
+        dbg_log('-m_opts:' + str(m_opts) + '\n')
         if m_opts:
             m_opts_url = re.search(r"url\s*:\s*'((?!/\b)[^']+)", m_opts.group(1))
             dbg_log('--m_opts_url:' + m_opts_url + '\n')
@@ -223,14 +230,17 @@ class VKIE():
 
         rdata = self._search_regex(
                 r'<!json>\s*({.+?})\s*<!>', info_page, 'json')
+        # dbg_log('-rdata:' + str(rdata) + '\n')
         jdata = json.loads(rdata.decode('cp1251').encode('utf-8'))
         data = jdata['player']['params'][0]
-
+        dbg_log('-data:' + str(data) + '\n')
         formats = []
         for format_id, format_url in data.items():
+            # dbg_log('-format_id:' + format_id + '\n')
+            # dbg_log('-format_url:' + format_url.encode('utf-8') + '\n')
             if not isinstance(format_url, compat_str) or not format_url.startswith(('http', '//', 'rtmp')):
                 continue
-            if format_id.startswith(('url', 'cache')) or format_id in ('extra_data', 'live_mp4'):
+            if format_id.startswith(('url', 'cache')) or format_id in ('extra_data', 'live_mp4', 'postlive_mp4'):
                 height = int_or_none(self._search_regex(
                     r'^(?:url|cache)(\d+)', format_id, 'height'))
                 formats.append({
@@ -252,8 +262,10 @@ class VKIE():
         #         self._sort_formats(formats)
 
     def _sort_fid(self, uslist):
+        dbg_log('-_sort_fid:\n')
+        dbg_log('-uslist:' + str(uslist)+ '\n')
         nurl = None
-        fids = ['url720', 'cache720', 'url480', 'cache480', 'url360', 'cache360', 'url240', 'cache240']
+        fids = ['url720', 'cache720', 'url480', 'cache480', 'url360', 'cache360', 'url240', 'cache240', 'postlive_mp4']
         for fid in fids:
             for item in uslist:
                 if item['format_id'] == fid:
@@ -305,6 +317,11 @@ def JVS_top():
     xbmcplugin.addDirectoryItem(pluginhandle,
                                 sys.argv[0] + '?mode=vkalb&oid=' + fnp_oid + '&url=' +
                                 urllib.quote_plus(vk_pg + fnp_oid), item, True)
+    item = xbmcgui.ListItem('ФУТБОЛЬНЫЕ ОБЗОРЫ НА РУССКОМ [vk.com/lifesport ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkalb&oid=' + ls_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + ls_oid), item, True)
     item = xbmcgui.ListItem('TVGOAL [vk.com/tvgoal ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
