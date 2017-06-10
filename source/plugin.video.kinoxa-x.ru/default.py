@@ -1,12 +1,13 @@
-#!/usr/bin/python
+﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.6.4
+# Rev. 0.7.0
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
+import requests
 
 try:
   # Import UnifiedSearch
@@ -34,13 +35,11 @@ page_pg = start_pg + "/page/"
 # fdpg_pg = ";t=0;md=;p="
 # find_pg = start_pg + "/search/?q="
 find_pg = start_pg + "/index.php?do=search"
-find_dt = "titleonly=3&do=search&subaction=search"
-find_ss = "&search_start="
-# find_str = "&full_search=0&result_from=25&story="
-find_rs = "&full_search=0&result_from="
-find_str = "&story="
-# do=search&subaction=search&search_start=3&full_search=0&result_from=25&story=mama
-# do=search&subaction=search&story=test&sfSbm=&a=2
+# find_dt = "titleonly=3&do=search&subaction=search"
+# find_ss = "&search_start="
+# find_rs = "&full_search=0&result_from="
+# find_str = "&story="
+
 
 def gettranslit(msg):
     if use_translit == 'true': 
@@ -52,33 +51,26 @@ def gettranslit(msg):
 def dbg_log(line):
     if dbg: xbmc.log(line)
 
-def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
+def req_url(url, opts = None, cookies = None, params = None, data = None):
     dbg_log("get_url=>%s"%url)
-    if data: dbg_log("get_data=>%s"%data)
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
-#     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
-    req.add_header('Accept', '*/*')
-    req.add_header('Accept-Language', 'ru,en;q=0.9')
-    if cookie: req.add_header('Cookie', cookie)
-    if referrer: req.add_header('Referer', referrer)
-    if opts:
-        for x1, x2 in opts:
-            req.add_header(x1, x2)
-
-    if data: 
-        response = urllib2.urlopen(req, data)
-    else:
-        response = urllib2.urlopen(req,timeout=30)
-    link=response.read()
-    if save_cookie:
-        setcookie = response.info().get('Set-Cookie', None)
-        if setcookie:
-            setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
-            link = link + '<cookie>' + setcookie + '</cookie>'
+    dbg_log("_params=>%s"%str(params))
     
-    response.close()
-    return link
+
+    headers = {'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0',
+               'Accept' : '*/*',
+               'Accept-Language' : 'ru,en;q=0.9'
+               }
+    if opts: 
+        headers.update(opts)
+        dbg_log("_opts=>%s"%str(opts))
+        
+    if data :
+        dbg_log("_data=>%s"%str(data))
+        r = requests.post(url, headers=headers, cookies = cookies, params = params, data = data)
+    else:
+        r = requests.get(url, headers=headers, cookies = cookies, params = params)
+        
+    return r
 
 def KNX_list(url, page, type, fdata, cook):
     dbg_log('-KNX_list:' + '\n')
@@ -87,36 +79,56 @@ def KNX_list(url, page, type, fdata, cook):
     dbg_log('- type:'+  type + '\n')
     dbg_log('- fdata:'+  fdata + '\n')
     
+    
+    dfind_ss = 'search_start'
+    dfind_str = 'story'
+    dfind_rs = 'result_from'
+    
+    dfind = {'titleonly' : '3',
+             'do' : 'search',
+             'subaction' : 'search',
+             'full_search' : '0'
+             }
+
+    
     if type == 'ctlg':
         n_url = url + 'page/' + page + '/'
-        pdata = ''
+        pdata = None
     elif fdata != '':
 
         if page != '1':
             n_url = url
-            pdata = find_dt + find_ss + page + find_rs + str(((int(page) - 1) * 12) + 1)  + find_str + fdata
+            pdata.update(dfind)
+            pdata[dfind_ss] = page
+            pdata[dfind_rs] = str(((int(page) - 1) * 12) + 1)
+            pdata[dfind_str] = fdata
+#             find_dt + find_ss + page + find_rs + str(((int(page) - 1) * 12) + 1)  + find_str + fdata
         else:
             n_url = start_pg
-            pdata = find_dt + find_rs + find_str + fdata + "&sfSbm=&a=2"
+            pdata.update(dfind)
+            pdata[dfind_rs] = ''
+            pdata[dfind_str] = fdata
+            pdata['sfSbm'] = ''
+            pdata['a'] = '2'
+#             pdata = find_dt + find_rs + find_str + fdata + "&sfSbm=&a=2"
     else:
         n_url = url + page + '/'
-        pdata = ''
+        pdata = None
 
                 
         
     dbg_log('- n_url:'+  n_url + '\n')
-    dbg_log('- pdata:'+  pdata + '\n')
+    dbg_log('- pdata:'+  str(pdata) + '\n')
     
     if type != 'unis':
         xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
+        
+    if cook : cookies = json.loads(cook)
+    else: cookies = None
     
-#     try:
-#     http = get_url(n_url, data=pdata)
-    http = get_url(n_url, cookie = cook, save_cookie = True, data=pdata)
-    cook = re.search('<cookie>(.+?)</cookie>', http).group(1)
-#     except:
-#         return
-    
+    req = req_url(n_url, cookies = cookies, data=pdata)
+    http = req.content
+    dbg_log('- cook:'+  str(req.cookies) + '\n')
     i = 0
     unis_res = []
     
@@ -132,29 +144,25 @@ def KNX_list(url, page, type, fdata, cook):
 
 
         
-    entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
-    msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"}) 
+    entrys = BeautifulSoup(http).findAll('section',{"class":"short_video_view"})
 
     for eid in entrys:
 
-#             print eid
-#            print msgs[i]
-
-            href = re.compile('<a href="(.*?)">').findall(str(eid))[0]
-            plots = BeautifulSoup(str(msgs[i])).findAll('div',{"class":"block-text"})
+            href = re.compile('<a href="(.*?)"><h3').findall(str(eid))[0]
+            plots = BeautifulSoup(str(eid)).findAll('td',{"class":"short_rewiev"})
 #            print plots            
             try:
-                plot = re.compile('<div class="block-text">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))[0]
+                plot = re.compile('<div>(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(plots[0])))[0]
             except:
                 plot = ''
             try:
-                img = start_pg + re.compile('<img.*?src="(.*?)"').findall(str(msgs[i]))[0]
+                img = start_pg + re.compile('<img src="(.*?)"').findall(re.sub('\thumbs', '',str(eid)))[0]
             except:
                 img = ''
             try:
-                title = re.compile('<div class="title-short">(.*?)</div>').findall(str(eid))[0]
+                title = re.compile('<h3 class="title_film">(.*?)</h3>').findall(str(eid))[0]
             except:
-                title = re.compile('<a href=".*?">(.*?)</a>').findall(str(eid))[0]
+                title = re.compile('title="(.*?)"').findall(str(eid))[0]
                 
 
 
@@ -167,7 +175,7 @@ def KNX_list(url, page, type, fdata, cook):
                 item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
                 item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
                 uri = sys.argv[0] + '?mode=play' \
-                + '&url=' + urllib.quote_plus(href)
+                + '&url=' + urllib.quote_plus(href) + '&cook=' + json.dumps(req.cookies.get_dict())
                 item.setProperty('IsPlayable', 'true')
                 xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
                 dbg_log('- uri:'+  uri + '\n')
@@ -205,115 +213,106 @@ def KNX_show(url):
     dbg_log('- uri:'+  uri + '\n')    
     xbmcplugin.endOfDirectory(pluginhandle) 
 
-def KNX_list2(url, page):
-    dbg_log('-KNX_list:' + '\n')
-    dbg_log('- url:'+  url + '\n')
-    dbg_log('- page:'+  page + '\n')
-
-
-    n_url = url + page
-        
-    dbg_log('- n_url:'+  n_url + '\n')
-    
-    xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
-    
-    http = get_url(n_url)
-    i = 0
-    
-    entrys = BeautifulSoup(http).findAll('div',{"class":"eTitle"})
-    msgs = BeautifulSoup(http).findAll('div',{"class":"eMessage"})
-
-    for eid in entrys:
-
-        films = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))
-        plots = re.compile('style=".*?">(.*?)</div>').findall(re.sub('[\n\r\t]', ' ',str(msgs[i])))
-        
-        for href, title in films:
-            img = ''
-            title = re.sub('<.*?>', '',title)
-            try: plot = re.sub('<.*?>', '',plots[0])
-            except: plot = title
-            dbg_log('-TITLE %s'%title)
-            dbg_log('-PLOT %s'%plot)
-
-            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-            item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-            uri = sys.argv[0] + '?mode=play' \
-            + '&url=' + urllib.quote_plus(href)
-            item.setProperty('IsPlayable', 'true')
-            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-            dbg_log('- uri:'+  uri + '\n')
-            i = i + 1
-                
-    if i:
-        item = xbmcgui.ListItem('<NEXT PAGE>')
-        uri = sys.argv[0] + '?mode=list&page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)
-        xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
-        dbg_log('- uri:'+  uri + '\n')
-      
- 
-    xbmcplugin.endOfDirectory(pluginhandle)
 
 
 def get_moonwalk(url, ref, cook):
+    dbg_log('-get_moonwalk:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- ref:'+  ref + '\n')
+    dbg_log('- cook:'+  str(cook) + '\n')
     #    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url, referrer=ref, cookie=cook, save_cookie=True)
-    cook = re.search('<cookie>(.+?)</cookie>', page).group(1)
-    # xbmc.log(page)
+    req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
+    page = req.content
+    
+    vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    
+    ulist = url.split('/')
+    ulist[len(ulist) - 2] = vtoken
+    nref = '/'.join(ulist)
+#    xbmc.log('nref= ' + nref)
+    
+    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
+    page = req.content
 
-    #    video_token: 'f956e26b0ffe0ab9',
-    #                                                content_type: 'movie',
-    #                                                mw_key: '1152cb1dd4c4d544',
-    #                                                mw_pid: 537,
-    #                                                mw_domain_id: 13338,
-    #                                                ad_attr: condition_detected ? 1 : 0,
-    #                                                debug: false,
-    #                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
-
-
-    #    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-    #    did = re.findall("d_id: (.*?),", page)[0]
-    #    ctype = re.findall("content_type: '(.*?)'", page)[0]
-    #    akey = re.findall("access_key: '(.*?)'", page)[0]
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
+    xacc = re.findall("'X-Access-Level': '(.*?)'", page)[0]
     #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
     ctype = re.findall("content_type: '(.*?)'", page)[0]
     mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
-    # mw_key = '1152%D1%81b1dd4c4d544'
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
     p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
-    #    uuid = re.findall("uuid: '(.*?)'", page)[0]
-    #     vctrl = re.findall("version_control = '(.*?)'", page)[0]
-    # condition_safe = 'ed064acb78fd5dd9'
-    asmethod = urllib.quote_plus(re.findall("var async_method = '(.*?)'", page)[0])
-    # var async_method = '4e5cb79586b68d648926ae0762cfbd92';
+    
+    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
+#     setTimeout(function() {
+#     e37834294bc3c6bda8e36eb04ac3adc5['4e0ee0a1036a72dacc804306eabaaba3'] = 'b4b34c43ff2dc523887b8814e5f96f2d';
+#   }
 
+    opts = {'Accept-Encoding': 'gzip, deflate',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-CSRF-Token': csrf,
+            'X-Access-Level': xacc,
+            'X-Condition-Safe': 'Normal',
+            'X-Format-Token': 'B300',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer' : nref
+            }
 
-    opts = []
-    opts.append(('Accept-Encoding', 'gzip, deflate'))
-    opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
-    opts.append(('X-CSRF-Token', csrf))
-    opts.append(('X-Condition-Safe', 'Normal'))
-    opts.append(('X-Format-Token', 'B300'))
+    udata = {'video_token': vtoken,
+             'content_type': ctype,
+             'mw_key': mw_key,
+             'mw_pid': mw_pid,
+             'p_domain_id': p_domain_id,
+             'ad_attr': '0',
+             'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+             }
+    
+    req.cookies['quality'] = '720'
+    
+    req = req_url('http://moonwalk.cc/sessions/new_session',
+                   opts = opts, cookies = req.cookies, data = udata)
+    html = req.content
 
-    opts.append(('X-Requested-With', 'XMLHttpRequest'))
-    #    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
-    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_attr=0&debug=false&async_method=%s' % (
-    vtoken, ctype, mw_key, mw_pid, p_domain_id, asmethod)
-
-    html = get_url('http://moonwalk.cc/sessions/new_session',
-                   data=udata,
-                   referrer=url,
-                   cookie=cook,
-                   #                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29',
-                   opts=opts)
-    #    xbmc.log(html)
+#     cook = re.search('<cookie>(.+?)</cookie>', html).group(1)
+#     xbmc.log('ncook= ' + cook + ';quality=720')    
+#     re.sub('<cookie>(.+?)</cookie>', '', html)
+    
+#    xbmc.log(html)
     page = json.loads(html)
-    xbmc.log(str(page))
-    url = page["mans"]["manifest_m3u8"]
-    return url
+    nurl = page["mans"]["manifest_m3u8"]
+
+#     nurl = 'http://moonwalk.cc/video/html5?manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
+#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
+#     ndata = 'manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
+#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
+    
+    params = {'manifest_m3u8': page["mans"]["manifest_m3u8"],
+              'manifest_mp4': page["mans"]["manifest_mp4"],
+              'token': vtoken,
+              'pid': mw_pid,
+              'debug': '0'
+              }
+
+    opts['Upgrade-Insecure-Requests'] = '1'
+    req = req_url(nurl,
+                  opts = {'Upgrade-Insecure-Requests': '1',
+                          'Referer' : nref},
+                  cookies = req.cookies,
+                  params = params
+                  )
+        
+    html = req.content
+#    xbmc.log(html)
+    
+    r = [(i[0], i[1]) for i in re.findall('#EXT-X-STREAM-INF:.*?RESOLUTION=\d+x(\d+).*?(http.*?(?:\.abst|\.f4m|\.m3u8)).*?', html, re.DOTALL) if i]
+    r0 = re.findall('RESOLUTION=(.*?),', html)
+    dbg_log('- r:'+  str(r) + '\n')
+    dbg_log('- r0:'+  str(r0) + '\n')
+    i = xbmcgui.Dialog().select('Video Quality', r0)
+
+    return r[i][1]
+    
 
 def get_kinoxa(url):
     dbg_log('-get_kinoxa:'+ '\n')
@@ -334,16 +333,18 @@ def get_kinoxa(url):
         
     return link
         
-def KNX_play(url):     
+def KNX_play(url, cook):     
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     
-    http = get_url(url)
+    req = req_url(url, cookies=json.loads(cook))
+    http = req.content
+
     # print http
     iframes = re.compile('<iframe class="prerolllvid"(.*?)src="(.*?)"').findall(http)
 #                         <iframe class="prerolllvid" block-time="10" onload="StopLoading()" itemprop="video" src="http://moonwalk.cc/video/f9539ce0f228ab05/iframe" style="width:632px; height:445px !important;" frameborder="0" scrolling="no" allowfullscreen></iframe>
 
-    print iframes[0][1]
+#     print iframes[0][1]]
     
     if len(iframes[0][1]) == 0: return
 
@@ -352,7 +353,7 @@ def KNX_play(url):
     if "kinoxa" in iframes[0][1]:
         link = get_kinoxa(iframes[0][1])
     else:
-        link = get_moonwalk(iframes[0][1], url, "")
+        link = get_moonwalk(iframes[0][1], url, req.cookies)
 
     if link != None:
         item = xbmcgui.ListItem(path = link)
@@ -362,14 +363,19 @@ def KNX_ctlg(url):
     dbg_log('-KNX_ctlg:' + '\n')
     dbg_log('- url:'+  url + '\n')
                
-    catalog  = [( "/filmy_2016_goda/", '2016 год'),
-                ( "/filmy_2015_goda/", '2015 год'),
-                ( "/filmy_2014_goda/", '2014 год'),
-                ( "/filmy_2013_goda/", '2013 год'),
-                ( "/filmy_2012_goda/", '2012 год'),
-                ( "/filmy_2011_goda/", '2011 год'),
-                ( "/filmy_2010_goda/", '2010 год'),
-                ( "/filmy_2009_goda/", '2009 год'),
+    catalog  = [
+                ( "/novinki_kino/", 'Новинки кино'),
+                ( "/filmy_2017_goda/", '2017 года'),
+                ( "/filmy_2016_goda/", '2016 года'),
+                ( "/filmy_2015_goda/", '2015 года'),
+                ( "/filmy_2014_goda/", '2014 года'),
+                ( "/filmy_2013_goda/", '2013 года'),
+                ( "/filmy_2012_goda/", '2012 года'),
+                ( "/filmy_2011_goda/", '2011 года'),
+                ( "/filmy_2010_goda/", '2010 года'),
+                ( "/filmy_2009_goda/", '2009 года'),
+                ( "/filmy_v_vysokom_kachestve_hd/", 'В высоком качестве HD'),
+                ( "/kachestvo_full_hd/", 'FULL HD'),
                 ( "/komedii/", 'Комедии'),
                 ( "/boeviki/", 'Боевики'),
                 ( "/dramy/", 'Драмы'),
@@ -401,9 +407,7 @@ def KNX_ctlg(url):
                 ( "/biografija/", 'Биография'),
                 ( "/xxx/", 'XXX'),
                 ( "/jumoristicheskie_peredachi/", 'Юмористические передачи'),
-                ( "/teleshou/", 'Передачи'),
-                ( "/filmy_v_vysokom_kachestve_hd/", 'В высоком качестве HD'),
-                ( "/novinki_kino/", 'Новинки кино')]
+                ( "/teleshou/", 'Передачи')]
                
                
     for ctLink, ctTitle  in catalog:
@@ -515,7 +519,7 @@ if url=='':
 
 if mode == '': KNX_list(url, page, type, find, cook)
 elif mode == 'ctlg': KNX_ctlg(url)
-elif mode == 'play': KNX_play(url)
+elif mode == 'play': KNX_play(url, cook)
 elif mode == 'find': KNX_find(cook)
 elif mode == 'show': KNX_show(url)
 elif mode == 'search': 
