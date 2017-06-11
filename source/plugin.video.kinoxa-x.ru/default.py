@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.0
+# Rev. 0.7.1
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -220,19 +220,22 @@ def get_moonwalk(url, ref, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- ref:'+  ref + '\n')
     dbg_log('- cook:'+  str(cook) + '\n')
-    #    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
     req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
     page = req.content
     
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    nref = url
+#    if 'serial' in url:
+#      nref = url
+#    else:
+#      ulist = url.split('/')
+#      ulist[len(ulist) - 2] = vtoken
+#      nref = '/'.join(ulist)
     
-    ulist = url.split('/')
-    ulist[len(ulist) - 2] = vtoken
-    nref = '/'.join(ulist)
-#    xbmc.log('nref= ' + nref)
+#    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
+#    page = req.content
     
-    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
-    page = req.content
+#    xbmc.log(page)
 
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
     xacc = re.findall("'X-Access-Level': '(.*?)'", page)[0]
@@ -340,11 +343,7 @@ def KNX_play(url, cook):
     req = req_url(url, cookies=json.loads(cook))
     http = req.content
 
-    # print http
     iframes = re.compile('<iframe class="prerolllvid"(.*?)src="(.*?)"').findall(http)
-#                         <iframe class="prerolllvid" block-time="10" onload="StopLoading()" itemprop="video" src="http://moonwalk.cc/video/f9539ce0f228ab05/iframe" style="width:632px; height:445px !important;" frameborder="0" scrolling="no" allowfullscreen></iframe>
-
-#     print iframes[0][1]]
     
     if len(iframes[0][1]) == 0: return
 
@@ -352,6 +351,8 @@ def KNX_play(url, cook):
     
     if "kinoxa" in iframes[0][1]:
         link = get_kinoxa(iframes[0][1])
+    elif "youtube" in iframes[0][1]:
+        link = None
     else:
         link = get_moonwalk(iframes[0][1], url, req.cookies)
 
