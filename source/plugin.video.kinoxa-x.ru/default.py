@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.2
+# Rev. 0.7.3
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -97,7 +97,7 @@ def KNX_list(url, page, type, fdata, cook):
     elif fdata != '':
         
         pdata = {}
-        n_url = ur
+        n_url = url
         pdata.update(dfind)
         pdata[dfind_ss] = page
         pdata[dfind_rs] = str(((int(page) - 1) * 12) + 1)
@@ -138,6 +138,7 @@ def KNX_list(url, page, type, fdata, cook):
 
 
     if type == 'find':
+#         entrys = re.compile('<table (.*?)</table>').findall(http, re.MULTILINE|re.DOTALL)
         entrys = BeautifulSoup(http).findAll('table',{"class":"eBlock"})
     else:        
         entrys = BeautifulSoup(http).findAll('section',{"class":"short_video_view"})
@@ -145,6 +146,7 @@ def KNX_list(url, page, type, fdata, cook):
     for eid in entrys:
 
         if type == 'find':
+#             xbmc.log(str(eid))
             hrtt = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))[0]
             href = hrtt[0]
             title = hrtt[1] 
