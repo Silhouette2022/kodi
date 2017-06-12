@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.1
+# Rev. 0.7.2
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -52,7 +52,7 @@ def dbg_log(line):
     if dbg: xbmc.log(line)
 
 def req_url(url, opts = None, cookies = None, params = None, data = None):
-    dbg_log("get_url=>%s"%url)
+    dbg_log("req_url=>%s"%url)
     dbg_log("_params=>%s"%str(params))
     
 
@@ -95,21 +95,15 @@ def KNX_list(url, page, type, fdata, cook):
         n_url = url + 'page/' + page + '/'
         pdata = None
     elif fdata != '':
+        
+        pdata = {}
+        n_url = ur
+        pdata.update(dfind)
+        pdata[dfind_ss] = page
+        pdata[dfind_rs] = str(((int(page) - 1) * 12) + 1)
+        pdata[dfind_str] = fdata
 
-        if page != '1':
-            n_url = url
-            pdata.update(dfind)
-            pdata[dfind_ss] = page
-            pdata[dfind_rs] = str(((int(page) - 1) * 12) + 1)
-            pdata[dfind_str] = fdata
-#             find_dt + find_ss + page + find_rs + str(((int(page) - 1) * 12) + 1)  + find_str + fdata
-        else:
-            n_url = start_pg
-            pdata.update(dfind)
-            pdata[dfind_rs] = ''
-            pdata[dfind_str] = fdata
-            pdata['sfSbm'] = ''
-            pdata['a'] = '2'
+#             pdata['a'] = '2'
 #             pdata = find_dt + find_rs + find_str + fdata + "&sfSbm=&a=2"
     else:
         n_url = url + page + '/'
@@ -143,11 +137,21 @@ def KNX_list(url, page, type, fdata, cook):
             dbg_log('- uri:'+  uri + '\n')    
 
 
-        
-    entrys = BeautifulSoup(http).findAll('section',{"class":"short_video_view"})
+    if type == 'find':
+        entrys = BeautifulSoup(http).findAll('table',{"class":"eBlock"})
+    else:        
+        entrys = BeautifulSoup(http).findAll('section',{"class":"short_video_view"})
 
     for eid in entrys:
 
+        if type == 'find':
+            hrtt = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))[0]
+            href = hrtt[0]
+            title = hrtt[1] 
+            plot = ''
+            try: img = start_pg + re.compile('<img src="(.*?)"').findall(re.sub('\thumbs', '',str(eid)))[0]
+            except: img = ''
+        else:
             href = re.compile('<a href="(.*?)"><h3').findall(str(eid))[0]
             plots = BeautifulSoup(str(eid)).findAll('td',{"class":"short_rewiev"})
 #            print plots            
@@ -166,23 +170,23 @@ def KNX_list(url, page, type, fdata, cook):
                 
 
 
-            dbg_log('-HREF %s'%href)
-            dbg_log('-TITLE %s'%title)
-            dbg_log('-IMG %s'%img)
-            dbg_log('-PLOT %s'%plot)
+        dbg_log('-HREF %s'%href)
+        dbg_log('-TITLE %s'%title)
+        dbg_log('-IMG %s'%img)
+        dbg_log('-PLOT %s'%plot)
 
-            if type != 'unis':
-                item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
-                item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
-                uri = sys.argv[0] + '?mode=play' \
-                + '&url=' + urllib.quote_plus(href) + '&cook=' + json.dumps(req.cookies.get_dict())
-                item.setProperty('IsPlayable', 'true')
-                xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-                dbg_log('- uri:'+  uri + '\n')
-                i = i + 1
-            else:
-              try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
-              except: pass
+        if type != 'unis':
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
+            uri = sys.argv[0] + '?mode=play' \
+            + '&url=' + urllib.quote_plus(href) + '&cook=' + json.dumps(req.cookies.get_dict())
+            item.setProperty('IsPlayable', 'true')
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
+            dbg_log('- uri:'+  uri + '\n')
+            i = i + 1
+        else:
+          try: unis_res.append({'title':  title, 'url': href, 'image': img, 'plugin': 'plugin.video.kinoxa-x.ru'})
+          except: pass
 
     if type == 'unis':
       try: UnifiedSearch().collect(unis_res)
@@ -322,7 +326,8 @@ def get_kinoxa(url):
     dbg_log('- url:'+  url + '\n')    
     
     link = None
-    http = get_url(url)
+    req = req_url(url)
+    http = req.content
     
     flvs = re.compile('src="http(.*?)"').findall(http)
     hrefs = re.compile('<a href="(.*?)">').findall(http)
