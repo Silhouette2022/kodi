@@ -44,7 +44,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.net[/COLOR]" version="0.7.3" provider-name="Silhouette">
+<addon id="plugin.video.kinoxa-x.ru" name="[COLOR FFcFFF48]Kinoxa-X.net[/COLOR]" version="0.7.4" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>

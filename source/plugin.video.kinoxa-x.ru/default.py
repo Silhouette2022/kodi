@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.3
+# Rev. 0.7.4
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -80,22 +80,22 @@ def KNX_list(url, page, type, fdata, cook):
     dbg_log('- fdata:'+  fdata + '\n')
     
     
-    dfind_ss = 'search_start'
-    dfind_str = 'story'
-    dfind_rs = 'result_from'
-    
-    dfind = {'titleonly' : '3',
-             'do' : 'search',
-             'subaction' : 'search',
-             'full_search' : '0'
-             }
-
-    
+  
     if type == 'ctlg':
         n_url = url + 'page/' + page + '/'
         pdata = None
     elif fdata != '':
         
+        dfind_ss = 'search_start'
+        dfind_str = 'story'
+        dfind_rs = 'result_from'
+    
+        dfind = {'titleonly' : '3',
+                 'do' : 'search',
+                 'subaction' : 'search',
+                 'full_search' : '0'
+                 }
+
         pdata = {}
         n_url = url
         pdata.update(dfind)
@@ -103,8 +103,6 @@ def KNX_list(url, page, type, fdata, cook):
         pdata[dfind_rs] = str(((int(page) - 1) * 12) + 1)
         pdata[dfind_str] = fdata
 
-#             pdata['a'] = '2'
-#             pdata = find_dt + find_rs + find_str + fdata + "&sfSbm=&a=2"
     else:
         n_url = url + page + '/'
         pdata = None
@@ -114,7 +112,7 @@ def KNX_list(url, page, type, fdata, cook):
     dbg_log('- n_url:'+  n_url + '\n')
     dbg_log('- pdata:'+  str(pdata) + '\n')
     
-    if type != 'unis':
+    if type != 'unis' and type != 'unds':
         xbmcplugin.setContent(int(sys.argv[1]), 'episodes')#movies episodes tvshows
         
     if cook : cookies = json.loads(cook)
@@ -137,15 +135,14 @@ def KNX_list(url, page, type, fdata, cook):
             dbg_log('- uri:'+  uri + '\n')    
 
 
-    if type == 'find':
-#         entrys = re.compile('<table (.*?)</table>').findall(http, re.MULTILINE|re.DOTALL)
+    if type == 'find' or type == 'unis' or type == 'unds':
         entrys = BeautifulSoup(http).findAll('table',{"class":"eBlock"})
     else:        
         entrys = BeautifulSoup(http).findAll('section',{"class":"short_video_view"})
 
     for eid in entrys:
 
-        if type == 'find':
+        if type == 'find' or type == 'unis' or type == 'unds':
 #             xbmc.log(str(eid))
             hrtt = re.compile('<a href="(.*?)">(.*?)</a>').findall(str(eid))[0]
             href = hrtt[0]
@@ -193,7 +190,7 @@ def KNX_list(url, page, type, fdata, cook):
     if type == 'unis':
       try: UnifiedSearch().collect(unis_res)
       except: pass
-    else:
+    elif type != 'unds':
       if i :
           item = xbmcgui.ListItem('<NEXT PAGE>')
           uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata) + '&cook=' + urllib.quote_plus(cook)
@@ -253,7 +250,7 @@ def get_moonwalk(url, ref, cook):
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
     p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
     
-    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
+#    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
 #     setTimeout(function() {
 #     e37834294bc3c6bda8e36eb04ac3adc5['4e0ee0a1036a72dacc804306eabaaba3'] = 'b4b34c43ff2dc523887b8814e5f96f2d';
 #   }
@@ -279,15 +276,16 @@ def get_moonwalk(url, ref, cook):
     
     req.cookies['quality'] = '720'
     
-    req = req_url('http://moonwalk.cc/sessions/new_session',
-                   opts = opts, cookies = req.cookies, data = udata)
+    murl = 'http://moonwalk.cc/manifests/video/%s/all'%vtoken
+    
+    req = req_url(murl, opts = opts, cookies = req.cookies, data = udata)
     html = req.content
 
 #     cook = re.search('<cookie>(.+?)</cookie>', html).group(1)
 #     xbmc.log('ncook= ' + cook + ';quality=720')    
 #     re.sub('<cookie>(.+?)</cookie>', '', html)
     
-#    xbmc.log(html)
+    xbmc.log(html)
     page = json.loads(html)
     nurl = page["mans"]["manifest_m3u8"]
 
@@ -343,11 +341,14 @@ def get_kinoxa(url):
         
     return link
         
-def KNX_play(url, cook):     
+def KNX_play(url, cook):
     dbg_log('-NKN_play:'+ '\n')
     dbg_log('- url:'+  url + '\n')
     
-    req = req_url(url, cookies=json.loads(cook))
+    if cook: cookies=json.loads(cook)
+    else: cookies=None
+    
+    req = req_url(url, cookies=cookies)
     http = req.content
 
     iframes = re.compile('<iframe class="prerolllvid"(.*?)src="(.*?)"').findall(http)
@@ -521,6 +522,9 @@ except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
+usearch = params['usearch'] if 'usearch' in params else None
+if unified: type = 'unis'
+if usearch: type = 'unds'
 
 if url=='':
     url = page_pg
@@ -532,7 +536,7 @@ elif mode == 'find': KNX_find(cook)
 elif mode == 'show': KNX_show(url)
 elif mode == 'search': 
     url = find_pg
-    KNX_list(url, '1', 'unis', uni2cp(gettranslit(keyword)), cook)
+    KNX_list(url, '1', type, uni2cp(gettranslit(keyword)), cook)
     
 #elif mode == 'list': KNX_list(url, page)
 
