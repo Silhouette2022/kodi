@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.4
+# Rev. 0.7.5
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -178,7 +178,8 @@ def KNX_list(url, page, type, fdata, cook):
             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
             item.setInfo( type='video', infoLabels={'title': title, 'plot': plot})
             uri = sys.argv[0] + '?mode=play' \
-            + '&url=' + urllib.quote_plus(href) + '&cook=' + json.dumps(req.cookies.get_dict())
+            + '&url=' + urllib.quote_plus(href)
+            if type != 'unds': uri += '&cook=' + json.dumps(req.cookies.get_dict())
             item.setProperty('IsPlayable', 'true')
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
             dbg_log('- uri:'+  uri + '\n')
@@ -190,8 +191,8 @@ def KNX_list(url, page, type, fdata, cook):
     if type == 'unis':
       try: UnifiedSearch().collect(unis_res)
       except: pass
-    elif type != 'unds':
-      if i :
+    else:
+        if type != 'unds' and i :
           item = xbmcgui.ListItem('<NEXT PAGE>')
           uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url) + '&type=' + type + '&find=' + urllib.quote_plus(fdata) + '&cook=' + urllib.quote_plus(cook)
           xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
@@ -202,7 +203,7 @@ def KNX_list(url, page, type, fdata, cook):
               xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
               dbg_log('- uri:'+  uri + '\n')        
      
-      xbmcplugin.endOfDirectory(pluginhandle) 
+        xbmcplugin.endOfDirectory(pluginhandle) 
 
 
 def KNX_show(url):
@@ -536,7 +537,7 @@ elif mode == 'find': KNX_find(cook)
 elif mode == 'show': KNX_show(url)
 elif mode == 'search': 
     url = find_pg
-    KNX_list(url, '1', type, uni2cp(gettranslit(keyword)), cook)
+    KNX_list(url, '1', type, uni2cp(gettranslit(urllib.unquote_plus(keyword))), cook)
     
 #elif mode == 'list': KNX_list(url, page)
 
