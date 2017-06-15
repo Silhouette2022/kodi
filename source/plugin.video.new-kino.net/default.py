@@ -1,14 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.10.4
+# Rev. 0.11.0
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
-import urllib, urllib2, os, re, sys, json, cookielib
-
+import requests
 
 try:
   # Import UnifiedSearch
@@ -43,35 +42,57 @@ def gettranslit(msg):
 def dbg_log(line):
     if dbg: xbmc.log(line)
 
-def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
-    dbg_log("get_url=>%s"%url)
-    if data: dbg_log("data=>%s"%data)
-    if cookie: dbg_log("cookie=>%s" % cookie)
-    if data: dbg_log("referrer=>%s" % referrer)
-    req = urllib2.Request(url)
-    req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
-#     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
-    req.add_header('Accept', '*/*')
-    req.add_header('Accept-Language', 'ru,en;q=0.9')
-    if cookie: req.add_header('Cookie', cookie)
-    if referrer: req.add_header('Referer', referrer)
-    if opts:
-        for x1, x2 in opts:
-            req.add_header(x1, x2)
+# def get_url(url, data = None, cookie = None, save_cookie = False, referrer = None, opts=None):
+#     dbg_log("get_url=>%s"%url)
+#     if data: dbg_log("data=>%s"%data)
+#     if cookie: dbg_log("cookie=>%s" % cookie)
+#     if data: dbg_log("referrer=>%s" % referrer)
+#     req = urllib2.Request(url)
+#     req.add_header('User-Agent', 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0')
+# #     req.add_header('Accept', 'text/html, application/xml, application/xhtml+xml, */*')
+#     req.add_header('Accept', '*/*')
+#     req.add_header('Accept-Language', 'ru,en;q=0.9')
+#     if cookie: req.add_header('Cookie', cookie)
+#     if referrer: req.add_header('Referer', referrer)
+#     if opts:
+#         for x1, x2 in opts:
+#             req.add_header(x1, x2)
+# 
+#     if data: 
+#         response = urllib2.urlopen(req, data)
+#     else:
+#         response = urllib2.urlopen(req,timeout=30)
+#     link=response.read()
+#     if save_cookie:
+#         setcookie = response.info().get('Set-Cookie', None)
+#         if setcookie:
+#             setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
+#             link = link + '<cookie>' + setcookie + '</cookie>'
+#     
+#     response.close()
+#     return link
 
-    if data: 
-        response = urllib2.urlopen(req, data)
-    else:
-        response = urllib2.urlopen(req,timeout=30)
-    link=response.read()
-    if save_cookie:
-        setcookie = response.info().get('Set-Cookie', None)
-        if setcookie:
-            setcookie = re.search('([^=]+=[^=;]+)', setcookie).group(1)
-            link = link + '<cookie>' + setcookie + '</cookie>'
+def req_url(url, opts = None, cookies = None, params = None, data = None):
+    dbg_log("req_url=>%s"%url)
+    dbg_log("_params=>%s"%str(params))
     
-    response.close()
-    return link
+
+    headers = {'User-Agent' : 'Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0',
+               'Accept' : '*/*',
+               'Accept-Language' : 'ru,en;q=0.9'
+               }
+    if opts: 
+        headers.update(opts)
+        dbg_log("_opts=>%s"%str(opts))
+        
+    if data :
+        dbg_log("_data=>%s"%str(data))
+        r = requests.post(url, headers=headers, cookies = cookies, params = params, data = data)
+    else:
+        r = requests.get(url, headers=headers, cookies = cookies, params = params)
+        
+    return r
+
 
 def NKN_start(url, page, cook):
     dbg_log('-NKN_start:' + '\n')
@@ -82,10 +103,14 @@ def NKN_start(url, page, cook):
               ('<ПОИСК>', '?mode=find')]
     unis_res = []
     unis_en = False
+    unds_en = False
     
     if cook == "unis":
         cook = ""
         unis_en = True
+    elif cook == "unds":
+        cook = ""
+        unds_en = True
     else:
         xbmcplugin.setContent(int(sys.argv[1]), 'movies')#movies episodes tvshows    
               
@@ -95,11 +120,19 @@ def NKN_start(url, page, cook):
         n_url = url + page_pg + page + '/'
         
     dbg_log('- n_url:'+  n_url + '\n')
-    horg = get_url(n_url, cookie = cook, save_cookie = True)
-    cook = re.search('<cookie>(.+?)</cookie>', horg).group(1)
+
+    if cook : cookies = json.loads(cook)
+    else: cookies = None
+
+    req = req_url(n_url, cookies = cookies)
+    horg = req.content
+    if req.cookies.get_dict():
+        cook = json.dumps(req.cookies.get_dict())
+    else: cook = ''
+
     i = 0
     
-    if unis_en == False:
+    if not unis_en and not unds_en:
       for ctTitle, ctMode  in ext_ls:
         item = xbmcgui.ListItem(ctTitle)
         uri = sys.argv[0] + ctMode + '&cook=' + urllib.quote_plus(cook)
@@ -111,7 +144,6 @@ def NKN_start(url, page, cook):
     hrefs = re.compile('<a href="(.*?)(#|">|" >)(.*?)</a></h4>').findall(http)
 #     print http
     extras = re.compile('<h2><a href="(.*?)">(.*?)</a></h2>').findall(http)
-    print extras
 
     if len(hrefs):
         news_id = re.compile("news-id-[0-9]")
@@ -161,7 +193,7 @@ def NKN_start(url, page, cook):
       try: UnifiedSearch().collect(unis_res)
       except:  pass
     else:
-      if i:
+      if i and not unds_en:
         item = xbmcgui.ListItem('<NEXT PAGE>')
         uri = sys.argv[0] + '?page=' + str(int(page) + 1) + '&url=' + urllib.quote_plus(url)+ '&cook=' + urllib.quote_plus(cook)
         xbmcplugin.addDirectoryItem(pluginhandle, uri, item, True)
@@ -196,9 +228,18 @@ def NKN_view(url, img, name, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- img:'+  img + '\n')
     dbg_log('- name:'+  name + '\n')
-        
-    http = get_url(url, cookie = cook, save_cookie=True)
-    cook = re.search('<cookie>(.+?)</cookie>', http).group(1)
+    
+    if cook : cookies = json.loads(cook)
+    else: cookies = None
+    
+    req = req_url(url, cookies = cookies)
+    http = req.content
+    
+    if req.cookies.get_dict():
+        cook = json.dumps(req.cookies.get_dict())
+    else: cook = ''
+    
+    dbg_log('- ncook:'+  cook + '\n')
 
     frames = re.compile('<iframe (.*?)</iframe>').findall(http)
     if len(frames) > 0:
@@ -465,7 +506,7 @@ class VKIE():
             video_id = '%s_%s' % (mobj.group('oid'), mobj.group('id'))
             dbg_log('--video_id:' + video_id + '\n')
 
-        info_page = get_url(info_url)
+        info_page = req_url(info_url).content
 
         error_message = self._html_search_regex(
             [r'(?s)<!><div[^>]+class="video_layer_message"[^>]*>(.+?)</div>',
@@ -604,14 +645,16 @@ def get_mailru(url):
         url = url.replace('/my.mail.ru/video/', '/api.video.mail.ru/videos/embed/')
         url = url.replace('/my.mail.ru/mail/', '/api.video.mail.ru/videos/embed/mail/')
         url = url.replace('/videoapi.my.mail.ru/', '/api.video.mail.ru/')
-        result = get_url(url)
-
+        result = req_url(url).content
+        
         url = re.compile('"metadataUrl" *: *"(.+?)"').findall(result)[0]
-        mycookie = get_url(url, save_cookie = True)
-        cookie = re.search('<cookie>(.+?)</cookie>', mycookie).group(1)
+        req = req_url(url)
+        if req.cookies.get_dict():
+            cookie = json.dumps(req.cookies.get_dict())
+        else: cookie = ''
         h = "|Cookie=%s" % urllib.quote(cookie)
 
-        result = get_url(url)
+        result = ret_url(url).content
         result = json.loads(result)
         result = result['videos']
 
@@ -626,67 +669,111 @@ def get_mailru(url):
         return None
 
 
-   
-def get_moonwalk(url, ref, cook):
-        
-#    token=re.findall('http://moonwalk.cc/video/(.+?)/',url)[0]
-    page = get_url(url, referrer=ref, cookie = cook, save_cookie=True)
-    cook = re.search('<cookie>(.+?)</cookie>', page).group(1)
-    # xbmc.log(page)
 
-#    video_token: 'f956e26b0ffe0ab9',
-#                                                content_type: 'movie',
-#                                                mw_key: '1152cb1dd4c4d544',
-#                                                mw_pid: 537,
-#                                                mw_domain_id: 13338,
-#                                                ad_attr: condition_detected ? 1 : 0,
-#                                                debug: false,
-#                                                uuid: '9ee940f4080aa1c9d4815cab11bd7a42'
-                                                
+def get_moonwalk(url, ref, cook):
+    dbg_log('-get_moonwalk:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- ref:'+  ref + '\n')
+    dbg_log('- cook:'+  str(cook) + '\n')
+    req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
+    page = req.content
     
-#    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-#    did = re.findall("d_id: (.*?),", page)[0]
-#    ctype = re.findall("content_type: '(.*?)'", page)[0]
-#    akey = re.findall("access_key: '(.*?)'", page)[0]
+    xbmc.log(page)
+    try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
+    except: return None
+    nref = url
+#    if 'serial' in url:
+#      nref = url
+#    else:
+#      ulist = url.split('/')
+#      ulist[len(ulist) - 2] = vtoken
+#      nref = '/'.join(ulist)
+    
+#    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
+#    page = req.content
+    
+#    xbmc.log(page)
+
     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-#    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+    xacc = re.findall("'X-Access-Level': '(.*?)'", page)[0]
+    #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
     ctype = re.findall("content_type: '(.*?)'", page)[0]
     mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
-    # mw_key = '1152%D1%81b1dd4c4d544'
     mw_pid = re.findall("mw_pid: (.*?),", page)[0]
     p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
-#    uuid = re.findall("uuid: '(.*?)'", page)[0]
-#     vctrl = re.findall("version_control = '(.*?)'", page)[0]
-#condition_safe = 'ed064acb78fd5dd9'
-    asmethod = urllib.quote_plus(re.findall("var async_method = '(.*?)'", page)[0])
-# var async_method = '4e5cb79586b68d648926ae0762cfbd92';
-        
     
-    opts = []
-    opts.append(('Accept-Encoding', 'gzip, deflate'))
-    opts.append(('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'))
-    opts.append(('X-CSRF-Token', csrf))
-    opts.append(('X-Condition-Safe', 'Normal'))
-    opts.append(('X-Format-Token', 'B300'))
+#    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
+#     setTimeout(function() {
+#     e37834294bc3c6bda8e36eb04ac3adc5['4e0ee0a1036a72dacc804306eabaaba3'] = 'b4b34c43ff2dc523887b8814e5f96f2d';
+#   }
 
-    opts.append(('X-Requested-With', 'XMLHttpRequest'))
-#    udata = 'partner=&d_id=%s&video_token=%s&content_type=%s&access_key=%s&cd=0'%(did, vtoken, ctype, akey)
-    udata = 'video_token=%s&content_type=%s&mw_key=%s&mw_pid=%s&p_domain_id=%s&ad_attr=0&debug=false&async_method=%s'%(vtoken, ctype, mw_key, mw_pid, p_domain_id, asmethod)
+    opts = {'Accept-Encoding': 'gzip, deflate',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-CSRF-Token': csrf,
+            'X-Access-Level': xacc,
+            'X-Condition-Safe': 'Normal',
+            'X-Format-Token': 'B300',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Referer' : nref
+            }
 
+    udata = {'video_token': vtoken,
+             'content_type': ctype,
+             'mw_key': mw_key,
+             'mw_pid': mw_pid,
+             'p_domain_id': p_domain_id,
+             'ad_attr': '0',
+             'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+             }
+    
+    req.cookies['quality'] = '720'
+    
+    murl = 'http://moonwalk.cc/manifests/video/%s/all'%vtoken
+    
+    req = req_url(murl, opts = opts, cookies = req.cookies, data = udata)
+    html = req.content
 
-    html = get_url('http://moonwalk.cc/sessions/new_session', 
-                   data=udata, 
-                   referrer=url,
-                   cookie=cook,
-#                    cookie='_moon_session=NFdHdDBUWmQvUVpvdTk4N0xuVzlkTEdiekhva3NBRDJCQzVYN2JwVzJjenhtZG5jUW45ck9GRUpXMVdjMGhKSVBCdUhPN0NBVHZQSnkrVDFoSHRjME1pL1BKNS85RGpIN1lrbGFRbUFXYlNxcTFZNk8rNnlmcXpvTkl0blByTzREV0d4ZXVwOTMzZHd5emJMMUhTU2ZCVGVtNTV4bG1tTUljYUVGOFJVY2JtUEFLK2NucTQ1eWRwMlE4VFd4VGNrLS1EQjdFcDNxMGhNdlJPUUxuTzhaMzlnPT0%3D--0d2dafceaa11be80d5e17b5f9a657bbfcb0e1b29', 
-                   opts=opts)
-#    xbmc.log(html)    
-    page=json.loads(html)
-    xbmc.log(str(page))
-    url = page["mans"]["manifest_m3u8"]
-    return url   
+#     cook = re.search('<cookie>(.+?)</cookie>', html).group(1)
+#     xbmc.log('ncook= ' + cook + ';quality=720')    
+#     re.sub('<cookie>(.+?)</cookie>', '', html)
+    
+    xbmc.log(html)
+    page = json.loads(html)
+    nurl = page["mans"]["manifest_m3u8"]
+
+#     nurl = 'http://moonwalk.cc/video/html5?manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
+#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
+#     ndata = 'manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
+#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
+    
+    params = {'manifest_m3u8': page["mans"]["manifest_m3u8"],
+              'manifest_mp4': page["mans"]["manifest_mp4"],
+              'token': vtoken,
+              'pid': mw_pid,
+              'debug': '0'
+              }
+
+    opts['Upgrade-Insecure-Requests'] = '1'
+    req = req_url(nurl,
+                  opts = {'Upgrade-Insecure-Requests': '1',
+                          'Referer' : nref},
+                  cookies = req.cookies,
+                  params = params
+                  )
+        
+    html = req.content
+#    xbmc.log(html)
+    
+    r = [(i[0], i[1]) for i in re.findall('#EXT-X-STREAM-INF:.*?RESOLUTION=\d+x(\d+).*?(http.*?(?:\.abst|\.f4m|\.m3u8)).*?', html, re.DOTALL) if i]
+    r0 = re.findall('RESOLUTION=(.*?),', html)
+    dbg_log('- r:'+  str(r) + '\n')
+    dbg_log('- r0:'+  str(r0) + '\n')
+    i = xbmcgui.Dialog().select('Video Quality', r0)
+
+    return r[i][1]
+
 
 def NKN_play(url, cook, name, web, ref):
     dbg_log('-NKN_play:'+ '\n')
@@ -694,8 +781,12 @@ def NKN_play(url, cook, name, web, ref):
     url = url.replace('&amp;', '&')
     furls = []
 
+    if cook : cookies = json.loads(cook)
+    else: cookies = None
+    
     if 'kinolot.com' in web:
-        http = get_url(url, cookie = cook)
+        req = req_url(url, cookies = cookies)
+        http = req.content
         files = re.compile('file=(.*?)&').findall(http)
         if len(files):
             furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
@@ -723,7 +814,7 @@ def NKN_play(url, cook, name, web, ref):
                 break
         except: pass
     elif 'moonwalk.c' in web or web[0].isdigit():
-        furl = get_moonwalk(url.replace('.co','.cc'), ref, cook)
+        furl = get_moonwalk(url.replace('.co','.cc'), ref, cookies)
         if furl != None: furls.append(furl)
         else:  dbg_log('Moonwalk : no url returned')
     
@@ -840,6 +931,7 @@ imag=''
 name=''
 web = ''
 ref = ''
+type = ''
 
 try:
     mode=params['mode']
@@ -876,6 +968,9 @@ except: pass
 
 keyword = params['keyword'] if 'keyword' in params else None
 unified = params['unified'] if 'unified' in params else None
+usearch = params['usearch'] if 'usearch' in params else None
+if unified: type = 'unis'
+if usearch: type = 'unds'
 
 if url=='':
     url = start_pg
@@ -887,8 +982,8 @@ elif mode == 'play': NKN_play(url, cook, name, web, ref)
 elif mode == 'find': NKN_find(cook)
 elif mode == 'show': NKN_view(url, imag, "Play Video", cook)
 elif mode == 'search': 
-    url = find_pg + uni2cp(gettranslit(keyword))
-    NKN_start(url, '1', 'unis')
+    url = find_pg + uni2cp(gettranslit(urllib.unquote_plus(keyword)))
+    NKN_start(url, '1', type)
 
 
 
