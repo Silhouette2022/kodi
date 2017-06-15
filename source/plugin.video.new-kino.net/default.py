@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.11.0
+# Rev. 0.11.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -492,6 +492,12 @@ class VKIE():
         mobj = re.match(self._VALID_URL, url)
         video_id = mobj.group('videoid')
         dbg_log('--video_id:' + str(video_id) + '\n')
+        if not video_id:
+            info_url = 'http://vk.com/video_ext.php?' + mobj.group('embed_query')
+            dbg_log('--info_url:' + info_url + '\n')
+            video_id = '-%s_%s' % (mobj.group('oid'), mobj.group('id'))
+            dbg_log('--video_id:' + video_id + '\n')
+            
         if video_id:
             info_url = 'https://vk.com/al_video.php?act=show&al=1&module=video&video=%s' % video_id
             dbg_log('--info_url:' + info_url + '\n')
@@ -500,13 +506,9 @@ class VKIE():
             if list_id:
                 info_url += '&list=%s' % list_id
                 dbg_log('--info_url:' + info_url + '\n')
-        else:
-            info_url = 'http://vk.com/video_ext.php?' + mobj.group('embed_query')
-            dbg_log('--info_url:' + info_url + '\n')
-            video_id = '%s_%s' % (mobj.group('oid'), mobj.group('id'))
-            dbg_log('--video_id:' + video_id + '\n')
 
         info_page = req_url(info_url).content
+        xbmc.log(info_page)
 
         error_message = self._html_search_regex(
             [r'(?s)<!><div[^>]+class="video_layer_message"[^>]*>(.+?)</div>',
@@ -535,8 +537,9 @@ class VKIE():
                 dbg_log('--opts_url:' + opts_url + '\n')
                 return self.url_result(opts_url)
 
-        rdata = self._search_regex(
-                r'<!json>\s*({.+?})\s*<!>', info_page, 'json')
+        rdata = self._search_regex(r'<!json>\s*({.+?})\s*<!>', info_page, 'json')
+        dbg_log('--rdata:' + str(rdata) + '\n')
+        if not rdata: return None 
         jdata = json.loads(rdata.decode('cp1251').encode('utf-8'))
         data = jdata['player']['params'][0]
 
