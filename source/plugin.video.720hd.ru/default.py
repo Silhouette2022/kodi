@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.0.0
+# Rev. 3.0.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -979,7 +979,7 @@ elif mode == 'find': HD7_find(cook)
 elif mode == 'show': HD7_view(url, imag, "Play Video", cook)
 elif mode == 'search': 
     url = find_pg + uni2cp(gettranslit(urllib.unquote_plus(keyword)))
-    NKN_start(url, '1', type)
+    HD7_start(url, '1', type)
 
 
 
