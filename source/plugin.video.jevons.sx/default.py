@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.8.2
+# Rev. 0.9.0
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -43,8 +43,7 @@ fnp_oid = '87879667'
 ls_oid = '122493044'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
-rfpl_start = "http://rfpl.me"
-rfpl_pg = rfpl_start + "/matche/page/"
+sgol_start = "http://sportgol1.org"
 pbtv_start = "http://www.pressball.by"
 pbtv_pg = pbtv_start + "/tv/search/tag?ajax=yw0&q=222-pressbol-TV&TvVideo_page="
 vk_vid = "/video-%s_%s"
@@ -330,6 +329,10 @@ def JVS_top():
     item = xbmcgui.ListItem('PRESSBALL.by', iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
     item.setProperty('fanart_image', pbart_icon)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', item, True)
+    
+    item = xbmcgui.ListItem('SPORTGOL1.org', iconImage=lite_icon, thumbnailImage=lite_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=sgoltop', item, True)
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -488,7 +491,61 @@ def JVS_list(url, page):
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
+def JVS_sgoltop(url):
+    dbg_log('-JVS_sgoltop:' + '\n')
+    dbg_log('- url:' + url + '\n')
 
+    http = get_url(url)
+
+    blocks = BeautifulSoup(http).findAll('div', {"class": "tv-block"})
+
+    for block in blocks:
+        
+        sref = str(block).replace('\r', '').replace('\n', '')
+        try:
+            href = sgol_start + re.compile('href="(.*?)"').findall(sref)[0]
+        except:
+            href = ""
+        try:
+            title = re.compile('title="(.*?)"').findall(sref)[0]
+        except:
+            title = ""
+        try:
+            img = sgol_start + re.compile('src="(.*?)"').findall(sref)[0]
+        except:
+            img = ""
+            
+        if title != "":
+            dbg_log('-HREF %s' % href)
+            dbg_log('-IMG %s' % img)
+            dbg_log('-TITLE %s' % title)
+
+            item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+            item.setInfo(type='video', infoLabels={'title': title, 'plot': title})
+            item.setProperty('IsPlayable', 'true')
+            uri = sys.argv[0] + '?mode=sgoltv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+            xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+            dbg_log('- uri:' + uri + '\n')
+
+
+    xbmcplugin.endOfDirectory(pluginhandle)
+
+def JVS_sgoltv(url):
+    dbg_log('-JVS_sgoltv:' + '\n')
+    dbg_log('- url:' + url + '\n')
+
+    http = get_url(urllib.unquote_plus(url))
+    
+    iframe = re.compile('<iframe src="(.*?)"').findall(http)[0]
+#     print iframe
+    http = get_url(iframe)
+    htt2 = get_url('http://cdn.videosofsport1.pw/crossdomain.xml', referrer='http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
+    uri = re.compile("file: '(.*?)'").findall(http)[0] + '|Referer=' + urllib.quote_plus('http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
+    
+    dbg_log('- uri: ' + uri + '\n')
+    item = xbmcgui.ListItem(path = uri)
+    xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+            
 def JVS_pbtvtop():
     dbg_log('-JVS_pbyvtop:' + '\n')
 
@@ -921,6 +978,10 @@ elif mode == 'pbtvtop':
     JVS_pbtvtop()
 elif mode == 'pbtv':
     JVS_pbtv(url, page)
+elif mode == 'sgoltop':
+    JVS_sgoltop(sgol_start)
+elif mode == 'sgoltv':
+    JVS_sgoltv(url)
 elif mode == 'play':
     JVS_play(url, name)
 elif mode == 'playpbtv':
