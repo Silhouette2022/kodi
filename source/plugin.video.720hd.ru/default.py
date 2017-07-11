@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.0.1
+# Rev. 3.1.0
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -25,11 +25,12 @@ except: use_translit = 'false'
 
 dbg = 0
 
-supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru', 'moonwalk.cc', 'moonwalk.co'}
+supported = {'vk.com', 'vkontakte.ru', 'kinolot.com', 'mail.ru', 'moonwalk.cc', 'moonwalk.co', 'hdgo.cc'}
 
 pluginhandle = int(sys.argv[1])
 
 start_pg = "http://720hd.ru/"
+filmy_pg = "filmy/"
 page_pg = "page/"
 find_pg = "http://720hd.ru/?do=search&subaction=search&story="
 search_start = "&search_start="
@@ -116,8 +117,10 @@ def HD7_start(url, page, cook):
               
     if url.find(find_pg) != -1:
         n_url = url + search_start + page
+    elif page == "0":
+        n_url = url
     else:
-        n_url = url + page_pg + page + '/'
+        n_url = url + filmy_pg + page_pg + page + '/'
         
     dbg_log('- n_url:'+  n_url + '\n')
 
@@ -667,6 +670,31 @@ def get_mailru(url):
         return None
 
 
+def get_hdgo(url, ref, cook):
+    dbg_log('-get_hdgo:' + '\n')
+    dbg_log('- url:'+  url + '\n')
+    dbg_log('- ref:'+  ref + '\n')
+    dbg_log('- cook:'+  str(cook) + '\n')
+    req = req_url(url, opts = {'Referer' : ref})
+    page = req.content
+        
+#     xbmc.log(page)
+    try: src = re.findall('<iframe src="(.*?)"', page)[0]
+    except: return None
+    
+    req = req_url(src, opts = {'Referer' : url})
+    page = req.content
+        
+#     xbmc.log(page)
+    
+    try: urls = re.findall("{url: '(.*?)'", page)
+    except: return None
+    
+#     xbmc.log(str(urls))
+    
+    return urls
+
+
    
 def get_moonwalk(url, ref, cook):
     dbg_log('-get_moonwalk:' + '\n')
@@ -676,7 +704,7 @@ def get_moonwalk(url, ref, cook):
     req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
     page = req.content
         
-    xbmc.log(page)
+#     xbmc.log(page)
     try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
     except: return None
     nref = url
@@ -737,7 +765,7 @@ def get_moonwalk(url, ref, cook):
 #     xbmc.log('ncook= ' + cook + ';quality=720')    
 #     re.sub('<cookie>(.+?)</cookie>', '', html)
     
-    xbmc.log(html)
+#     xbmc.log(html)
     page = json.loads(html)
     nurl = page["mans"]["manifest_m3u8"]
     
@@ -787,6 +815,11 @@ def HD7_play(url, cook, name, web, ref):
         files = re.compile('file=(.*?)&').findall(http)
         if len(files):
             furls.append(Decode2(Decode2(urllib.unquote_plus(files[0]))))
+    elif 'hdgo.cc' in web:
+#        furl = get_YTD(url)
+        furl = get_hdgo(url, ref, cookies)
+        if furl != None: furls.extend(furl)
+        else:  dbg_log('HDGO : no url returned')
     elif 'vk.com' in web:
 #        furl = get_YTD(url)
         furl = get_VK(url)
@@ -940,7 +973,7 @@ except: pass
 try: 
     page=urllib.unquote_plus(params['page'])
     dbg_log('-PAGE:'+ page + '\n')
-except: page = '1'
+except: page = '0'
 try: 
     imag=urllib.unquote_plus(params['img'])
     dbg_log('-IMaG:'+ imag + '\n')
