@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.1.0
+# Rev. 3.1.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -243,15 +243,20 @@ def HD7_view(url, img, name, cook):
     dbg_log('- ncook:'+  cook + '\n')
 
     frames = re.compile('<iframe src="(.*?)"').findall(http)
+    xtraf = re.compile('<div id="hdgoplayer">.+?src="(.*?)"', re.MULTILINE|re.DOTALL).findall(http)
+    if len(xtraf): frames.extend(xtraf)
+
     if len(frames) > 0:
 
         i = 1
+        try: plot = re.compile('<br>.+?<center>(.*?)<br />', re.MULTILINE|re.DOTALL).findall(http)[0].decode('cp1251').encode('utf-8')
+        except: plot = ''
+#         xbmc.log(str(plot).decode('cp1251').encode('utf-8'))     
 #        http = re.sub('<br />', '', horg)
         wdic = { '' : 0}
         for file in frames:
             
-            try: plot = re.compile('<br>.+?<center>(.*?)<br />').findall(file)[0]
-            except: plot = ''
+
             if 'facebook' not in file:
                 try: 
                     web = getSite(file)
@@ -675,6 +680,13 @@ def get_hdgo(url, ref, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- ref:'+  ref + '\n')
     dbg_log('- cook:'+  str(cook) + '\n')
+    
+    if 'api' in url:
+        req = req_url(url, opts = {'Referer' : ref})
+        page = req.content
+        try: url = re.findall('"src", "(.*?)"', page)[0]
+        except: return None
+    
     req = req_url(url, opts = {'Referer' : ref})
     page = req.content
         
@@ -701,7 +713,8 @@ def get_moonwalk(url, ref, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- ref:'+  ref + '\n')
     dbg_log('- cook:'+  str(cook) + '\n')
-    req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
+    try: req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
+    except: return None
     page = req.content
         
 #     xbmc.log(page)
