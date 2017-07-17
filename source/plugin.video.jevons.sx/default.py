@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.9.0
+# Rev. 0.9.1
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -25,7 +25,8 @@ pbtv_icon = xbmc.translatePath(os.path.join(plugin_path, 'pb.png'))
 pbart_icon = xbmc.translatePath(os.path.join(plugin_path, 'pbart.png'))
 art2_icon = xbmc.translatePath(os.path.join(plugin_path, 'fanart2.png'))
 icon4_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon4.png'))
-
+art3_icon = xbmc.translatePath(os.path.join(plugin_path, 'fanart3.png'))
+icon5_icon = xbmc.translatePath(os.path.join(plugin_path, 'icon5.png'))
 dbg = 0
 
 pluginhandle = int(sys.argv[1])
@@ -41,35 +42,13 @@ tvg_oid = '22893032'
 gt_oid = '76470207'
 fnp_oid = '87879667'
 ls_oid = '122493044'
+rfpl_oid = '51812607'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
 sgol_start = "http://sportgol1.org"
 pbtv_start = "http://www.pressball.by"
 pbtv_pg = pbtv_start + "/tv/search/tag?ajax=yw0&q=222-pressbol-TV&TvVideo_page="
 vk_vid = "/video-%s_%s"
-
-
-def reportUsage(addonid, action):
-    host = 'xbmc-doplnky.googlecode.com'
-    tc = 'UA-3971432-4'
-    try:
-        utmain.main({'id': addonid, 'host': host, 'tc': tc, 'action': action})
-    except:
-        pass
-
-
-def resolve(self, url):
-    result = xbmcprovider.XBMCMultiResolverContentProvider.resolve(self, url)
-    if result:
-        # ping befun.cz GA account
-        host = 'befun.cz'
-        tc = 'UA-35173050-1'
-        try:
-            utmain.main({'id': __scriptid__, 'host': host, 'tc': tc, 'action': url})
-        except:
-            print 'Error sending ping to GA'
-            traceback.print_exc()
-    return result
 
 
 def dbg_log(line):
@@ -215,6 +194,11 @@ class VKIE():
             dbg_log('-rutube:\n')
             return m_rutube.group(1).replace('\\', '')
 
+#        if 'youtube.com/embed' in info_page:
+#            dbg_log('-youtube:\n')
+#            videoId = #re.findall('youtube.com/embed/(.*?)[\"\']', #info_page)[0]
+#            return #urllib.quote_plus('plugin://plugin.video.youtube/play/?v#ideo_id=' + videoId)
+#
         m_opts = re.search(r'(?s)var\s+opts\s*=\s*({.+?});', info_page)
         dbg_log('-m_opts:' + str(m_opts) + '\n')
         if m_opts:
@@ -306,6 +290,11 @@ def JVS_top():
     #     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
+    item = xbmcgui.ListItem('Наш Футбол [vk.com/rfpl]', iconImage=icon5_icon, thumbnailImage=icon5_icon)
+    item.setProperty('fanart_image', art3_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkalb&oid=' + rfpl_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + rfpl_oid), item, True)
     item = xbmcgui.ListItem('GOALTIME [vk.com/goaltime ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
@@ -397,7 +386,7 @@ def JVS_vkshow(url, page, oid):
             try:
                 ht = "/video-%s_%s" % (oid, entry[1])
                 href = vk_start + ht
-                title = entry[3].decode('cp1251').encode('utf-8').replace('\/', '/').strip('"')
+                title = entry[3].decode('cp1251').encode('utf-8').replace('\/', '/').strip('"').replace('&quot;', '"')
                 img = entry[2].replace('\/', '/').strip('"')
             # if entry[19].find('rutube') != -1: href = ''
             except:
@@ -715,7 +704,7 @@ def get_VK(url, n = 0):
     newVK = VKIE()
     nurl = newVK._real_extract(url)
 
-    if 'rutube' in nurl:
+    if nurl != None and 'rutube' in nurl:
         nurl = get_rutube(nurl.replace('?','"'))
 
     return nurl
