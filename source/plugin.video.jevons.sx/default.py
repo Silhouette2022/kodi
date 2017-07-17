@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.9.1
+# Rev. 0.9.2
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -194,11 +194,11 @@ class VKIE():
             dbg_log('-rutube:\n')
             return m_rutube.group(1).replace('\\', '')
 
-#        if 'youtube.com/embed' in info_page:
-#            dbg_log('-youtube:\n')
-#            videoId = #re.findall('youtube.com/embed/(.*?)[\"\']', #info_page)[0]
-#            return #urllib.quote_plus('plugin://plugin.video.youtube/play/?v#ideo_id=' + videoId)
-#
+        if 'youtube.com/embed' in info_page:
+            dbg_log('-youtube:\n')
+            videoId = re.findall('youtube.com/embed/(.*?)[\"\']', info_page)[0]
+            return urllib.quote_plus('plugin://plugin.video.youtube/play/?video_id=' + videoId)
+
         m_opts = re.search(r'(?s)var\s+opts\s*=\s*({.+?});', info_page)
         dbg_log('-m_opts:' + str(m_opts) + '\n')
         if m_opts:
@@ -879,7 +879,7 @@ def JVS_play(url, title):
         uri = get_rutube(url)
 
     if uri != None and uri != False:
-        if not uri.startswith('http'): uri = 'http:' + uri
+        if not uri.startswith('http') and not uri.startswith('plugin'): uri = 'http:' + uri
         uri = urllib.unquote_plus(uri)
         dbg_log('- uri: ' + uri + '\n')
         try:
