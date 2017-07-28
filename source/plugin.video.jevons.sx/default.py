@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.9.2
+# Rev. 0.9.3
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -43,6 +43,7 @@ gt_oid = '76470207'
 fnp_oid = '87879667'
 ls_oid = '122493044'
 rfpl_oid = '51812607'
+bf_oid = '34157052'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
 sgol_start = "http://sportgol1.org"
@@ -290,31 +291,32 @@ def JVS_top():
     #     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=list&url=' + urllib.quote_plus(page_pg), xbmcgui.ListItem('JEVONS.ru', thumbnailImage=jevs_icon), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=mail&url=' + urllib.quote_plus(mail_pg), xbmcgui.ListItem('< MAIL.RU >'), True)
     #    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=vk&url=' + urllib.quote_plus(vk_pg), xbmcgui.ListItem('< VK.COM >'), True)
-    item = xbmcgui.ListItem('Наш Футбол [vk.com/rfpl]', iconImage=icon5_icon, thumbnailImage=icon5_icon)
-    item.setProperty('fanart_image', art3_icon)
-    xbmcplugin.addDirectoryItem(pluginhandle,
-                                sys.argv[0] + '?mode=vkalb&oid=' + rfpl_oid + '&url=' +
-                                urllib.quote_plus(vk_pg + rfpl_oid), item, True)
+
     item = xbmcgui.ListItem('GOALTIME [vk.com/goaltime ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
                                 sys.argv[0] + '?mode=vkalb&oid=' + gt_oid + '&url=' +
                                 urllib.quote_plus(vk_pg + gt_oid), item, True)
-    item = xbmcgui.ListItem('ЖИВУ ФУТБОЛОМ [vk.com/football_news_pro ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
-    item.setProperty('fanart_image', art2_icon)
-    xbmcplugin.addDirectoryItem(pluginhandle,
-                                sys.argv[0] + '?mode=vkalb&oid=' + fnp_oid + '&url=' +
-                                urllib.quote_plus(vk_pg + fnp_oid), item, True)
-    item = xbmcgui.ListItem('ФУТБОЛЬНЫЕ ОБЗОРЫ НА РУССКОМ [vk.com/lifesport ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
-    item.setProperty('fanart_image', art2_icon)
-    xbmcplugin.addDirectoryItem(pluginhandle,
-                                sys.argv[0] + '?mode=vkalb&oid=' + ls_oid + '&url=' +
-                                urllib.quote_plus(vk_pg + ls_oid), item, True)
     item = xbmcgui.ListItem('TVGOAL [vk.com/tvgoal ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
     item.setProperty('fanart_image', art2_icon)
     xbmcplugin.addDirectoryItem(pluginhandle,
                                 sys.argv[0] + '?mode=vkalb&oid=' + tvg_oid + '&url=' +
                                 urllib.quote_plus(vk_pg + tvg_oid), item, True)
+    item = xbmcgui.ListItem('ФУТБОЛЬНЫЕ ОБЗОРЫ НА РУССКОМ [vk.com/lifesport ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkalb&oid=' + ls_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + ls_oid), item, True)
+    item = xbmcgui.ListItem('Большой футбол [vk.com/rb_army]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkshow&oid=' + bf_oid + '&url=' +
+                                urllib.quote_plus(vk_videos + bf_oid), item, True)
+    item = xbmcgui.ListItem('ЖИВУ ФУТБОЛОМ [vk.com/football_news_pro ]', iconImage=icon4_icon, thumbnailImage=icon4_icon)
+    item.setProperty('fanart_image', art2_icon)
+    xbmcplugin.addDirectoryItem(pluginhandle,
+                                sys.argv[0] + '?mode=vkalb&oid=' + fnp_oid + '&url=' +
+                                urllib.quote_plus(vk_pg + fnp_oid), item, True)
     item = xbmcgui.ListItem('PRESSBALL.by', iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
     item.setProperty('fanart_image', pbart_icon)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', item, True)
