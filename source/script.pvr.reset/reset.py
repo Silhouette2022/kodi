@@ -43,12 +43,12 @@ class ResetService:
 
 	def _daemon(self):
 
+		global stime
+
 		stime = time.time()
 		dtime = int(xbmcaddon.Addon(_SERVICE_ID_).getSetting('delay'))
 
 		while (not xbmc.abortRequested) and stime and dtime:
-
-			global stime
 
 			ntime = time.time()
 			if ntime - stime >= dtime:
@@ -63,7 +63,7 @@ class ResetService:
 if __name__ == '__main__':
 	log('version %s started' % __addonversion__)
 	ResetService()
-	del Reset
+	del ResetService
 	log('version %s stopped' % __addonversion__)
 
 
