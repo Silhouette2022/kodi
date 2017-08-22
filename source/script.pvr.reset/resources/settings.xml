@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+		<setting id="delay" label = "PVR reset delay sec" type="labelenum" values="0|5|10|15|20|25|30|35|40|45|50|55|60" default="0" />
+</settings>
