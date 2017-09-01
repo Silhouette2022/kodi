@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.11.1
+# Rev. 0.11.3
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -253,6 +253,7 @@ def NKN_view(url, img, name, cook):
 
             for file in files:
                 if 'facebook' not in file:
+                  if 'forum' not in file:
 
                     try: 
                         web = getSite(file)

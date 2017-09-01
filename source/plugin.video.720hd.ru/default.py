@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.1.1
+# Rev. 3.1.2
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -690,21 +690,24 @@ def get_hdgo(url, ref, cook):
     req = req_url(url, opts = {'Referer' : ref})
     page = req.content
         
-#     xbmc.log(page)
+    xbmc.log(page)
     try: src = re.findall('<iframe src="(.*?)"', page)[0]
-    except: return None
-    
+    except: return None    
     req = req_url(src, opts = {'Referer' : url})
     page = req.content
         
-#     xbmc.log(page)
+    xbmc.log(page)
     
     try: urls = re.findall("{url: '(.*?)'", page)
     except: return None
     
-#     xbmc.log(str(urls))
+    nurls = []
+    for iurl in urls:
+        nurls.append(iurl + "|Referer="+src)
+ 
+    xbmc.log(str(nurls))
     
-    return urls
+    return nurls
 
 
    
