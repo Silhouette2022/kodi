@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.1.2
+# Rev. 3.2.0
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -716,11 +716,10 @@ def get_moonwalk(url, ref, cook):
     dbg_log('- url:'+  url + '\n')
     dbg_log('- ref:'+  ref + '\n')
     dbg_log('- cook:'+  str(cook) + '\n')
-    try: req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
-    except: return None
+    req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
     page = req.content
         
-#     xbmc.log(page)
+    xbmc.log(page)
     try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
     except: return None
     nref = url
@@ -736,15 +735,17 @@ def get_moonwalk(url, ref, cook):
                                                 
 #    xbmc.log(page)
     
-    csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    xacc = re.findall("'X-Access-Level': '(.*?)'", page)[0]
+#     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
+    xacc = re.findall("user_token: '(.*?)'", page)[0]
 #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
-    ctype = re.findall("content_type: '(.*?)'", page)[0]
-    mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
-    mw_pid = re.findall("mw_pid: (.*?),", page)[0]
-    p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
+#     ctype = re.findall("content_type: '(.*?)'", page)[0]
+#     mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
+#     ref = urllib.quote_plus(re.findall("ref: encodeURIComponent\('(.*?)'", page)[0])
+
+    mw_pid = re.findall("partner_id: (.*?),", page)[0]
+    p_domain_id = re.findall("domain_id: (.*?),", page)[0]
         
 #    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
 #     setTimeout(function() {
@@ -753,7 +754,7 @@ def get_moonwalk(url, ref, cook):
 
     opts = {'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'X-CSRF-Token': csrf,
+#             'X-CSRF-Token': csrf,
             'X-Access-Level': xacc,
             'X-Condition-Safe': 'Normal',
             'X-Format-Token': 'B300',
@@ -762,8 +763,9 @@ def get_moonwalk(url, ref, cook):
             }
 
     udata = {'video_token': vtoken,
-             'content_type': ctype,
-             'mw_key': mw_key,
+#                 'content_type': ctype,
+#                 'mw_key': mw_key,
+                'mw_key': '1ffd4aa558cc51f5a9fc6888e7bc5cb4',
              'mw_pid': mw_pid,
              'p_domain_id': p_domain_id,
              'ad_attr': '0',
@@ -781,7 +783,7 @@ def get_moonwalk(url, ref, cook):
 #     xbmc.log('ncook= ' + cook + ';quality=720')    
 #     re.sub('<cookie>(.+?)</cookie>', '', html)
     
-#     xbmc.log(html)
+    xbmc.log(html)
     page = json.loads(html)
     nurl = page["mans"]["manifest_m3u8"]
     
@@ -807,6 +809,7 @@ def get_moonwalk(url, ref, cook):
 
     html = req.content
 #    xbmc.log(html)    
+    
     r = [(i[0], i[1]) for i in re.findall('#EXT-X-STREAM-INF:.*?RESOLUTION=\d+x(\d+).*?(http.*?(?:\.abst|\.f4m|\.m3u8)).*?', html, re.DOTALL) if i]
     r0 = re.findall('RESOLUTION=(.*?),', html)
     dbg_log('- r:'+  str(r) + '\n')

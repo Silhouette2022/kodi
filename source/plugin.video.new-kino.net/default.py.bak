@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 0.11.4
+# Rev. 0.11.3
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -290,56 +290,6 @@ def NKN_view(url, img, name, cook):
                     dbg_log('- uri:'+  uri + '\n')
 
         xbmcplugin.endOfDirectory(pluginhandle)
-
-def Decode(param):
-        hash1 = ("3", "U", "I", "a", "V", "x", "s", "8", "z", "2", "7", "W", "w", "G", "B", "X", "b", "9", "4", "R", "k", "J", "e", "5", "g", "=")
-        hash2 = ("Q", "H", "o", "1", "0", "T", "d", "n", "v", "i", "l", "Z", "Y", "f", "p", "M", "y", "N", "6", "D", "t", "L", "m", "c", "u", "j")
-
-
-        try:
-            #-- define variables
-            loc_3 = [0,0,0,0]
-            loc_4 = [0,0,0]
-            loc_2 = ''
-
-            #-- define hash parameters for decoding
-            dec = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
-
-            #-- decode
-            for i in range(0, len(hash1)):
-                re1 = hash1[i]
-                re2 = hash2[i]
-
-                param = param.replace(re1, '___')
-                param = param.replace(re2, re1)
-                param = param.replace('___', re2)
-
-            i = 0
-            while i < len(param):
-                j = 0
-                while j < 4 and i+j < len(param):
-                    loc_3[j] = dec.find(param[i+j])
-                    j = j + 1
-
-                loc_4[0] = (loc_3[0] << 2) + ((loc_3[1] & 48) >> 4);
-                loc_4[1] = ((loc_3[1] & 15) << 4) + ((loc_3[2] & 60) >> 2);
-                loc_4[2] = ((loc_3[2] & 3) << 6) + loc_3[3];
-
-                j = 0
-                while j < 3:
-                    if loc_3[j + 1] == 64:
-                        break
-
-                    loc_2 += unichr(loc_4[j])
-
-                    j = j + 1
-
-                i = i + 4;
-        except:
-            loc_2 = ''
-
-        return loc_2
-
 
 
 def Decode2(param):
@@ -748,17 +698,15 @@ def get_moonwalk(url, ref, cook):
     
 #    xbmc.log(page)
 
-#     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    xacc = re.findall("user_token: '(.*?)'", page)[0]
+    csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
+    xacc = re.findall("'X-Access-Level': '(.*?)'", page)[0]
     #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
-#     ctype = re.findall("content_type: '(.*?)'", page)[0]
-#     mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
-#     ref = urllib.quote_plus(re.findall("ref: encodeURIComponent\('(.*?)'", page)[0])
-
-    mw_pid = re.findall("partner_id: (.*?),", page)[0]
-    p_domain_id = re.findall("domain_id: (.*?),", page)[0]
+    ctype = re.findall("content_type: '(.*?)'", page)[0]
+    mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
+    mw_pid = re.findall("mw_pid: (.*?),", page)[0]
+    p_domain_id = re.findall("p_domain_id: (.*?),", page)[0]
     
 #    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
 #     setTimeout(function() {
@@ -767,7 +715,7 @@ def get_moonwalk(url, ref, cook):
 
     opts = {'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-#             'X-CSRF-Token': csrf,
+            'X-CSRF-Token': csrf,
             'X-Access-Level': xacc,
             'X-Condition-Safe': 'Normal',
             'X-Format-Token': 'B300',
@@ -776,9 +724,8 @@ def get_moonwalk(url, ref, cook):
             }
 
     udata = {'video_token': vtoken,
-#                 'content_type': ctype,
-#                 'mw_key': mw_key,
-                'mw_key': '1ffd4aa558cc51f5a9fc6888e7bc5cb4',
+             'content_type': ctype,
+             'mw_key': mw_key,
              'mw_pid': mw_pid,
              'p_domain_id': p_domain_id,
              'ad_attr': '0',
