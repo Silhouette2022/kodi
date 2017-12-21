@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.6
+# Rev. 0.7.7
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64
@@ -227,7 +227,7 @@ def get_moonwalk(url, ref, cook):
     req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
     page = req.content
     
-    xbmc.log(page)
+#     xbmc.log(page)
     try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
     except: return None
     nref = url
@@ -241,10 +241,10 @@ def get_moonwalk(url, ref, cook):
 #    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
 #    page = req.content
     
-#    xbmc.log(page)
+#     xbmc.log(page)
 
 #     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    xacc = re.findall("user_token: '(.*?)'", page)[0]
+#     xacc = re.findall("user_token: '(.*?)'", page)[0]
     #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
@@ -263,7 +263,7 @@ def get_moonwalk(url, ref, cook):
     opts = {'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 #             'X-CSRF-Token': csrf,
-            'X-Access-Level': xacc,
+#             'X-Access-Level': xacc,
             'X-Condition-Safe': 'Normal',
             'X-Format-Token': 'B300',
             'X-Requested-With': 'XMLHttpRequest',
@@ -277,7 +277,11 @@ def get_moonwalk(url, ref, cook):
              'mw_pid': mw_pid,
              'p_domain_id': p_domain_id,
              'ad_attr': '0',
-             'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+             'iframe_version': '2.1',
+             'c0e005ee151ce1c4': 'cbafa6de912548080e8be488'
+#              'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+
+
              }
     
     req.cookies['quality'] = '720'

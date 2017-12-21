@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.2.0
+# Rev. 3.2.1
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64
@@ -15,7 +15,7 @@ try:
   from unified_search import UnifiedSearch
 except: pass
 
-__settings__ = xbmcaddon.Addon(id='plugin.video.new-kino.net')
+__settings__ = xbmcaddon.Addon(id='plugin.video.720hd.ru')
 use_translit = __settings__.getSetting('translit')
 
 try:  
@@ -718,8 +718,8 @@ def get_moonwalk(url, ref, cook):
     dbg_log('- cook:'+  str(cook) + '\n')
     req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
     page = req.content
-        
-    xbmc.log(page)
+    
+#     xbmc.log(page)
     try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
     except: return None
     nref = url
@@ -729,15 +729,15 @@ def get_moonwalk(url, ref, cook):
 #      ulist = url.split('/')
 #      ulist[len(ulist) - 2] = vtoken
 #      nref = '/'.join(ulist)
-
+    
 #    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
 #    page = req.content
-                                                
-#    xbmc.log(page)
     
+#     xbmc.log(page)
+
 #     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-    xacc = re.findall("user_token: '(.*?)'", page)[0]
-#    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
+#     xacc = re.findall("user_token: '(.*?)'", page)[0]
+    #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
 
     vtoken = re.findall("video_token: '(.*?)'", page)[0]
 #     ctype = re.findall("content_type: '(.*?)'", page)[0]
@@ -746,7 +746,7 @@ def get_moonwalk(url, ref, cook):
 
     mw_pid = re.findall("partner_id: (.*?),", page)[0]
     p_domain_id = re.findall("domain_id: (.*?),", page)[0]
-        
+    
 #    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
 #     setTimeout(function() {
 #     e37834294bc3c6bda8e36eb04ac3adc5['4e0ee0a1036a72dacc804306eabaaba3'] = 'b4b34c43ff2dc523887b8814e5f96f2d';
@@ -755,7 +755,7 @@ def get_moonwalk(url, ref, cook):
     opts = {'Accept-Encoding': 'gzip, deflate',
             'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 #             'X-CSRF-Token': csrf,
-            'X-Access-Level': xacc,
+#             'X-Access-Level': xacc,
             'X-Condition-Safe': 'Normal',
             'X-Format-Token': 'B300',
             'X-Requested-With': 'XMLHttpRequest',
@@ -769,7 +769,11 @@ def get_moonwalk(url, ref, cook):
              'mw_pid': mw_pid,
              'p_domain_id': p_domain_id,
              'ad_attr': '0',
-             'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+             'iframe_version': '2.1',
+             'c0e005ee151ce1c4': 'cbafa6de912548080e8be488'
+#              'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
+
+
              }
     
     req.cookies['quality'] = '720'
@@ -786,12 +790,12 @@ def get_moonwalk(url, ref, cook):
     xbmc.log(html)
     page = json.loads(html)
     nurl = page["mans"]["manifest_m3u8"]
-    
+
 #     nurl = 'http://moonwalk.cc/video/html5?manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
 #     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
 #     ndata = 'manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
 #     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
-
+    
     params = {'manifest_m3u8': page["mans"]["manifest_m3u8"],
               'manifest_mp4': page["mans"]["manifest_mp4"],
               'token': vtoken,
@@ -806,9 +810,9 @@ def get_moonwalk(url, ref, cook):
                   cookies = req.cookies,
                   params = params
                   )
-
+        
     html = req.content
-#    xbmc.log(html)    
+#    xbmc.log(html)
     
     r = [(i[0], i[1]) for i in re.findall('#EXT-X-STREAM-INF:.*?RESOLUTION=\d+x(\d+).*?(http.*?(?:\.abst|\.f4m|\.m3u8)).*?', html, re.DOTALL) if i]
     r0 = re.findall('RESOLUTION=(.*?),', html)
