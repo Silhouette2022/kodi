@@ -1,10 +1,10 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2013, Silhouette, E-mail: 
-# Rev. 0.7.7
+# Rev. 0.7.8
 
 
-import urllib,urllib2, os, re,sys, json,cookielib, base64
+import urllib,urllib2, os, re,sys, json,cookielib, base64, socket
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 import requests
@@ -26,6 +26,10 @@ except: use_translit = 'false'
 
 
 dbg = 0
+
+socket.setdefaulttimeout(120)
+
+QUALITY_TYPES = (360, 480, 720, 1080)
 
 pluginhandle = int(sys.argv[1])
 
@@ -214,12 +218,77 @@ def KNX_show(url):
     uri = sys.argv[0] + '?mode=play&url=' + urllib.quote_plus(url)
     item.setProperty('IsPlayable', 'true')
     xbmcplugin.addDirectoryItem(pluginhandle, uri, item, False)  
-    dbg_log('- uri:'+  uri + '\n')    
-    xbmcplugin.endOfDirectory(pluginhandle) 
+    dbg_log('- uri:'+  uri + '\n')
+    xbmcplugin.endOfDirectory(pluginhandle)
+    
+     
+def get_video_link_from_iframe(url, mainurl):
+    
+    from videohosts import moonwalk
 
+    playlist_domain = 'streamblast.cc'
+    playlist_domain2 = 's4.cdnapponline.com'
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
+#            "Referer": mainurl
+        "Referer": "http://www.random.org"
+    }
+    request = urllib2.Request(url, "", headers)
+    request.get_method = lambda: 'GET'
+    response = urllib2.urlopen(request).read()
 
+    subtitles = None
+    if 'subtitles: {"master_vtt":"' in response:
+        subtitles = response.split('subtitles: {"master_vtt":"')[-1].split('"')[0]
+
+    ###################################################
+    values, attrs = moonwalk.get_access_attrs(response)
+    ###################################################
+
+    headers = {
+        "Host": playlist_domain2,
+        "Origin": "http://" + playlist_domain2,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
+        "Referer": url,
+        "X-Requested-With": "XMLHttpRequest"
+    }
+    headers.update(attrs)
+
+    request = urllib2.Request('http://' + playlist_domain2 + attrs["purl"], urllib.urlencode(values), headers)
+    response = urllib2.urlopen(request).read()
+    data = json.loads(response.decode('unicode-escape'))
+    playlisturl = data['mans']['manifest_m3u8']
+
+    headers = {
+        "Host": playlist_domain2,
+        "Referer": url,
+        "Origin": "http://" + playlist_domain2,
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
+        "X-Requested-With": "XMLHttpRequest"
+    }
+
+    request = urllib2.Request(playlisturl, "", headers)
+    request.get_method = lambda: 'GET'
+    response = urllib2.urlopen(request).read()
+
+    urls = re.compile("http:\/\/.*?\n").findall(response)
+    manifest_links = {}
+    for i, url in enumerate(urls):
+        manifest_links[QUALITY_TYPES[i]] = url.replace("\n", "")
+
+    return manifest_links, subtitles
+    
 def get_moonwalk(url, ref, cook):
+    links, subtitles = get_video_link_from_iframe(url, ref)
+    xbmc.log(str(links))
+    r0 = [str(x) for x in links.keys()]
+    dbg_log('- r0:'+  str(r0) + '\n')
+    i = xbmcgui.Dialog().select('Video Quality', r0)
+    
+    return links[int(r0[i])]
+
+def get_moonwalk2(url, ref, cook):
     dbg_log('-get_moonwalk:' + '\n')
     dbg_log('- url:'+  url + '\n')
     dbg_log('- ref:'+  ref + '\n')
@@ -360,6 +429,8 @@ def KNX_play(url, cook):
     
     req = req_url(url, cookies=cookies)
     http = req.content
+    
+    print http
 
     iframes = re.compile('<iframe class="prerolllvid"(.*?)src="(.*?)"').findall(http)
     
