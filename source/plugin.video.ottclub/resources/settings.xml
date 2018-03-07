@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+	<category label="General">
+		<setting id="url" type="text" label="Server" default="ottclub.cc" />
+		<setting id="key" type="text" label="Key" default="" />
+	</category>
+	<category label="View">
+		<setting id="view_epg" type="bool" label="EPG as 2nd line" default="true"/>
+		<setting id="use_percent" type="bool" label="Show percentage" default="true"/>
+		<setting id="use_time" type="bool" label="Show time" default="true"/>
+	</category>
+</settings>
