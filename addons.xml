@@ -101,6 +101,20 @@
   </extension>
 </addon>
 
+<addon id="plugin.video.ottclub" name="OTTClub" version="0.1.0" provider-name="Silhouette">
+  <requires>
+    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="script.module.requests" version="2.12.4"/>
+    <import addon="script.module.simpleplugin" version="1.6"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource"  provides="video" library="default.py"><provides>video</provides></extension>
+  <extension point="xbmc.addon.metadata">
+    <summary>OTTClub</summary>
+    <description>OTTClub</description>
+    <platform>all</platform>
+  </extension>
+</addon>
+
 <addon id="plugin.video.rutube.deti" name="RuTube.Детям" version="0.3.0" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
