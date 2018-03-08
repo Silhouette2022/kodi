@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.1.0
+# Rev. 0.1.2
 
 
 import urllib,urllib2, os, re, sys
@@ -141,7 +141,10 @@ def live():
     dbg_log("-live")
 #     req = req_url(epg_now)
     req = cached_get('now')
-    d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    try:
+        d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    except:
+        return []
     
 
     view_epg = 'true'
@@ -225,7 +228,10 @@ def arch():
     dbg_log("-arch")
 #     req = req_url(epg_now)
     req = cached_get('now')
-    d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    try:
+        d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    except:
+        return []
     
 
     view_epg = 'true'
