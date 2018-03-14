@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.1.2
+# Rev. 0.2.0
 
 
 import urllib,urllib2, os, re, sys
@@ -62,8 +62,9 @@ def uni2cp(ustr):
         raw += ('%%%02X') % ord(uni[i].encode('cp1251'))
     return raw
 
-def cached_rst(fn):
+def cached_rst(type):
     dbg_log("-cached_rst:")
+    fn = xbmc.translatePath('special://temp/' + 'ottepg_' + type + '.tmp')
 
     if os.path.isfile(fn) == True:
         dbg_log("--exist")
@@ -133,7 +134,9 @@ def root():
     return [{'label': 'LiveTV',
             'url': plugin.get_url(action='live')},
             {'label': 'Archive',
-            'url': plugin.get_url(action='arch')}]
+            'url': plugin.get_url(action='arch')},
+            {'label': 'Settings',
+            'url': plugin.get_url(action='settings')}]
 
 
 @plugin.action()
@@ -144,12 +147,13 @@ def live():
     try:
         d_epg = json.loads(req, object_pairs_hook=OrderedDict)
     except:
+        cached_rst('now')
         return []
     
 
-    view_epg = 'true'
-    use_percent = 'true'
-    use_time = 'true'
+    view_epg = __addon__.getSetting('view_epg')
+    use_percent = __addon__.getSetting('use_percent')
+    use_time = __addon__.getSetting('use_time')
     chans =[]
     for id in d_epg:
 
@@ -216,10 +220,10 @@ def play(params):
         extra += '?archive=%s'%params.archive
         if params.archive_end!= None:  extra += '&archive_end=%s'%params.archive_end
 
-#     if params.timeshift!= None and params.timenow != None:
-#         if extra != "": extra += '&'
-#         extra += 'timeshift=%s&timenow=%s'%(params.timeshift, params.timenow)
-#     if extra != "": extra = '?' + extra
+    if params.timeshift!= None and params.timenow != None:
+        if extra != "": extra += '&'
+        else: extra = '?'
+        extra += 'timeshift=%s&timenow=%s'%(params.timeshift, params.timenow)
 
     return Plugin.resolve_url(path + extra, succeeded=True)
 
@@ -231,12 +235,9 @@ def arch():
     try:
         d_epg = json.loads(req, object_pairs_hook=OrderedDict)
     except:
+        cached_rst('now')
         return []
-    
 
-    view_epg = 'true'
-    use_percent = 'true'
-    use_time = 'true'
     chans =[]
     for id in d_epg:
       if d_epg[id]['rec'] == '1':
@@ -254,7 +255,11 @@ def chan(params):
     dbg_log("-chan")
 #     req = req_url(epg_now)
     req = cached_get(params.url)
-    d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    try:
+        d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    except:
+        cached_rst(params.url)
+        return []
     
     chans =[]
     
@@ -283,15 +288,28 @@ def chan(params):
 #             if (tt - futstart > 330) nd (tt - futstart < duration) :
 #                 title = '[COLOR FF00FFFF]' + '%s[/COLOR]' % (title)
 #             else:                
-                title = '[COLOR FFdc5310]%s[/COLOR]' % (title)
+                title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
+                pl_get_url = plugin.get_url(action='play', url=params.url)
+        elif __addon__.getSetting('carc') == 'true':
+            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart)
+        elif tt < utstop:
+            title = '[COLOR FF00FFFF]%s[/COLOR]' % (title)
+            pl_get_url = plugin.get_url(action='play', url=params.url, timenow=int(tt), timeshift=utstart)
+        else:
+            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, archive_end=utstop) 
         
         chans.append({'label': title,
                       'info': {'video':{'title': title, 'plot': plot}},
                       'thumb': icon,
-                      'url': plugin.get_url(action='play', url=params.url, archive=utstart, archive_end=utstop),
+                      'url': pl_get_url,
                       'is_playable': True})
         
     return chans
+
+@plugin.action()
+def settings(params):
+    __addon__.openSettings()
+    cached_rst('now')
 
 
 if __name__ == '__main__':

@@ -3,6 +3,7 @@
 	<category label="General">
 		<setting id="url" type="text" label="Server" default="ottclub.cc" />
 		<setting id="key" type="text" label="Key" default="" />
+		<setting id="carc" type="bool" label="Continuous archive" default="false" />
 	</category>
 	<category label="View">
 		<setting id="view_epg" type="bool" label="EPG as 2nd line" default="true"/>
