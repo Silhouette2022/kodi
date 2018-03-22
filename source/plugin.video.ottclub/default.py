@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.3.0
+# Rev. 0.3.1
 
 
 import urllib,urllib2, os, re, sys
@@ -27,7 +27,7 @@ def QT(url): return urllib.quote_plus(url)
 
 def dbg_log(line):
     if dbg: xbmc.log(line)
-
+    
 def req_url(url, opts = None, cookies = None, params = None, data = None):
     dbg_log("req_url=>%s"%url)
     dbg_log("_params=>%s"%str(params))
@@ -192,48 +192,48 @@ def live(params):
 #             popup.append((self.lng['go2arch'], 'XBMC.Container.Update(%s)'%uri2,))
         if params.group == None or params.group == "" or params.group == d_epg[id]['category']['class']:
 
-        plot = ''
-        title2nd = ''
-        t2len = 0
-        title = d_epg[id]['channel_name'].encode('utf8')
-        utstart = d_epg[id]['time']
-        utstop = d_epg[id]['time_to']
-        utdur = d_epg[id]['duration']
-        ename = d_epg[id]['name'].encode('utf8')
-        edescr = d_epg[id]['descr'].encode('utf8')
-        cutnow = calendar.timegm(time.gmtime())
-        icon = ott_img + d_epg[id]['img']
-        utb = time.localtime(int(utstart))
-        ute = time.localtime(int(utstop))
-        ebgn = '%02d:%02d'%(utb.tm_hour, utb.tm_min)
-        eend = '%02d:%02d'%(ute.tm_hour, ute.tm_min)
-#         try:
-        if view_epg == 'true' and title2nd == '':
-            if use_percent == 'true':
-                pcent = ((cutnow- float(utstart)) * 100) / float(utdur)
-                stmp = '[%d %%]' % pcent
-                t2len += len(stmp) 
-                title2nd = '[COLOR FF00BB66]%s[/COLOR]' % stmp
-            if use_time == 'true':
-                utb = time.localtime(int(utstart))
-                ute = time.localtime(int(utstop))
-                stmp = '%s-%s' % (ebgn, eend)
-                t2len += (len(stmp) + 1) 
-                title2nd += ' [COLOR FF0084FF]%s[/COLOR]' % stmp
-            title2nd += ' %s' % ename
-            t2len += (len(ename) + 1)
-        plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
-                
-#         except: pass
-        plot = plot.replace('&quot;','`').replace('&amp;',' & ')
-        title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
-        if not t2len: t2len = len(title)
-        
-        chans.append({'label': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd),
-                      'info': {'video':{'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot': plot}},
-                      'thumb': icon,
+            plot = ''
+            title2nd = ''
+            t2len = 0
+            title = d_epg[id]['channel_name'].encode('utf8')
+            utstart = d_epg[id]['time']
+            utstop = d_epg[id]['time_to']
+            utdur = d_epg[id]['duration']
+            ename = d_epg[id]['name'].encode('utf8')
+            edescr = d_epg[id]['descr'].encode('utf8')
+            cutnow = calendar.timegm(time.gmtime())
+            icon = ott_img + d_epg[id]['img']
+            utb = time.localtime(int(utstart))
+            ute = time.localtime(int(utstop))
+            ebgn = '%02d:%02d'%(utb.tm_hour, utb.tm_min)
+            eend = '%02d:%02d'%(ute.tm_hour, ute.tm_min)
+    #         try:
+            if view_epg == 'true' and title2nd == '':
+                if use_percent == 'true':
+                    pcent = ((cutnow- float(utstart)) * 100) / float(utdur)
+                    stmp = '[%d %%]' % pcent
+                    t2len += len(stmp) 
+                    title2nd = '[COLOR FF00BB66]%s[/COLOR]' % stmp
+                if use_time == 'true':
+                    utb = time.localtime(int(utstart))
+                    ute = time.localtime(int(utstop))
+                    stmp = '%s-%s' % (ebgn, eend)
+                    t2len += (len(stmp) + 1) 
+                    title2nd += ' [COLOR FF0084FF]%s[/COLOR]' % stmp
+                title2nd += ' %s' % ename
+                t2len += (len(ename) + 1)
+            plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, ename, edescr)
+                    
+    #         except: pass
+            plot = plot.replace('&quot;','`').replace('&amp;',' & ')
+            title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
+            if not t2len: t2len = len(title)
+            
+            chans.append({'label': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd),
+                          'info': {'video':{'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot': plot}},
+                          'thumb': icon,
                           'url': plugin.get_url(action='play', url=id, rand=params.rand),
-                      'is_playable': True})
+                          'is_playable': True})
         
     return chans
 
@@ -251,7 +251,7 @@ def play(params):
         if extra != "": extra += '&'
         else: extra = '?'
         extra += 'timeshift=%s&timenow=%s'%(params.timeshift, params.timenow)
-
+        
     if params.archive!= None: page = 'arch/' + params.url
     else: page = 'live/' + params.url
     track(QT(page), params.rand)
@@ -304,14 +304,14 @@ def arch(params):
 
     chans =[]
     for id in d_epg:
-      if d_epg[id]['rec'] == '1':
+        if d_epg[id]['rec'] == '1':
             if params.group == None or params.group == "" or params.group == d_epg[id]['category']['class']:
-        title = d_epg[id]['channel_name'].encode('utf8')
-        chans.append({'label': title,
-                      'info': {'video':{'title': title, 'plot': title}},
-                      'thumb': ott_img + d_epg[id]['img'],
+                title = d_epg[id]['channel_name'].encode('utf8')
+                chans.append({'label': title,
+                              'info': {'video':{'title': title, 'plot': title}},
+                              'thumb': ott_img + d_epg[id]['img'],
                               'url': plugin.get_url(action='chan', url=id, rand=params.rand),
-                      'is_playable': False})
+                              'is_playable': False})
         
     return chans
 
@@ -350,7 +350,7 @@ def chan(params):
         futstart = float(utstart)
         tt = time.time()
         if tt < futstart:
-                title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
+            title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
             pl_get_url = plugin.get_url(action='play', url=params.url, rand=params.rand)
         elif __addon__.getSetting('carc') == 'true':
             pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, rand=params.rand)
