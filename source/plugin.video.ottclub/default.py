@@ -1,13 +1,15 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.2.0
+# Rev. 0.3.0
 
 
 import urllib,urllib2, os, re, sys
 import xbmcplugin,xbmcgui,xbmcaddon
 import requests, json
 from collections import OrderedDict
+import random
+
 
 dbg = 0
 
@@ -20,6 +22,8 @@ ott_img = ott_url + "/images/"
 ott_stream = ott_url + "/stream/%s/%s.m3u8"
 KEY = __addon__.getSetting('key')
 pluginhandle = int(sys.argv[1])
+
+def QT(url): return urllib.quote_plus(url)
 
 def dbg_log(line):
     if dbg: xbmc.log(line)
@@ -44,6 +48,23 @@ def req_url(url, opts = None, cookies = None, params = None, data = None):
         r = requests.get(url, headers=headers, cookies = cookies, params = params)
         
     return r
+
+def track(page2, session):
+    
+    try: uuuid = __addon__.getSetting('uuid')
+    except: uuuid = ''
+
+    try:
+        if uuuid == '':
+            import uuid
+            import hashlib
+            uuuid = '%s' % hash(uuid.uuid4())
+            __addon__.setSetting('uuid', uuuid)
+        usr = __addon__.getSetting('url') + '/' + uuuid
+        page = __addon__.getSetting('url') + '/' + page2 
+        gif = req_url("http://c.statcounter.com/t.php?sc_project=11663901&camefrom="+page+"&u="+usr+"&java=0&security=0f9f0036&sc_random="+session+"&sc_snum=1&invisible=1")
+    except:
+        dbg_log("http://c.statcounter.com/t.php?sc_project=11663901&camefrom="+page+"&u="+usr+"&java=0&security=0f9f0036&sc_random="+session+"&sc_snum=1&invisible=1")
 
 
 def uni2enc(ustr):
@@ -131,18 +152,23 @@ plugin = Plugin()
 @plugin.action()
 def root():
 
+    rand = str(random.random())
+        
     return [{'label': 'LiveTV',
-            'url': plugin.get_url(action='live')},
+            'url': plugin.get_url(action='live', rand=rand)},
             {'label': 'Archive',
-            'url': plugin.get_url(action='arch')},
+            'url': plugin.get_url(action='arch', rand=rand)},
             {'label': 'Settings',
-            'url': plugin.get_url(action='settings')}]
+            'url': plugin.get_url(action='settings', rand=rand)}]
 
 
 @plugin.action()
-def live():
+def live(params):
     dbg_log("-live")
-#     req = req_url(epg_now)
+
+    if (params.group == None or params.group == '') and __addon__.getSetting('groups') != 'false':
+        return groups(params)
+    
     req = cached_get('now')
     try:
         d_epg = json.loads(req, object_pairs_hook=OrderedDict)
@@ -164,6 +190,7 @@ def live():
 #             if self.cat != '': uri2 += '&cat=' + self.cat
 #             if self.sort != '': uri2 += '&sort=' + self.sort
 #             popup.append((self.lng['go2arch'], 'XBMC.Container.Update(%s)'%uri2,))
+        if params.group == None or params.group == "" or params.group == d_epg[id]['category']['class']:
 
         plot = ''
         title2nd = ''
@@ -205,7 +232,7 @@ def live():
         chans.append({'label': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd),
                       'info': {'video':{'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot': plot}},
                       'thumb': icon,
-                      'url': plugin.get_url(action='play', url=id),
+                          'url': plugin.get_url(action='play', url=id, rand=params.rand),
                       'is_playable': True})
         
     return chans
@@ -225,12 +252,49 @@ def play(params):
         else: extra = '?'
         extra += 'timeshift=%s&timenow=%s'%(params.timeshift, params.timenow)
 
+    if params.archive!= None: page = 'arch/' + params.url
+    else: page = 'live/' + params.url
+    track(QT(page), params.rand)
+
     return Plugin.resolve_url(path + extra, succeeded=True)
 
 @plugin.action()
-def arch():
+def groups(params):
+    dbg_log("-groups")
+
+    req = cached_get('now')
+    try:
+        d_epg = json.loads(req, object_pairs_hook=OrderedDict)
+    except:
+        cached_rst('now')
+        return []
+
+    group = OrderedDict()
+    
+    for id in d_epg:
+        if d_epg[id]['category']['class'] not in group:
+            print d_epg[id]['category']['class']
+            print d_epg[id]['category']['name'].encode('utf8')
+            group[d_epg[id]['category']['class']] = d_epg[id]['category']['name'].encode('utf8')
+
+    chans = []
+    for key, title in group.iteritems():
+        
+        chans.append({'label': title,
+                      'info': {'video':{'title': title, 'plot': title}},
+                      'url': plugin.get_url(action=params.action, group=key, rand=params.rand),
+                      'is_playable': False})
+        
+    return chans
+
+
+@plugin.action()
+def arch(params):
     dbg_log("-arch")
-#     req = req_url(epg_now)
+
+    if (params.group == None or params.group == '') and __addon__.getSetting('groups') != 'false':
+        return groups(params)
+
     req = cached_get('now')
     try:
         d_epg = json.loads(req, object_pairs_hook=OrderedDict)
@@ -241,11 +305,12 @@ def arch():
     chans =[]
     for id in d_epg:
       if d_epg[id]['rec'] == '1':
+            if params.group == None or params.group == "" or params.group == d_epg[id]['category']['class']:
         title = d_epg[id]['channel_name'].encode('utf8')
         chans.append({'label': title,
                       'info': {'video':{'title': title, 'plot': title}},
                       'thumb': ott_img + d_epg[id]['img'],
-                      'url': plugin.get_url(action='chan', url=id),
+                              'url': plugin.get_url(action='chan', url=id, rand=params.rand),
                       'is_playable': False})
         
     return chans
@@ -285,18 +350,15 @@ def chan(params):
         futstart = float(utstart)
         tt = time.time()
         if tt < futstart:
-#             if (tt - futstart > 330) nd (tt - futstart < duration) :
-#                 title = '[COLOR FF00FFFF]' + '%s[/COLOR]' % (title)
-#             else:                
                 title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
-                pl_get_url = plugin.get_url(action='play', url=params.url)
+            pl_get_url = plugin.get_url(action='play', url=params.url, rand=params.rand)
         elif __addon__.getSetting('carc') == 'true':
-            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart)
+            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, rand=params.rand)
         elif tt < utstop:
             title = '[COLOR FF00FFFF]%s[/COLOR]' % (title)
-            pl_get_url = plugin.get_url(action='play', url=params.url, timenow=int(tt), timeshift=utstart)
+            pl_get_url = plugin.get_url(action='play', url=params.url, timenow=int(tt), timeshift=utstart, rand=params.rand)
         else:
-            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, archive_end=utstop) 
+            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, archive_end=utstop, rand=params.rand) 
         
         chans.append({'label': title,
                       'info': {'video':{'title': title, 'plot': plot}},

@@ -6,8 +6,10 @@
 		<setting id="carc" type="bool" label="Continuous archive" default="false" />
 	</category>
 	<category label="View">
+		<setting id="groups" type="bool" label="Use groups" default="false"/>
 		<setting id="view_epg" type="bool" label="EPG as 2nd line" default="true"/>
 		<setting id="use_percent" type="bool" label="Show percentage" default="true"/>
 		<setting id="use_time" type="bool" label="Show time" default="true"/>
+		<setting id="uuid" type="text" label="uuid" default="" visible="false" />
 	</category>
 </settings>
