@@ -4,6 +4,7 @@
 		<setting id="url" type="text" label="Server" default="ottclub.cc" />
 		<setting id="key" type="text" label="Key" default="" />
 		<setting id="carc" type="bool" label="Continuous archive" default="false" />
+		<setting id="askts" type="bool" label="Ask timeshift" default="false" />
 	</category>
 	<category label="View">
 		<setting id="groups" type="bool" label="Use groups" default="false"/>

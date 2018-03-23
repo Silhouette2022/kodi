@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.3.1
+# Rev. 0.3.2
 
 
 import urllib,urllib2, os, re, sys
@@ -242,7 +242,13 @@ def play(params):
     """Play video"""
     path = ott_stream%(KEY, params.url)
     extra = ''
-    tt = int(time.time())
+    
+    if params.timeshift!= None and __addon__.getSetting('askts'):
+         i = xbmcgui.Dialog().select('Use timeshift', ['Yes', 'No'])
+         if i:
+             params.archive = params.timeshift
+             params.timeshift = None
+
     if params.archive!= None:
         extra += '?archive=%s'%params.archive
         if params.archive_end!= None:  extra += '&archive_end=%s'%params.archive_end
