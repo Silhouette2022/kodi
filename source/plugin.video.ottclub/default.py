@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.3.2
+# Rev. 0.3.3
 
 
 import urllib,urllib2, os, re, sys
@@ -243,7 +243,7 @@ def play(params):
     path = ott_stream%(KEY, params.url)
     extra = ''
     
-    if params.timeshift!= None and __addon__.getSetting('askts'):
+    if params.timeshift!= None and __addon__.getSetting('askts') != 'false':
          i = xbmcgui.Dialog().select('Use timeshift', ['Yes', 'No'])
          if i:
              params.archive = params.timeshift
@@ -358,11 +358,11 @@ def chan(params):
         if tt < futstart:
             title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
             pl_get_url = plugin.get_url(action='play', url=params.url, rand=params.rand)
-        elif __addon__.getSetting('carc') == 'true':
-            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, rand=params.rand)
         elif tt < utstop:
             title = '[COLOR FF00FFFF]%s[/COLOR]' % (title)
             pl_get_url = plugin.get_url(action='play', url=params.url, timenow=int(tt), timeshift=utstart, rand=params.rand)
+        elif __addon__.getSetting('carc') == 'true':
+            pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, rand=params.rand)
         else:
             pl_get_url = plugin.get_url(action='play', url=params.url, archive=utstart, archive_end=utstop, rand=params.rand) 
         
