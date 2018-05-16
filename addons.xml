@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addons>
-<addon id="plugin.video.720hd.ru" name="[COLOR FF89c80e]720HD.RU[/COLOR]" version="3.2.2" provider-name="Silhouette">
+<addon id="plugin.video.720hd.ru" name="[COLOR FF89c80e]720HD.RU[/COLOR]" version="3.3.0" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.beautifulsoup" version="3.0.8"/>
@@ -9,6 +9,8 @@
     <import addon="script.module.xbmc.helpers" version="2.0.0"/>
     <import addon="script.module.translit" version="2.0.1"/>
     <import addon="script.module.videohosts" version="1.0.0"/>
+    <import addon="script.module.beautifulsoup4" version="4.3.2"/>
+    <import addon="script.module.html5lib" version="0.999.0"/>
   </requires>
   <extension point="xbmc.python.pluginsource"
              provides="video"

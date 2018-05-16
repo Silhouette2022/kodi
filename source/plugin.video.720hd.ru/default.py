@@ -1,13 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2012, Silhouette, E-mail: 
-# Rev. 3.2.2
+# Rev. 3.3.0
 
 
 import urllib, urllib2, os, re, sys, json, cookielib, base64, socket
 import xbmcplugin,xbmcgui,xbmcaddon
 from BeautifulSoup import BeautifulSoup
 import requests
+import lib.moonwalk as moonwalk
 
 try:
   # Import UnifiedSearch
@@ -714,184 +715,23 @@ def get_hdgo(url, ref, cook):
     
     return nurls
 
+def get_moonwalk(url, ref):
+    dbg_log('-get_moonwalk:'+ '\n')
+    dbg_log('- url:'+  url + '\n')    
+    dbg_log('- ref:'+  ref + '\n') 
 
-     
-def get_video_link_from_iframe(url, mainurl):
     
-    from videohosts import moonwalk
-
-    playlist_domain = 'streamblast.cc'
-    playlist_domain2 = 's4.cdnapponline.com'
-
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
-#            "Referer": mainurl
-        "Referer": "http://www.random.org"
-    }
-    request = urllib2.Request(url, "", headers)
-    request.get_method = lambda: 'GET'
-    response = urllib2.urlopen(request).read()
-
-    subtitles = None
-    if 'subtitles: {"master_vtt":"' in response:
-        subtitles = response.split('subtitles: {"master_vtt":"')[-1].split('"')[0]
-
-    ###################################################
-    values, attrs = moonwalk.get_access_attrs(response)
-    ###################################################
-
-    headers = {
-        "Host": playlist_domain2,
-        "Origin": "http://" + playlist_domain2,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
-        "Referer": url,
-        "X-Requested-With": "XMLHttpRequest"
-    }
-    headers.update(attrs)
-
-    request = urllib2.Request('http://' + playlist_domain2 + attrs["purl"], urllib.urlencode(values), headers)
-    response = urllib2.urlopen(request).read()
-    data = json.loads(response.decode('unicode-escape'))
-    playlisturl = data['mans']['manifest_m3u8']
-
-    headers = {
-        "Host": playlist_domain2,
-        "Referer": url,
-        "Origin": "http://" + playlist_domain2,
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36",
-        "X-Requested-With": "XMLHttpRequest"
-    }
-
-    request = urllib2.Request(playlisturl, "", headers)
-    request.get_method = lambda: 'GET'
-    response = urllib2.urlopen(request).read()
-
-    urls = re.compile("http:\/\/.*?\n").findall(response)
-    manifest_links = {}
-    for i, url in enumerate(urls):
-        manifest_links[QUALITY_TYPES[i]] = url.replace("\n", "")
-
-    return manifest_links, subtitles
+    manifest_links, subtitles, season, episode = moonwalk.get_playlist(url)
+#     values, attrs = moonwalk.get_access_attrs(http, url)
+#     print values
+#     print attrs
+#     print manifest_links
     
-def get_moonwalk(url, ref, cook):
-    links, subtitles = get_video_link_from_iframe(url, ref)
-    xbmc.log(str(links))
-    r0 = [str(x) for x in links.keys()]
-    dbg_log('- r0:'+  str(r0) + '\n')
-    i = xbmcgui.Dialog().select('Video Quality', r0)
-    
-    return links[int(r0[i])]
-
-def get_moonwalk2(url, ref, cook):
-    dbg_log('-get_moonwalk:' + '\n')
-    dbg_log('- url:'+  url + '\n')
-    dbg_log('- ref:'+  ref + '\n')
-    dbg_log('- cook:'+  str(cook) + '\n')
-    req = req_url(url, opts = {'Referer' : ref}, cookies=cook)
-    page = req.content
-    
-#     xbmc.log(page)
-    try: vtoken = re.findall("video_token: '(.*?)'", page)[0]
-    except: return None
-    nref = url
-#    if 'serial' in url:
-#      nref = url
-#    else:
-#      ulist = url.split('/')
-#      ulist[len(ulist) - 2] = vtoken
-#      nref = '/'.join(ulist)
-    
-#    req = req_url(nref, opts = {'Referer' : ref}, cookies=req.cookies)
-#    page = req.content
-    
-#     xbmc.log(page)
-
-#     csrf = re.findall('name="csrf-token" content="(.*?)"', page)[0]
-#     xacc = re.findall("user_token: '(.*?)'", page)[0]
-    #    bdata = base64.b64encode(re.findall('\|setRequestHeader\|(.*?)\|', page)[0])
-
-    vtoken = re.findall("video_token: '(.*?)'", page)[0]
-#     ctype = re.findall("content_type: '(.*?)'", page)[0]
-#     mw_key = urllib.quote_plus(re.findall("var mw_key = '(.*?)'", page)[0])
-#     ref = urllib.quote_plus(re.findall("ref: encodeURIComponent\('(.*?)'", page)[0])
-
-    mw_pid = re.findall("partner_id: (.*?),", page)[0]
-    p_domain_id = re.findall("domain_id: (.*?),", page)[0]
-    
-#    hzsh = re.findall("setTimeout\(function\(\) {\n    (.*?)\['(.*?)'\] = '(.*?)';", page, re.MULTILINE|re.DOTALL)[0]
-#     setTimeout(function() {
-#     e37834294bc3c6bda8e36eb04ac3adc5['4e0ee0a1036a72dacc804306eabaaba3'] = 'b4b34c43ff2dc523887b8814e5f96f2d';
-#   }
-
-    opts = {'Accept-Encoding': 'gzip, deflate',
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-#             'X-CSRF-Token': csrf,
-#             'X-Access-Level': xacc,
-            'X-Condition-Safe': 'Normal',
-            'X-Format-Token': 'B300',
-            'X-Requested-With': 'XMLHttpRequest',
-            'Referer' : nref
-            }
-
-    udata = {'video_token': vtoken,
-#                 'content_type': ctype,
-#                 'mw_key': mw_key,
-                'mw_key': '1ffd4aa558cc51f5a9fc6888e7bc5cb4',
-             'mw_pid': mw_pid,
-             'p_domain_id': p_domain_id,
-             'ad_attr': '0',
-             'iframe_version': '2.1',
-             'c0e005ee151ce1c4': 'cbafa6de912548080e8be488'
-#              'c90b4ca500a12b91e2b54b2d4a1e4fb7': 'cc5610c93fa23befc2d244a76500ee6c'
-
-
-             }
-    
-    req.cookies['quality'] = '720'
-    
-    murl = 'http://moonwalk.cc/manifests/video/%s/all'%vtoken
-    
-    req = req_url(murl, opts = opts, cookies = req.cookies, data = udata)
-    html = req.content
-
-#     cook = re.search('<cookie>(.+?)</cookie>', html).group(1)
-#     xbmc.log('ncook= ' + cook + ';quality=720')    
-#     re.sub('<cookie>(.+?)</cookie>', '', html)
-    
-    xbmc.log(html)
-    page = json.loads(html)
-    nurl = page["mans"]["manifest_m3u8"]
-
-#     nurl = 'http://moonwalk.cc/video/html5?manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
-#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
-#     ndata = 'manifest_m3u8=%s&manifest_mp4=%s&token=%s&pid=%s&debug=0'% \
-#     (page["mans"]["manifest_m3u8"], page["mans"]["manifest_mp4"], vtoken, mw_pid)
-    
-    params = {'manifest_m3u8': page["mans"]["manifest_m3u8"],
-              'manifest_mp4': page["mans"]["manifest_mp4"],
-              'token': vtoken,
-              'pid': mw_pid,
-              'debug': '0'
-              }
-
-    opts['Upgrade-Insecure-Requests'] = '1'
-    req = req_url(nurl,
-                  opts = {'Upgrade-Insecure-Requests': '1',
-                          'Referer' : nref},
-                  cookies = req.cookies,
-                  params = params
-                  )
-        
-    html = req.content
-#    xbmc.log(html)
-    
-    r = [(i[0], i[1]) for i in re.findall('#EXT-X-STREAM-INF:.*?RESOLUTION=\d+x(\d+).*?(http.*?(?:\.abst|\.f4m|\.m3u8)).*?', html, re.DOTALL) if i]
-    r0 = re.findall('RESOLUTION=(.*?),', html)
-    dbg_log('- r:'+  str(r) + '\n')
+    r0 = [str(key) for key in manifest_links.keys()]
     dbg_log('- r0:'+  str(r0) + '\n')
     i = xbmcgui.Dialog().select('Video Quality', r0)
 
-    return r[i][1]
+    return manifest_links[int(r0[i])]
 
 
 def HD7_play(url, cook, name, web, ref):
@@ -938,7 +778,7 @@ def HD7_play(url, cook, name, web, ref):
                 break
         except: pass
     elif 'moonwalk.c' in web or web[0].isdigit():
-        furl = get_moonwalk(url.replace('.co','.cc'), ref, cookies)
+        furl = get_moonwalk(url.replace('.co','.cc'), ref)
         if furl != None: furls.append(furl)
         else:  dbg_log('Moonwalk : no url returned')
     
