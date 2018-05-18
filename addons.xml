@@ -58,7 +58,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.kinoha.tv" name="[COLOR FFcFFF48]KinoHa.TV[/COLOR]" version="0.0.2" provider-name="Silhouette">
+<addon id="plugin.video.kinoha.tv" name="[COLOR FFcFFF48]KinoHa.TV[/COLOR]" version="0.0.3" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.requests" version="2.12.4"/>

@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.0.1
+# Rev. 0.0.3
 
 
 import urllib,urllib2, os, re,sys, json,cookielib, base64, socket
@@ -271,13 +271,13 @@ def KNH_play(url, ref):
 
     link = None
     
-    if "kinoha" or "moonwalk" in url:
-        link = get_moonwalk(url, ref)
-    elif "youtube" in url:
+    if "youtube" in url:
         
         videoId = re.findall('youtube.com/embed/(.*?)[\"\'\?]', url)[0]
         link = 'plugin://plugin.video.youtube/play/?video_id=' + videoId
         dbg_log('-youtube: %s \n'%link)
+    elif "kinoha" or "moonwalk" in url:
+        link = get_moonwalk(url, ref)
     else:
         link = get_moonwalk(url, ref)
 
