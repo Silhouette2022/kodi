@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.3.3
+# Rev. 0.3.4
 
 
 import urllib,urllib2, os, re, sys
@@ -371,6 +371,15 @@ def chan(params):
                       'thumb': icon,
                       'url': pl_get_url,
                       'is_playable': True})
+        
+        try:
+            if __addon__.getSetting('wide_mode') == 'true':
+                if 'confluence' in skin_used:
+                    xbmc.executebuiltin('Container.SetViewMode("51")')
+                else:
+                    xbmc.executebuiltin('Container.SetViewMode("55")')
+        except:
+            pass
         
     return chans
 
