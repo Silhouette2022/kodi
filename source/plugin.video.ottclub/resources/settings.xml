@@ -11,7 +11,8 @@
 		<setting id="view_epg" type="bool" label="EPG as 2nd line" default="true"/>
 		<setting id="use_percent" type="bool" label="Show percentage" default="true"/>
 		<setting id="use_time" type="bool" label="Show time" default="true"/>
-		<setting id="wide_mode" type="bool" label="Wide list" default="false"/>
+		<setting id="view_mode" type="bool" label="Control list" default="true"/>
+		<setting id="wide_mode" type="bool" label="Wide list" default="false" enable="eq(-1,true)"/>
 		<setting id="uuid" type="text" label="uuid" default="" visible="false" />
 	</category>
 </settings>

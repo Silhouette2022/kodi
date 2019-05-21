@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.3.4
+# Rev. 0.3.5
 
 
 import urllib,urllib2, os, re, sys
@@ -234,6 +234,21 @@ def live(params):
                           'thumb': icon,
                           'url': plugin.get_url(action='play', url=id, rand=params.rand),
                           'is_playable': True})
+            
+    try:
+        if __addon__.getSetting('view_mode') == 'true': cont = 'episodes'
+        else: cont = None
+        
+        if cont != None and __addon__.getSetting('wide_mode') == 'true': mode = 55
+        else: mode = None
+        
+        if 'confluence' in xbmc.getSkinDir():
+            if cont != None and mode == None: mode = 504
+            if mode == 55: mode = 51
+
+        chans = plugin.create_listing(chans, view_mode = mode, content = cont)
+    except:
+        pass
         
     return chans
 
@@ -372,14 +387,20 @@ def chan(params):
                       'url': pl_get_url,
                       'is_playable': True})
         
-        try:
-            if __addon__.getSetting('wide_mode') == 'true':
-                if 'confluence' in skin_used:
-                    xbmc.executebuiltin('Container.SetViewMode("51")')
-                else:
-                    xbmc.executebuiltin('Container.SetViewMode("55")')
-        except:
-            pass
+    try:
+        if __addon__.getSetting('view_mode') == 'true': cont = 'episodes'
+        else: cont = None
+        
+        if cont != None and __addon__.getSetting('wide_mode') == 'true': mode = 55
+        else: mode = None
+        
+        if 'confluence' in xbmc.getSkinDir():
+            if cont != None and mode == None: mode = 504
+            if mode == 55: mode = 51
+
+        chans = plugin.create_listing(chans, view_mode = mode, content = cont)
+    except:
+        pass
         
     return chans
 
