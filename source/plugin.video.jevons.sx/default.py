@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2015, Silhouette, E-mail: 
-# Rev. 0.9.3
+# Rev. 0.10.0
 
 # import pyopenssl
 import xbmcplugin, xbmcgui, xbmcaddon
@@ -46,10 +46,11 @@ rfpl_oid = '51812607'
 bf_oid = '34157052'
 vk_pg = vk_start + vk_videos  # + vk_oid
 vk_alv = '/al_video.php'
-sgol_start = "http://sportgol1.org"
+sgol_start = "http://sportgol2.org"
 pbtv_start = "http://www.pressball.by"
 pbtv_pg = pbtv_start + "/tv/search/tag?ajax=yw0&q=222-pressbol-TV&TvVideo_page="
 vk_vid = "/video-%s_%s"
+s24_pg = "http://www.sport-24tv.ru"
 
 
 def dbg_log(line):
@@ -320,10 +321,16 @@ def JVS_top():
     item = xbmcgui.ListItem('PRESSBALL.by', iconImage=pbtv_icon, thumbnailImage=pbtv_icon)
     item.setProperty('fanart_image', pbart_icon)
     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=pbtvtop', item, True)
-    
-    item = xbmcgui.ListItem('SPORTGOL1.org', iconImage=lite_icon, thumbnailImage=lite_icon)
+
+#     item = xbmcgui.ListItem('SPORTGOL1.org', iconImage=lite_icon, thumbnailImage=lite_icon)
+#     item.setProperty('fanart_image', art2_icon)
+#     xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=sgoltop', item, True)
+
+    item = xbmcgui.ListItem('SPORT-24TV.ru', iconImage=lite_icon, thumbnailImage=lite_icon)
     item.setProperty('fanart_image', art2_icon)
-    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=sgoltop', item, True)
+    xbmcplugin.addDirectoryItem(pluginhandle, sys.argv[0] + '?mode=s24top' + '&url=' +
+                                urllib.quote_plus(s24_pg), item, True)
+# https://www.sport-24tv.ru
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -482,29 +489,29 @@ def JVS_list(url, page):
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
-def JVS_sgoltop(url):
-    dbg_log('-JVS_sgoltop:' + '\n')
+
+def JVS_s24top(url):
+    dbg_log('-JVS_s24top:' + '\n')
     dbg_log('- url:' + url + '\n')
 
     http = get_url(url)
 
-    blocks = BeautifulSoup(http).findAll('div', {"class": "tv-block"})
-
+#     blocks = BeautifulSoup(http).findAll('li', {"a": "href"})
+    blocks = re.compile('<li>(.*?)</li>').findall(http.replace('\r', ' ').replace('\n', ' '))
+    
     for block in blocks:
         
-        sref = str(block).replace('\r', '').replace('\n', '')
+        sref = block
         try:
-            href = sgol_start + re.compile('href="(.*?)"').findall(sref)[0]
+            href = re.compile("href='(.*?)'").findall(sref)[0]
         except:
             href = ""
         try:
-            title = re.compile('title="(.*?)"').findall(sref)[0]
+            title = re.compile("'>(.*?)</a>").findall(sref)[0].strip()
         except:
             title = ""
-        try:
-            img = sgol_start + re.compile('src="(.*?)"').findall(sref)[0]
-        except:
-            img = ""
+
+        img = ""
             
         if title != "":
             dbg_log('-HREF %s' % href)
@@ -514,28 +521,104 @@ def JVS_sgoltop(url):
             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
             item.setInfo(type='video', infoLabels={'title': title, 'plot': title})
             item.setProperty('IsPlayable', 'true')
-            uri = sys.argv[0] + '?mode=sgoltv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+            uri = sys.argv[0] + '?mode=s24tv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
             dbg_log('- uri:' + uri + '\n')
 
 
     xbmcplugin.endOfDirectory(pluginhandle)
 
-def JVS_sgoltv(url):
-    dbg_log('-JVS_sgoltv:' + '\n')
+def JVS_s24tv(url):
+    dbg_log('-JVS_s24tv:' + '\n')
     dbg_log('- url:' + url + '\n')
 
     http = get_url(urllib.unquote_plus(url))
     
-    iframe = re.compile('<iframe src="(.*?)"').findall(http)[0]
+    iframe = re.compile('<iframe.*?src="(.*?)"').findall(http.replace('\r', ' ').replace('\n', ' '))
+#     print iframe
+
+    r0 = ["Источник " + str(key) for key in range(1, len(iframe))]
+    dbg_log('- r0:'+  str(r0) + '\n')
+    i = xbmcgui.Dialog().select('', r0)
+    
+    http = get_url(iframe[i])
+    try:
+        uri = re.compile("videoLink = '(.*?)'").findall(http)[0]
+    
+        dbg_log('- uri: ' + uri + '\n')
+        item = xbmcgui.ListItem(path = uri)
+        xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+    except: pass
+    
+def JVS_s24play(url):
+    dbg_log('-JVS_s24tv:' + '\n')
+    dbg_log('- url:' + url + '\n')
+
+    http = get_url(urllib.unquote_plus(url))
+    
+    iframe = re.compile('<iframe.*?src="(.*?)"').findall(http.replace('\r', ' ').replace('\n', ' '))[0]
 #     print iframe
     http = get_url(iframe)
-    htt2 = get_url('http://cdn.videosofsport1.pw/crossdomain.xml', referrer='http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
-    uri = re.compile("file: '(.*?)'").findall(http)[0] + '|Referer=' + urllib.quote_plus('http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
+    uri = re.compile("videoLink = '(.*?)'").findall(http)[0]
     
     dbg_log('- uri: ' + uri + '\n')
     item = xbmcgui.ListItem(path = uri)
     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
+
+# def JVS_sgoltop(url):
+#     dbg_log('-JVS_sgoltop:' + '\n')
+#     dbg_log('- url:' + url + '\n')
+# 
+#     http = get_url(url)
+# 
+#     blocks = BeautifulSoup(http).findAll('div', {"class": "tv-block"})
+# 
+#     for block in blocks:
+#         
+#         sref = str(block).replace('\r', '').replace('\n', '')
+#         try:
+#             href = sgol_start + re.compile('href="(.*?)"').findall(sref)[0]
+#         except:
+#             href = ""
+#         try:
+#             title = re.compile('title="(.*?)"').findall(sref)[0]
+#         except:
+#             title = ""
+#         try:
+#             img = sgol_start + re.compile('src="(.*?)"').findall(sref)[0]
+#         except:
+#             img = ""
+#             
+#         if title != "":
+#             dbg_log('-HREF %s' % href)
+#             dbg_log('-IMG %s' % img)
+#             dbg_log('-TITLE %s' % title)
+# 
+#             item = xbmcgui.ListItem(title, iconImage=img, thumbnailImage=img)
+#             item.setInfo(type='video', infoLabels={'title': title, 'plot': title})
+#             item.setProperty('IsPlayable', 'true')
+#             uri = sys.argv[0] + '?mode=sgoltv' + '&url=' + urllib.quote_plus(href) + '&name=' + urllib.quote_plus(title)
+#             xbmcplugin.addDirectoryItem(pluginhandle, uri, item)
+#             dbg_log('- uri:' + uri + '\n')
+# 
+# 
+#     xbmcplugin.endOfDirectory(pluginhandle)
+# 
+# def JVS_sgoltv(url):
+#     dbg_log('-JVS_sgoltv:' + '\n')
+#     dbg_log('- url:' + url + '\n')
+# 
+#     http = get_url(urllib.unquote_plus(url))
+#     
+#     iframe = re.compile('<iframe src="(.*?)"').findall(http)[0]
+# #     print iframe
+#     http = get_url(iframe)
+#     htt2 = get_url('http://cdn.videosofsport1.pw/crossdomain.xml', referrer='http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
+#     uri = re.compile("file: '(.*?)'").findall(http)[0] + '|Referer=' + urllib.quote_plus('http://ssl.p.jwpcdn.com/player/v/7.9.3/jwplayer.flash.swf')
+#     
+#     dbg_log('- uri: ' + uri + '\n')
+#     item = xbmcgui.ListItem(path = uri)
+#     xbmcplugin.setResolvedUrl(pluginhandle, True, item)
             
 def JVS_pbtvtop():
     dbg_log('-JVS_pbyvtop:' + '\n')
@@ -808,6 +891,27 @@ def get_mailru(url):
     #    except:
     return None
 
+ 
+class Streamable():
+    def __init__(self):
+        name = "Streamable"
+        domains = ['streamable.com']
+        pattern = '(?://|\.)(streamable\.com)/(?:s/)?([a-zA-Z0-9]+(?:/[a-zA-Z0-9]+)?)'
+ 
+    def get_media_url(self, web_url):
+        html = get_url(web_url)
+        match = re.search('videoObject\s*=\s*(.*?});', html)
+        if match:
+            try: js_data = json.loads(match.group(1))
+            except: js_data = {}
+            streams = js_data.get('files', {})
+            sources = [(stream.get('height', 'Unknown'), stream['url']) for _key, stream in streams.iteritems()]
+            sources = [(label, 'https:' + stream_url) if stream_url.startswith('//') else (label, stream_url) for label, stream_url in sources]
+            sources.sort(key=lambda x: x[0], reverse=True)
+            return sources[0][1].replace('&amp;','&')
+        else:
+            dbg_log('JSON Not Found')
+            return None
 
 def JVS_show(url, name):
     nurl = start_pg + url
@@ -969,10 +1073,14 @@ elif mode == 'pbtvtop':
     JVS_pbtvtop()
 elif mode == 'pbtv':
     JVS_pbtv(url, page)
-elif mode == 'sgoltop':
-    JVS_sgoltop(sgol_start)
-elif mode == 'sgoltv':
-    JVS_sgoltv(url)
+# elif mode == 'sgoltop':
+#     JVS_sgoltop(sgol_start)
+# elif mode == 'sgoltv':
+#     JVS_sgoltv(url)
+elif mode == 's24top':
+    JVS_s24top(s24_pg)
+elif mode == 's24tv':
+    JVS_s24tv(url)
 elif mode == 'play':
     JVS_play(url, name)
 elif mode == 'playpbtv':
