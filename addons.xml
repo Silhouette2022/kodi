@@ -120,6 +120,24 @@
   </extension>
 </addon>
 
+<addon id="plugin.video.ourmatch" name="Our Match" version="2.0.2.1" provider-name="Echo Coder">
+	<requires>
+		<import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.urlresolver"/>
+        <import addon="script.module.echo"/>
+	</requires>
+	<extension point="xbmc.python.pluginsource" library="default.py">
+		<provides>video</provides>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<platform>all</platform>
+		<summary>Football highlights from around the world</summary>
+		<description>Watch football highlights.</description>
+		<disclaimer lang="en">The author is not responsible for the media you find in this add-on.</disclaimer>
+	</extension>
+
+</addon>
+
 <addon id="plugin.video.rutube.deti" name="RuTube.Детям" version="0.3.0" provider-name="Silhouette">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
@@ -143,6 +161,18 @@
 		<description>Дополнения для XBMC</description>
 		<disclaimer>XBMC add-on that allow viewing popular resources. For home usage</disclaimer>
 		<platform>all</platform>
+	</extension>
+</addon>
+
+<addon id="script.module.echo" name="Echo Libraries" version="1.00.003" provider-name="Echo Coder">
+	<requires>
+		<import addon="xbmc.python" version="2.1.0" />
+		<import addon="script.module.requests" />
+	</requires>
+	<extension point="xbmc.python.module" library="lib" />
+	<extension point="xbmc.addon.metadata">
+		<platform>all</platform>
+		<summary lang="en">Forked from TK Norris Shared Module. Reusable Modules used by several of Echo's addons</summary>
 	</extension>
 </addon>
 
