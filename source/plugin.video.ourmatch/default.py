@@ -148,16 +148,39 @@ def vidupstream(url):
       url = url.replace("player/PopUpIframe", "embed00")
       link = client.request(url)
       hls = re.compile('hls:"(.+?)"').findall(link)
-      if len(hls): return 'http:' + hls[0]
+      xbmc.log(str(hls))
+      xbmc.log(str(len(hls)))
+      if len(hls):
+        if len(hls) == 1: i = 0
+        else:
+          r0 = ["Source " + str(key + 1) for key in range(len(hls))]
+          xbmc.log('- r0:'+  str(r0) + '\n')
+          i = xbmcgui.Dialog().select('', r0)
+          
+        return 'http:' + hls[i]
       else: return None
       
 def okru(url):
       link = client.request(url)
       html = urllib.unquote_plus(link).replace("\&quot;", '"').replace("\\\\u0026","&")
-      names = re.compile('"name":"(.+?)","url":"(.+?)"').findall(urllib.unquote_plus(html))
+      #xbmc.log(html)
+      names = re.compile('"name":"(.+?)","url":"https(.+?)"').findall(html)
       xbmc.log(str(names))
-      if len(names): return names[0]
+      xbmc.log(str(len(names)))
+      
+      lnames = len(names)
+      if lnames:
+        if lnames == 1: i = 0
+        else:
+          r0 = [names[key][0] for key in range(1,lnames)]
+          r0.reverse()
+          xbmc.log('- r0:'+  str(r0) + '\n')
+          
+          i = lnames - 1 - xbmcgui.Dialog().select('', r0)
+          
+        return 'https' + names[i][1]
       else: return None
+
 
 def play(name,url):
     import urlresolver
@@ -176,7 +199,7 @@ def play(name,url):
     if "vidupstream" in url: stream_url = vidupstream(url)
     elif "ok.ru" in url: stream_url = okru(url)
     else: stream_url = url
-    
+    xbmc.log(str(stream_url))
 
     if stream_url != None:
         liz = xbmcgui.ListItem(name, path=stream_url)
