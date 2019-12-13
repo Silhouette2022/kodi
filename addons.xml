@@ -120,7 +120,7 @@
   </extension>
 </addon>
 
-<addon id="plugin.video.ourmatch" name="Our Match" version="2.0.2.2" provider-name="Echo Coder">
+<addon id="plugin.video.ourmatch" name="Our Match" version="2.0.2.3" provider-name="Echo Coder">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
         <import addon="script.module.urlresolver"/>

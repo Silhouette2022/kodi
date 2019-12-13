@@ -196,7 +196,7 @@ def play(name,url):
     stream_url = url
     xbmc.log(" $$$$$$$ ") 
     xbmc.log(stream_url)
-    if "vidupstream" in url: stream_url = vidupstream(url)
+    if "vidupstream" or "streamatus" in url: stream_url = vidupstream(url)
     elif "ok.ru" in url: stream_url = okru(url)
     else: stream_url = url
     xbmc.log(str(stream_url))
