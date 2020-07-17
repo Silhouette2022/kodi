@@ -1,7 +1,7 @@
 ﻿#!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Writer (c) 2018, Silhouette, E-mail: 
-# Rev. 0.4.1
+# Rev. 0.4.2
 
 import urllib,urllib2, os, re, sys
 import xbmcplugin,xbmcgui,xbmcaddon
@@ -230,7 +230,7 @@ def live(params):
             chans.append({'label': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd),
                           'info': {'video':{'title': '[B]%s[/B]\n%s' % (title.ljust(int(t2len * 1.65)), title2nd), 'plot': plot}},
                           'thumb': icon,
-                          'url': plugin.get_url(action='play', url=id, rand=params.rand),
+                          'url': plugin.get_url(action='play', url=id, rand=params.rand, day=''),
                           'is_playable': True})
             
     try:
@@ -301,7 +301,7 @@ def groups(params):
         
         chans.append({'label': title,
                       'info': {'video':{'title': title, 'plot': title}},
-                      'url': plugin.get_url(action=params.action, group=key, rand=params.rand),
+                      'url': plugin.get_url(action=params.action, group=key, rand=params.rand, day='now'),
                       'is_playable': False})
         
     return chans
@@ -329,7 +329,7 @@ def arch(params):
                 chans.append({'label': title,
                               'info': {'video':{'title': title, 'plot': title}},
                               'thumb': ott_img + d_epg[id]['img'],
-                              'url': plugin.get_url(action='chan', url=id, rand=params.rand),
+                              'url': plugin.get_url(action='chan', url=id, rand=params.rand, day='now'),
                               'is_playable': False})
         
     return chans
@@ -348,6 +348,9 @@ def chan(params):
     chans =[]
     yday = 500 # fake one
     weekDays = ("ПОНЕДЕЛЬНИК","ВТОРНИК","СРЕДА","ЧЕТВЕРГ","ПЯТНИЦА","СУББОТА","ВОСКРЕСЕНЬЕ")
+    tt = time.time()
+    tl = time.localtime()
+    squeeze = __addon__.getSetting('squeeze')
    
     for x in d_epg['epg_data']:
       if x['rec'] == '1':
@@ -369,7 +372,7 @@ def chan(params):
         title = title.replace('&quot;','`').replace('&amp;',' & ')
         
         futstart = float(utstart)
-        tt = time.time()
+#        tt = time.time()
         if tt < futstart:
             title = '[COLOR FFDC5310]%s[/COLOR]' % (title)
             pl_get_url = plugin.get_url(action='play', url=params.url, rand=params.rand)
@@ -394,10 +397,11 @@ def chan(params):
             chans.append({'label': weekday,
                       'info': {'video':{'title': weekday, 'plot': weekday}},
                       #'thumb': icon,
-                      'url': pl_get_url,
+                      'url': plugin.get_url(action='chan', url=params.url, rand=params.rand, day=str(utb.tm_yday)),
                       'is_playable': False})
-        
-        chans.append({'label': title,
+                      
+        if squeeze =='false' or (params.day == 'now' and tl.tm_yday == utb.tm_yday) or (params.day == str(utb.tm_yday)):
+            chans.append({'label': title,
                       'info': {'video':{'title': title, 'plot': plot}},
                       'thumb': icon,
                       'url': pl_get_url,

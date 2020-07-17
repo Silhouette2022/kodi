@@ -13,6 +13,7 @@
 		<setting id="use_time" type="bool" label="Show time" default="true"/>
 		<setting id="view_mode" type="bool" label="Control list" default="true"/>
 		<setting id="wide_mode" type="bool" label="Wide list" default="false" enable="eq(-1,true)"/>
+		<setting id="squeeze" type="bool" label="Squeeze archives" default="true"/>
 		<setting id="uuid" type="text" label="uuid" default="" visible="false" />
 	</category>
 </settings>
