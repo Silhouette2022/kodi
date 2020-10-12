@@ -305,6 +305,7 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                                 
                         t2len = 0
                         title2nd = ''
+                        edescr = ''
 
                         if idx is not None:
                             #xbmc.log(str( epgDict.get('prg').get(epgDict[u'data'][idx][0])))
@@ -313,8 +314,10 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                                     stime = parser.parse(start)
                                     etime = parser.parse(stop)
                                     if stime <= dnow <= etime:
+                                        ebgn = stime.astimezone(to_zone).strftime('%H:%M')
+                                        eend = etime.astimezone(to_zone).strftime('%H:%M')
                                         if use_time == 'true':
-                                            stmp = '%s-%s' % (stime.astimezone(to_zone).strftime('%H:%M'), etime.astimezone(to_zone).strftime('%H:%M'))
+                                            stmp = '%s-%s' % (ebgn, eend)
                                             t2len += (len(stmp) + 1) 
                                             title2nd += ' [COLOR FF00BB66]%s[/COLOR]' % stmp
                                         title2nd += ' %s' % title
@@ -322,8 +325,13 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                                         
                                         title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
                                         if not t2len: t2len = len(name)
+                                        plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, title, edescr)
                                         
                                         name = '[B]%s[/B]\n%s' % (name.ljust(int(t2len * 1.65)), title2nd.encode('utf-8'))
+                                        
+                                        
+                                        break
+                                        
 
                 
                 if logos is not None and logos != ''  and image != "" and not image.startswith('http'):

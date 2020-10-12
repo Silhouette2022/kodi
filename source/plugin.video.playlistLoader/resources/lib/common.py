@@ -216,7 +216,9 @@ def epg2dict(url, cache):
 		for prg in doc['tv']['programme']:
 			if pDict.get(prg['@channel']) == None:
 				pDict[prg['@channel']] = []
-			else: pDict[prg['@channel']].append((prg['@start'], prg['@stop'], prg['title']['#text']))
+			else: 
+				try: pDict[prg['@channel']].append((prg['@start'], prg['@stop'], prg['title']['#text']))
+				except: pass
 		
 		if len(nList):
 			eDict[u'name'] = nList;
