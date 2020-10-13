@@ -1,3 +1,5 @@
+1.4.4
+- EPG plot update
 1.4.3
 - Added Russian language support and minor EPG tweacks
 1.4.2

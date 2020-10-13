@@ -306,6 +306,7 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                         t2len = 0
                         title2nd = ''
                         edescr = ''
+                        next = False
 
                         if idx is not None:
                             #xbmc.log(str( epgDict.get('prg').get(epgDict[u'data'][idx][0])))
@@ -313,25 +314,27 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                                 for start,stop,title in epgDict.get('prg').get(epgDict[u'data'][idx][0]):
                                     stime = parser.parse(start)
                                     etime = parser.parse(stop)
-                                    if stime <= dnow <= etime:
+                                    if stime <= dnow <= etime or next:
                                         ebgn = stime.astimezone(to_zone).strftime('%H:%M')
                                         eend = etime.astimezone(to_zone).strftime('%H:%M')
                                         if use_time == 'true':
                                             stmp = '%s-%s' % (ebgn, eend)
                                             t2len += (len(stmp) + 1) 
-                                            title2nd += ' [COLOR FF00BB66]%s[/COLOR]' % stmp
+                                            if not next: title2nd += ' [COLOR FF00BB66]%s[/COLOR]' % stmp
+                                            else:  title2nd += ' %s' % stmp
                                         title2nd += ' %s' % title
                                         t2len += (len(title) + 1)
                                         
                                         title2nd = title2nd.replace('&quot;','`').replace('&amp;',' & ')
                                         if not t2len: t2len = len(name)
-                                        plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B][COLOR FF999999]\n%s[/COLOR]\n' % (ebgn, eend, title, edescr)
-                                        
-                                        name = '[B]%s[/B]\n%s' % (name.ljust(int(t2len * 1.65)), title2nd.encode('utf-8'))
-                                        
-                                        
-                                        break
-                                        
+                                        if not next:
+                                            plot += '[B][COLOR FF0084FF]%s-%s[/COLOR] [COLOR FFFFFFFF] %s[/COLOR][/B]' % (ebgn, eend, title)
+                                            name = '[B]%s[/B]\n%s' % (name.ljust(int(t2len * 1.65)), title2nd.encode('utf-8'))
+                                            next = True
+                                        else: 
+                                            plot += '[COLOR FF999999]\n\n%s-%s %s[/COLOR]\n' % (ebgn, eend, title) 
+                                            next = False
+                                            break
 
                 
                 if logos is not None and logos != ''  and image != "" and not image.startswith('http'):
