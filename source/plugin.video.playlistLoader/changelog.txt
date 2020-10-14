@@ -1,3 +1,5 @@
+1.4.5
+- cache reload period for EPG
 1.4.4
 - EPG plot update
 1.4.3

@@ -240,7 +240,7 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
     tmpList = []
     chList = common.m3u2list(url, cache)
     if mode == 10 and epg != None and epg != '':
-      epgDict = common.epg2dict(epg, cache)
+      epgDict = common.epg2dict(epg, cache=720)
       dnow = datetime.now(tz.UTC)
       to_zone = tz.tzlocal()
       use_percent = 'true'
