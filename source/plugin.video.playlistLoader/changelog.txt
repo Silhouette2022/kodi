@@ -1,3 +1,5 @@
+1.4.6
+- fix for absent icon source
 1.4.5
 - cache reload period for EPG
 1.4.4
