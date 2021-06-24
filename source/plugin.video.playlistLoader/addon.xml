@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.playlistLoader" name="Playlist Loader" version="1.4.8" provider-name="osgioia">
+<addon id="plugin.video.playlistLoader" name="Playlist Loader" version="1.4.9" provider-name="osgioia">
   <requires>
     <import addon="xbmc.python" version="2.1.0"/>
     <import addon="script.module.requests" version="2.9.1"/>
-    <import addon="script.module.xmltodict" version="0.11.0"/>
     <import addon="script.module.dateutil" version="2.8.1"/>
   </requires>
   <extension point="xbmc.python.pluginsource" library="default.py">
@@ -16,6 +15,8 @@
     <description lang="he">Playlist Loader</description>
     <platform>all</platform>
 	<news>
+1.4.9
+- Got rid of xmltodict to speed up EPG processing.
 1.4.8
 - EPG fix for list of channel names under the same id number
 1.4.7

@@ -298,7 +298,7 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                     if epgDict.get(u'name'):
                         if name.decode('utf-8') in epgDict.get(u'name'):
                             idx = epgDict[u'name'].index(name.decode('utf-8'))
-                        if name in epgDict.get(u'name'):
+                        elif name in epgDict.get(u'name'):
                             idx = epgDict[u'name'].index(name)
                         if image == "" and idx is not None:
                                 image = epgDict[u'data'][idx][1]
@@ -335,6 +335,9 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                                             plot += '[COLOR FF999999]\n\n%s-%s %s[/COLOR]\n' % (ebgn, eend, title) 
                                             next = False
                                             break
+                                    elif dnow < stime and not next: 
+                                        break
+                                    
 
                 
                 if logos is not None and logos != ''  and image != "" and not image.startswith('http'):

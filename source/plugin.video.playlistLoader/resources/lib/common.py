@@ -2,7 +2,8 @@ import urllib, urllib2, os, io, xbmc, xbmcaddon, xbmcgui, json, re, chardet, shu
 from StringIO import StringIO
 import requests, shutil
 from xbmc import getLocalizedString
-import xmltodict
+import xml.etree.ElementTree as ET
+from copy import copy
 
 AddonID = 'plugin.video.playlistLoader'
 Addon = xbmcaddon.Addon(AddonID)
@@ -194,6 +195,19 @@ def SaveDict(filname, dict):
 		success = False
 	return success
 	
+
+def dictify(r,root=True):
+    if root:
+        return {r.tag : dictify(r, False)}
+    d=copy(r.attrib)
+    if r.text:
+        d["_text"]=r.text
+    for x in r.findall("./*"):
+        if x.tag not in d:
+            d[x.tag]=[]
+        d[x.tag].append(dictify(x,False))
+    return d
+	
 def epg2dict(url, cache):
 	eDict={}
 	fn = os.path.join(cacheDir, hashlib.md5((url + '.ebk').encode('utf8')).hexdigest())
@@ -203,7 +217,15 @@ def epg2dict(url, cache):
 	if not eDict: 
 		response = GetList(url, cache)
 		try:
-			doc = xmltodict.parse(response)
+			root = ET.fromstring(response)
+			doc = dictify(root)
+			ID = 'id'
+			SRC = 'src'
+			CHANNEL = 'channel'
+			START = 'start'
+			STOP = 'stop'
+			TEXT = '_text'
+		
 		except: 
 			return {}
 		'''
@@ -232,26 +254,21 @@ def epg2dict(url, cache):
 		dList=[]
 		pDict={}
 		for ch in doc['tv']['channel']:
-#			try: nList.append(GetEncodeString(ch['display-name']['#text']))
-#			except:
-#				try: nList.append(GetEncodeString(ch['display-name']['#text'][0]))
-#				except: nList.append(GetEncodeString("??????"))
 			try:
-				xbmc.log(GetEncodeString(ch['display-name']['#text']))
-				nList.append(GetEncodeString(ch['display-name']['#text']))
-				try: dList.append((ch['@id'], ch['icon']['@src']))
-				except: dList.append((ch['@id'], ""))
+				nList.append(GetEncodeString(ch['display-name'][TEXT]))
+				try: dList.append((ch[ID], ch['icon'][0][SRC]))
+				except: dList.append((ch[ID], ""))
 			except:
 				for dname in ch['display-name']:
-					nList.append(GetEncodeString(dname['#text']))
-					try: dList.append((ch['@id'], ch['icon']['@src']))
-					except: dList.append((ch['@id'], ""))
-
+					nList.append(GetEncodeString(dname[TEXT]))
+					try: dList.append((ch[ID], ch['icon'][0][SRC]))
+					except: dList.append((ch[ID], ""))
+					
 		for prg in doc['tv']['programme']:
-			if pDict.get(prg['@channel']) == None:
-				pDict[prg['@channel']] = []
+			if pDict.get(prg[CHANNEL]) == None:
+				pDict[prg[CHANNEL]] = []
 			else: 
-				try: pDict[prg['@channel']].append((prg['@start'], prg['@stop'], prg['title']['#text']))
+				try: pDict[prg[CHANNEL]].append((prg[START], prg[STOP], prg['title'][0][TEXT]))
 				except: pass
 		
 		if len(nList):
