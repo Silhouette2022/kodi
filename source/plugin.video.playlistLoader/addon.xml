@@ -21,6 +21,7 @@
 2.0.0
 - Forked of Silhouette2022
 - Add Support for Kodi Matrix 19 and up (Modified By burekas)
+
 1.4.9
 - Got rid of xmltodict to speed up EPG processing.
 1.4.8

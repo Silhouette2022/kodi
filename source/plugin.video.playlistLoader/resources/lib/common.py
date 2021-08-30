@@ -283,10 +283,10 @@ def epg2dict(url, cache):
 	
 def GetEncodeString(str):
 	try:
-		str = str.decode(chardet.detect(str)["encoding"])
+		str = str.decode(chardet.detect(str)["encoding"]).encode("utf-8")
 	except:
 		try:
-			str = str
+			str = str.encode("utf-8")
 		except:
 			pass
 	return str
