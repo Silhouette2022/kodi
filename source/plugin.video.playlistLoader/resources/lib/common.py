@@ -127,7 +127,7 @@ def isFromCache(address, cache=0):
 		fileLocation = os.path.join(cacheDir, hashlib.md5(address.encode('utf8')).hexdigest())
 		retval = isFileNew(fileLocation, cache*60)
 	else:
-		retval = isFileNew(address.decode('utf-8'), cache*60)
+		retval = isFileNew(address, cache*60)
 	return retval
 
 def GetList(address, cache=0):
@@ -141,7 +141,7 @@ def GetList(address, cache=0):
 			if cache > 0:
 				SaveFile(fileLocation, response)
 	else:
-		response = ReadFile(address.decode('utf-8'))
+		response = ReadFile(address)
 	return response
 		
 def plx2list(url, cache):
@@ -187,7 +187,7 @@ def m3u2list(url, cache):
 def SaveDict(filname, dict):
 	try:
 		with io.open(filname, 'w', encoding='utf-8') as handle:
-			handle.write(json.dumps(dict).decode('utf-8'))
+			handle.write(json.dumps(dict))
 			handle.close()
 		success = True
 	except Exception as ex:
@@ -283,10 +283,10 @@ def epg2dict(url, cache):
 	
 def GetEncodeString(str):
 	try:
-		str = str.decode(chardet.detect(str)["encoding"]).encode("utf-8")
+		str = str.decode(chardet.detect(str)["encoding"])
 	except:
 		try:
-			str = str.encode("utf-8")
+			str = str
 		except:
 			pass
 	return str

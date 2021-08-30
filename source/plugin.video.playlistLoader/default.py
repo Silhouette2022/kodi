@@ -54,15 +54,15 @@ def AddListItems(chList, addToVdir=True):
         image = item.get('image', '')
         uuid4 = item["uuid"]
         
-        if image.encode("utf-8") is "" or image is None:
+        if image is "" or image is None:
             image = os.path.join(iconsDir, "default-list-image.png")
         
         logos = item.get('logos', '')
         epg = item.get('epg', '')
         cacheMin = item.get('cache', '0')
         if item["url"].startswith('http'):
-            cacheList.append(hashlib.md5(item["url"].encode("utf-8")).hexdigest())
-        AddDir("[{0}]".format(name) ,item["url"].encode("utf-8"), mode, image.encode("utf-8"), logos.encode("utf-8"), epg.encode("utf-8"), index=i, uuid=uuid4.encode("utf-8"), cacheMin=cacheMin, addToVdir=addToVdir)
+            cacheList.append(hashlib.md5(item["url"]).hexdigest())
+        AddDir("[{0}]".format(name) ,item["url"], mode, image, logos, epg, index=i, uuid=uuid4, cacheMin=cacheMin, addToVdir=addToVdir)
         i += 1
 
     for the_file in os.listdir(cacheDir):
@@ -92,8 +92,8 @@ def Categories():
     vDirs = common.ReadList(vDirectoriesFile)
     y = 0
     for vDir in vDirs:
-        dir_icon = vDir["icon"].encode("utf-8") if not vDir["icon"].encode("utf-8") is "" else os.path.join(iconsDir, "default-folder-image.png")
-        AddDir("[COLOR green][B]{0}[/B][/COLOR]".format(vDir["name"].encode("utf8")), "{0}".format(y) , 44 , dir_icon, uuid=vDir["uuid"].encode("utf-8"), isFolder=True)
+        dir_icon = vDir["icon"] if not vDir["icon"] is "" else os.path.join(iconsDir, "default-folder-image.png")
+        AddDir("[COLOR green][B]{0}[/B][/COLOR]".format(vDir["name"].encode("utf8")), "{0}".format(y) , 44 , dir_icon, uuid=vDir["uuid"], isFolder=True)
         y += 1
     
     ignored = []
@@ -106,7 +106,7 @@ def Categories():
     addList = []
     try:	
         for uitem in chList:
-            if "uuid" in uitem and not uitem["uuid"].encode("utf-8") in ignored:
+            if "uuid" in uitem and not uitem["uuid"] in ignored:
                 addList.append(chList[i])
             i += 1
     except:
@@ -137,7 +137,7 @@ def AddNewList():
     chList = common.ReadList(playlistsFile)
     for item in chList:
         if item["url"].lower() == listUrl.lower():
-            xbmc.executebuiltin('Notification({0}, "{1}" {2}, 5000, {3})'.format(AddonName, item["name"].encode("utf-8"), getLocaleString(30007), icon))
+            xbmc.executebuiltin('Notification({0}, "{1}" {2}, 5000, {3})'.format(AddonName, item["name"], getLocaleString(30007), icon))
             return
     chList.append({"name": listName, "url": listUrl, "image": image, "logos": logosUrl, "epg": epgUrl, "cache": cacheInMinutes, "uuid":str(random.uuid4())})
     if common.SaveList(playlistsFile, chList):
@@ -179,7 +179,7 @@ def RemoveFromLists(iuuid, listFile):
     
     i = 0
     for playlist in chList:
-        if playlist["uuid"].encode("utf-8") == iuuid.encode("utf-8"):
+        if playlist["uuid"] == iuuid:
             del chList[i]
         i += 1
     
@@ -187,7 +187,7 @@ def RemoveFromLists(iuuid, listFile):
     for vDir in vDirsList:
         i = 0
         for uuid4 in vDir["data"]:
-            if iuuid.encode("utf-8") in uuid4.encode("utf-8"):
+            if iuuid in uuid4:
                 del vDir["data"][i]
             i += 1
             
@@ -216,9 +216,9 @@ def PlxCategory(url, cache):
         iconimage = "" if "thumb" not in channel else common.GetEncodeString(channel["thumb"])
         name = common.GetEncodeString(channel["name"])
         if channel["type"] == 'playlist':
-            AddDir("[{0}]".format(name) ,channel["url"].encode("utf-8"), 1, iconimage, background=background.encode("utf-8"))
+            AddDir("[{0}]".format(name) ,channel["url"], 1, iconimage, background=background)
         else:
-            AddDir(name, channel["url"].encode("utf-8"), 3, iconimage, isFolder=False, IsPlayable=True, background=background)
+            AddDir(name, channel["url"], 3, iconimage, isFolder=False, IsPlayable=True, background=background)
             tmpList.append({"url": channel["url"], "image": iconimage, "name": name})
             
     common.SaveList(tmpListFile, tmpList)
@@ -287,8 +287,8 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                 image = channel.get("tvg_logo", channel.get("logo", ""))
                 '''
                 if image == "" and epgDict:
-                    if name.decode('utf-8') in epgDict.get(u'name'):
-                        image = epgDict[u'data'][epgDict[u'name'].index(name.decode('utf-8'))][1]
+                    if name in epgDict.get(u'name'):
+                        image = epgDict[u'data'][epgDict[u'name'].index(name)][1]
                     if name in epgDict.get(u'name'):
                         image = epgDict[u'data'][epgDict[u'name'].index(name)][1]
 '''
@@ -296,8 +296,8 @@ def m3uCategory(url, logos, epg, cache, mode, gListIndex=-1):
                     idx = None
                     id = None
                     if epgDict.get('name'):
-                        if name.decode('utf-8') in epgDict.get('name'):
-                            idx = epgDict['name'].index(name.decode('utf-8'))
+                        if name in epgDict.get('name'):
+                            idx = epgDict['name'].index(name)
                         elif name in epgDict.get('name'):
                             idx = epgDict['name'].index(name)
                         if image == "" and idx is not None:
@@ -481,8 +481,8 @@ def AddFavorites(url, iconimage, name):
     chList = common.ReadList(tmpListFile)    
     for channel in chList:
         if channel["name"].lower() == name.lower():
-            url = channel["url"].encode("utf-8")
-            iconimage = channel["image"].encode("utf-8")
+            url = channel["url"]
+            iconimage = channel["image"]
             break
     if not iconimage:
         iconimage = ""
@@ -523,14 +523,14 @@ def DeleteDirectory(iuuid, with_contents=False):
     vDirs = common.ReadList(vDirectoriesFile)
     y = 0
     for vdir in vDirs:
-        if vdir["uuid"].encode("utf-8") == iuuid:
+        if vdir["uuid"] == iuuid:
             if with_contents:
                 contents = common.ReadList(playlistsFile)
                 i = 0
                 uuids = vdir["data"]
-                uuids = [uuid4.encode("utf-8") for uuid4 in uuids]
+                uuids = [uuid4 for uuid4 in uuids]
                 for content in contents:
-                    if content["uuid"].encode("utf-8") in uuids:
+                    if content["uuid"] in uuids:
                         del contents[i]
                     i += 1
                 common.SaveList(playlistsFile, contents)
@@ -553,7 +553,7 @@ def ShowDirectoryContents(directory_uuid):
     
     for pUuid in dirFiles:
         for playlist in chList:
-            if pUuid.encode("utf-8") == playlist["uuid"].encode("utf-8"):
+            if pUuid == playlist["uuid"]:
                 lPlaylists.append(playlist) 
         
     AddListItems(lPlaylists, addToVdir=False)
@@ -565,7 +565,7 @@ def ListFavorites():
     chList = common.ReadList(favoritesFile)
     i = 0
     for channel in chList:
-        AddDir(channel["name"].encode("utf-8"), channel["url"].encode("utf-8"), 32, channel["image"].encode("utf-8"), index=i, isFolder=False, IsPlayable=True)
+        AddDir(channel["name"], channel["url"], 32, channel["image"], index=i, isFolder=False, IsPlayable=True)
         i += 1
     
         
@@ -597,7 +597,7 @@ def GetPlaylistIndex(iuuid, listFile):
     
     i = 0
     for playlist in chList:
-        if playlist["uuid"].encode("utf-8") == iuuid.encode("utf-8"):
+        if playlist["uuid"] == iuuid:
             return i
         i += 1
         
@@ -605,7 +605,7 @@ def GetPlaylistIndex(iuuid, listFile):
 def lsDir(iuuid):
     chDirs = common.ReadList(vDirectoriesFile)
     for vdir in chDirs:
-        if vdir["uuid"].encode("utf-8") == iuuid.encode("utf-8"):
+        if vdir["uuid"] == iuuid:
             return vdir["data"]
     return None
 
@@ -615,7 +615,7 @@ def ChangeKey(iuuid, listFile, key, title, favourites=False):
     chList = common.ReadList(listFile)
     index = GetPlaylistIndex(iuuid, listFile) if not favourites else iuuid
     
-    str = GetKeyboardText(getLocaleString(title), chList[index][key].encode("utf-8"))
+    str = GetKeyboardText(getLocaleString(title), chList[index][key])
     if len(str) < 1:
         return
         
@@ -687,36 +687,36 @@ def MoveInList(iuuid, step, listFile):
     dir = False
     vdirs = common.ReadList(vDirectoriesFile)
     for vdir in vdirs:
-    	uuids4 = [uuid4.encode("utf-8") for uuid4 in vdir["data"]]
-    	if iuuid.encode("utf-8") in uuids4:
+    	uuids4 = [uuid4 for uuid4 in vdir["data"]]
+    	if iuuid in uuids4:
     		dir = vdir
     
     if not dir is False:
         # Moving two sides, directories and global list ( in case of directory removal )
         dirFiles = lsDir(dir["uuid"])
         
-        ffiles = [tfile for tfile in theList if tfile["uuid"].encode("utf-8") in dirFiles]
-        rfiles = [tfile for tfile in theList if tfile["uuid"].encode("utf-8") not in dirFiles]
+        ffiles = [tfile for tfile in theList if tfile["uuid"] in dirFiles]
+        rfiles = [tfile for tfile in theList if tfile["uuid"] not in dirFiles]
         
-        ffiles = moveOnPlaylist(dirFiles.index(iuuid.encode("utf-8")), step, ffiles)
+        ffiles = moveOnPlaylist(dirFiles.index(iuuid), step, ffiles)
         
         if not ffiles is None:
             common.SaveList(listFile, rfiles + ffiles)
         
         # Movin it directory side.
         idx = vdirs.index(vdir)
-        vdir["data"] = [item["uuid"].encode("utf-8") for item in ffiles]
+        vdir["data"] = [item["uuid"] for item in ffiles]
         vdirs[idx] = vdir
         common.SaveList(vDirectoriesFile, vdirs)
             
     else:
         dirFiles = [item for data in vdirs for item in lsDir(data["uuid"])]
-        dirItems    = [playlist for playlist in common.ReadList(listFile) if playlist["uuid"].encode("utf-8") in dirFiles]
-        notDirFiles = [playlist for playlist in common.ReadList(listFile) if not playlist["uuid"].encode("utf-8") in dirFiles]
+        dirItems    = [playlist for playlist in common.ReadList(listFile) if playlist["uuid"] in dirFiles]
+        notDirFiles = [playlist for playlist in common.ReadList(listFile) if not playlist["uuid"] in dirFiles]
         
         idx = 0
         for playlist in notDirFiles:
-            if playlist["uuid"].encode("utf-8") == iuuid:
+            if playlist["uuid"] == iuuid:
                 break
             idx += 1
         
