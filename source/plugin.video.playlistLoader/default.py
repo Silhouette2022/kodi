@@ -54,7 +54,7 @@ def AddListItems(chList, addToVdir=True):
         image = item.get('image', '')
         uuid4 = item["uuid"]
         
-        if image is "" or image is None:
+        if image == "" or image == None:
             image = os.path.join(iconsDir, "default-list-image.png")
         
         logos = item.get('logos', '')
@@ -92,7 +92,7 @@ def Categories():
     vDirs = common.ReadList(vDirectoriesFile)
     y = 0
     for vDir in vDirs:
-        dir_icon = vDir["icon"] if not vDir["icon"] is "" else os.path.join(iconsDir, "default-folder-image.png")
+        dir_icon = vDir["icon"] if vDir["icon"] != "" else os.path.join(iconsDir, "default-folder-image.png")
         AddDir("[COLOR green][B]{0}[/B][/COLOR]".format(vDir["name"].encode("utf8")), "{0}".format(y) , 44 , dir_icon, uuid=vDir["uuid"], isFolder=True)
         y += 1
     
