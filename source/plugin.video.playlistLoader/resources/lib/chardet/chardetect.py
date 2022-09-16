@@ -35,11 +35,11 @@ def description_of(file, name='stdin'):
 
 def main():
     if len(argv) <= 1:
-        print(description_of(stdin))
+        print((description_of(stdin)))
     else:
         for path in argv[1:]:
             with open(path, 'rb') as f:
-                print(description_of(f, path))
+                print((description_of(f, path)))
 
 
 if __name__ == '__main__':

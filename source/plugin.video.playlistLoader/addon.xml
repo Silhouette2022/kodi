@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.playlistLoader" name="Playlist Loader" version="1.4.9" provider-name="osgioia">
+<addon id="plugin.video.playlistLoader" name="Playlist Loader" version="2.0.0" provider-name="osgioia (With @burekas fixes)">
   <requires>
-    <import addon="xbmc.python" version="2.1.0"/>
+    <import addon="xbmc.python" version="3.0.0"/>
     <import addon="script.module.requests" version="2.9.1"/>
     <import addon="script.module.dateutil" version="2.8.1"/>
   </requires>
@@ -9,12 +9,19 @@
         <provides>video</provides>
   </extension>
   <extension point="xbmc.addon.metadata">
+    <assets>
+        <icon>icon.png</icon>
+    </assets>   
     <summary lang="en">Playlist Loader</summary>
     <summary lang="he">Playlist Loader</summary>
     <description lang="en">Playlist Loader</description>
     <description lang="he">Playlist Loader</description>
     <platform>all</platform>
 	<news>
+2.0.0
+- Forked of Silhouette2022
+- Add Support for Kodi Matrix 19 and up (Modified By burekas)
+
 1.4.9
 - Got rid of xmltodict to speed up EPG processing.
 1.4.8
